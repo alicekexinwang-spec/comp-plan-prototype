@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adobe CompPlan Studio — FY27 Prototype</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --adobe-red:#E1251B;
+  --nav-bg:#1A1A1A;
+  --nav-w:220px;
+  --hdr-h:52px;
+  --surface:#F8F7F5;
+  --card-bg:#ffffff;
+  --border:0.5px solid rgba(0,0,0,0.12);
+  --text:#1a1a1a;
+  --muted:#6b6b6b;
+  --radius:8px;
+  --radius-lg:12px;
+  --blue:#185FA5;
+  --green:#3B6D11;
+  --amber:#854F0B;
+  --red:#A32D2D;
+  --purple:#534AB7;
+  --teal:#0F6E56;
+  --bg-secondary:#F1EFE8;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --surface:#111;
+    --card-bg:#1c1c1c;
+    --border:0.5px solid rgba(255,255,255,0.1);
+    --text:#e8e8e8;
+    --muted:#999;
+    --bg-secondary:#242424;
+  }
+}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:13px;background:var(--surface);color:var(--text);line-height:1.5}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--nav-w);background:var(--nav-bg);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-logo{padding:16px 16px 12px;border-bottom:0.5px solid rgba(255,255,255,.1)}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-box{width:28px;height:28px;background:var(--adobe-red);border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:11px;color:#fff;letter-spacing:.5px}
+.logo-text{color:#fff;font-size:13px;font-weight:500;line-height:1.2}
+.logo-sub{color:rgba(255,255,255,.5);font-size:10px}
+.sidebar-section{padding:8px 0}
+.sidebar-label{padding:8px 16px 4px;font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;color:rgba(255,255,255,.65);cursor:pointer;transition:background .15s;font-size:12.5px}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(225,37,27,.2);color:#fff;border-left:2.5px solid var(--adobe-red)}
+.nav-item.active i{color:var(--adobe-red)}
+.nav-item i{font-size:15px;width:16px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--adobe-red);color:#fff;font-size:10px;padding:1px 6px;border-radius:10px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:var(--hdr-h);background:var(--card-bg);border-bottom:var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:500;flex:1}
+.topbar-fy{font-size:12px;background:var(--bg-secondary);padding:3px 10px;border-radius:12px;color:var(--muted);border:var(--border)}
+.topbar-avatar{width:30px;height:30px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#185FA5}
+.content{flex:1;overflow-y:auto;padding:20px}
+.screen{display:none}
+.screen.active{display:block}
+
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.page-title{font-size:18px;font-weight:500}
+.page-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius);border:0.5px solid rgba(0,0,0,0.2);background:var(--card-bg);color:var(--text);cursor:pointer;font-size:12px;font-weight:500;transition:background .15s}
+.btn:hover{background:var(--bg-secondary)}
+.btn-primary{background:var(--adobe-red);color:#fff;border-color:var(--adobe-red)}
+.btn-primary:hover{background:#c0201a}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-group{display:flex;gap:8px;align-items:center}
+
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.metric-card{background:var(--bg-secondary);border-radius:var(--radius);padding:14px 16px}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.metric-value{font-size:26px;font-weight:500}
+.metric-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.metric-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:1px 6px;border-radius:10px;margin-top:4px}
+.delta-up{background:#EAF3DE;color:#3B6D11}
+.delta-down{background:#FCEBEB;color:#A32D2D}
+
+.card{background:var(--card-bg);border:var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:500}
+
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.badge-draft{background:#F1EFE8;color:#444441}
+.badge-review{background:#FAEEDA;color:#633806}
+.badge-approved{background:#EAF3DE;color:#27500A}
+.badge-rejected{background:#FCEBEB;color:#791F1F}
+.badge-published{background:#E6F1FB;color:#0C447C}
+.badge-rescinded{background:#FBEAF0;color:#72243E}
+.badge-pending{background:#FAEEDA;color:#633806}
+.badge-passed{background:#EAF3DE;color:#27500A}
+.badge-warning{background:#FAEEDA;color:#633806}
+.badge-failed{background:#FCEBEB;color:#791F1F}
+.badge-info{background:#E6F1FB;color:#0C447C}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--muted);padding:8px 10px;border-bottom:var(--border);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:8px 10px;border-bottom:var(--border);font-size:12px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg-secondary)}
+.table-wrap{background:var(--card-bg);border:var(--border);border-radius:var(--radius-lg);overflow:hidden}
+
+.filter-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.filter-select{padding:5px 10px;border-radius:var(--radius);border:var(--border);background:var(--card-bg);font-size:12px;color:var(--text)}
+.search-input{padding:5px 10px;border-radius:var(--radius);border:var(--border);background:var(--card-bg);font-size:12px;flex:1;max-width:240px;color:var(--text)}
+
+.workflow-track{display:flex;align-items:center;gap:0;margin:12px 0}
+.wf-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative}
+.wf-step:not(:last-child)::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:1.5px;background:rgba(0,0,0,0.1);z-index:0}
+.wf-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;z-index:1;border:1.5px solid rgba(0,0,0,0.15);background:var(--card-bg)}
+.wf-circle.done{background:#EAF3DE;border-color:#639922;color:#3B6D11}
+.wf-circle.active{background:#E6F1FB;border-color:#378ADD;color:#185FA5}
+.wf-circle.pending{background:var(--bg-secondary);color:var(--muted)}
+.wf-circle.rejected{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
+.wf-label{font-size:10px;color:var(--muted);margin-top:4px;text-align:center}
+
+.activity-item{display:flex;gap:10px;padding:8px 0;border-bottom:var(--border);align-items:flex-start}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.activity-time{font-size:11px;color:var(--muted);margin-top:2px}
+
+.comparison-grid{background:var(--card-bg);border:var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.comp-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:var(--border)}
+.comp-row:last-child{border-bottom:none}
+.comp-cell{padding:10px 16px;border-right:var(--border)}
+.comp-cell:last-child{border-right:none}
+.comp-cell.changed-add{background:#EAF3DE}
+.comp-cell.changed-mod{background:#FAEEDA}
+.comp-cell.changed-rem{background:#FCEBEB}
+.comp-section-header{padding:8px 16px;background:var(--bg-secondary);border-bottom:var(--border);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;grid-column:1/-1}
+
+.change-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:500;margin:2px}
+.chip-vct{background:#EEEDFE;color:#3C3489}
+.chip-payline{background:#E1F5EE;color:#085041}
+.chip-bonus{background:#FAEEDA;color:#633806}
+.chip-tether{background:#FAECE7;color:#4A1B0C}
+.chip-accel{background:#E6F1FB;color:#0C447C}
+.chip-freq{background:#EAF3DE;color:#27500A}
+.chip-other{background:#F1EFE8;color:#444441}
+
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+.plan-builder section{margin-bottom:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.form-input,.form-select{padding:6px 10px;border-radius:var(--radius);border:var(--border);background:var(--card-bg);font-size:12px;color:var(--text)}
+.form-input:focus,.form-select:focus{outline:none;border-color:#378ADD}
+.form-textarea{padding:8px 10px;border-radius:var(--radius);border:var(--border);background:var(--card-bg);font-size:12px;color:var(--text);resize:vertical;min-height:80px}
+
+.approval-card{border:var(--border);border-radius:var(--radius-lg);padding:16px;background:var(--card-bg);margin-bottom:12px}
+.approver-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:var(--border)}
+.approver-row:last-child{border-bottom:none}
+.approver-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500}
+
+.doc-preview{border:var(--border);border-radius:var(--radius-lg);background:var(--card-bg);overflow:hidden}
+.doc-header{background:var(--adobe-red);padding:24px 32px;color:#fff}
+.doc-section{padding:20px 32px;border-bottom:var(--border)}
+.doc-section:last-child{border-bottom:none}
+.doc-section-title{font-size:13px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+
+.audit-timeline{position:relative;padding-left:24px}
+.audit-timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:1px;background:rgba(0,0,0,0.1)}
+.audit-item{position:relative;margin-bottom:16px}
+.audit-dot{position:absolute;left:-20px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--adobe-red);border:2px solid var(--card-bg)}
+.audit-dot.gray{background:#888780}
+.audit-dot.green{background:#639922}
+.audit-dot.amber{background:#BA7517}
+.audit-dot.blue{background:#378ADD}
+.audit-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.audit-change{font-size:11px;margin-top:4px;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);border-left:2.5px solid rgba(0,0,0,0.15)}
+
+.mechanics-row{display:grid;grid-template-columns:220px 1fr 130px;gap:12px;padding:10px;border-bottom:var(--border);align-items:start}
+.mechanics-row:last-child{border-bottom:none}
+.mech-source{font-size:12px;font-weight:500}
+.mech-generated{font-size:11px;background:var(--bg-secondary);padding:6px 8px;border-radius:var(--radius);font-family:monospace;white-space:pre-line}
+.mech-error{font-size:11px;color:#A32D2D;margin-top:4px}
+
+.add-row-btn{display:flex;align-items:center;gap:6px;padding:8px 12px;color:var(--muted);cursor:pointer;font-size:12px;border-top:var(--border)}
+.add-row-btn:hover{color:var(--text);background:var(--bg-secondary)}
+
+.quick-actions{display:flex;gap:8px;flex-wrap:wrap}
+.qa-card{background:var(--card-bg);border:var(--border);border-radius:var(--radius-lg);padding:12px 16px;cursor:pointer;transition:background .15s;flex:1;min-width:140px;text-align:center}
+.qa-card:hover{background:var(--bg-secondary)}
+.qa-icon{font-size:22px;color:var(--adobe-red);margin-bottom:6px}
+.qa-label{font-size:12px;font-weight:500}
+.qa-desc{font-size:11px;color:var(--muted);margin-top:2px}
+
+.payout-table-wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-logo">
+      <div class="logo-row">
+        <div class="logo-box">Ac</div>
+        <div>
+          <div class="logo-text">CompPlan Studio</div>
+          <div class="logo-sub">Adobe Internal · FY27</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <div class="nav-item active" onclick="showScreen('dashboard')"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Plan Management</div>
+      <div class="nav-item" onclick="showScreen('library')"><i class="ti ti-files"></i> Compensation Plans</div>
+      <div class="nav-item" onclick="showScreen('builder')"><i class="ti ti-tool"></i> Plan Builder</div>
+      <div class="nav-item" onclick="showScreen('compare')"><i class="ti ti-columns"></i> Comparisons <span class="nav-badge">3</span></div>
+      <div class="nav-item" onclick="showScreen('multi')"><i class="ti ti-table"></i> Multi-Role View</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Workflow</div>
+      <div class="nav-item" onclick="showScreen('approval')"><i class="ti ti-circle-check"></i> Approvals <span class="nav-badge">5</span></div>
+      <div class="nav-item" onclick="showScreen('tracker')"><i class="ti ti-list-check"></i> Approval Tracker</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Outputs</div>
+      <div class="nav-item" onclick="showScreen('mechanics')"><i class="ti ti-circuit-board"></i> Plan Mechanics</div>
+      <div class="nav-item" onclick="showScreen('document')"><i class="ti ti-file-text"></i> Plan Documents</div>
+      <div class="nav-item" onclick="showScreen('audit')"><i class="ti ti-history"></i> Audit History</div>
+    </div>
+    <div style="padding:16px;margin-top:auto;border-top:0.5px solid rgba(255,255,255,.08)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#533AB7;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:500">MC</div>
+        <div><div style="color:rgba(255,255,255,.8);font-size:12px">Melissa C.</div><div style="color:rgba(255,255,255,.4);font-size:10px">Comp Design Lead</div></div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Executive Dashboard</div>
+      <span class="topbar-fy">FY27 Planning Cycle</span>
+      <button class="btn btn-sm"><i class="ti ti-bell"></i> 5</button>
+      <button class="btn btn-primary btn-sm" onclick="showScreen('builder')"><i class="ti ti-plus"></i> New Plan</button>
+      <div class="topbar-avatar" title="Melissa Chen">MC</div>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- SCREEN 1: DASHBOARD -->
+      <div id="screen-dashboard" class="screen active">
+        <div class="page-header">
+          <div><div class="page-title">Executive Dashboard</div><div class="page-subtitle">FY27 Annual Compensation Plan Progress · Updated today at 2:14 PM</div></div>
+          <div class="btn-group">
+            <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
+            <button class="btn btn-sm"><i class="ti ti-refresh"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="grid-4">
+          <div class="metric-card"><div class="metric-label">Total Plans</div><div class="metric-value">42</div><div class="metric-sub">FY27 cycle</div></div>
+          <div class="metric-card"><div class="metric-label">Draft</div><div class="metric-value" style="color:#888780">14</div><div class="metric-delta delta-down"><i class="ti ti-arrow-up" style="font-size:10px"></i>2 new this week</div></div>
+          <div class="metric-card"><div class="metric-label">Pending Approval</div><div class="metric-value" style="color:#BA7517">11</div><div class="metric-delta delta-down"><i class="ti ti-clock" style="font-size:10px"></i>Avg 3.2 days</div></div>
+          <div class="metric-card"><div class="metric-label">Approved</div><div class="metric-value" style="color:#3B6D11">17</div><div class="metric-delta delta-up"><i class="ti ti-trending-up" style="font-size:10px"></i>+4 this week</div></div>
+        </div>
+        <div class="grid-4" style="margin-top:-4px">
+          <div class="metric-card"><div class="metric-label">Rejected</div><div class="metric-value" style="color:#A32D2D">3</div><div class="metric-sub">Under revision</div></div>
+          <div class="metric-card"><div class="metric-label">Published</div><div class="metric-value" style="color:#185FA5">8</div><div class="metric-sub">To Salesforce</div></div>
+          <div class="metric-card"><div class="metric-label">Docs Generated</div><div class="metric-value">24</div><div class="metric-delta delta-up"><i class="ti ti-file-text" style="font-size:10px"></i>6 pending</div></div>
+          <div class="metric-card"><div class="metric-label">Mechanics Ready</div><div class="metric-value">19</div><div class="metric-delta delta-down"><i class="ti ti-alert-triangle" style="font-size:10px"></i>2 warnings</div></div>
+        </div>
+        <div class="two-col" style="margin-top:4px">
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Approval progress by role group</div><button class="btn btn-sm">Details</button></div>
+              <div style="position:relative;height:220px"><canvas id="approvalChart" role="img" aria-label="Bar chart showing approval progress by role group">Approval data by role group: DX AE, CXO Specialist, Commerce, SMB, Enterprise, Renewal.</canvas></div>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:11px;color:var(--muted)">
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#639922;display:inline-block"></span>Approved</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#BA7517;display:inline-block"></span>In review</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#888780;display:inline-block"></span>Draft</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Plans by status</div></div>
+              <div style="position:relative;height:180px"><canvas id="statusChart" role="img" aria-label="Doughnut chart of plan status distribution">Status breakdown: Draft 14, In Review 11, Approved 17, Rejected 3, Published 8.</canvas></div>
+              <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:11px;color:var(--muted)">
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#639922;display:inline-block"></span>Approved 17</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#BA7517;display:inline-block"></span>In review 11</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#B4B2A9;display:inline-block"></span>Draft 14</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#378ADD;display:inline-block"></span>Published 8</span>
+                <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#E24B4A;display:inline-block"></span>Rejected 3</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header"><div class="card-title">Quick actions</div></div>
+              <div class="quick-actions">
+                <div class="qa-card" onclick="showScreen('builder')"><div class="qa-icon"><i class="ti ti-plus"></i></div><div class="qa-label">Create plan</div><div class="qa-desc">Start new FY27 plan</div></div>
+                <div class="qa-card" onclick="showScreen('compare')"><div class="qa-icon"><i class="ti ti-columns"></i></div><div class="qa-label">Compare</div><div class="qa-desc">FY26 vs FY27</div></div>
+                <div class="qa-card" onclick="showScreen('approval')"><div class="qa-icon"><i class="ti ti-circle-check"></i></div><div class="qa-label">Approval queue</div><div class="qa-desc">5 awaiting review</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Recent activity</div><button class="btn btn-sm">View all</button></div>
+              <div>
+                <div class="activity-item">
+                  <div class="activity-icon" style="background:#EAF3DE"><i class="ti ti-circle-check" style="color:#3B6D11;font-size:14px"></i></div>
+                  <div><div><strong>H02.A</strong> approved by Susan L.</div><div class="activity-time">Today, 1:47 PM · CXO Product Specialist</div></div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon" style="background:#E6F1FB"><i class="ti ti-send" style="color:#185FA5;font-size:14px"></i></div>
+                  <div><div><strong>H01.A</strong> submitted for approval</div><div class="activity-time">Today, 11:22 AM · Digital Experience AE</div></div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon" style="background:#EEEDFE"><i class="ti ti-file-text" style="color:#534AB7;font-size:14px"></i></div>
+                  <div><div><strong>H03.A</strong> document generated</div><div class="activity-time">Yesterday, 4:05 PM · Commerce AE</div></div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon" style="background:#FAEEDA"><i class="ti ti-arrow-back" style="color:#854F0B;font-size:14px"></i></div>
+                  <div><div><strong>H04.A</strong> returned for revision</div><div class="activity-time">Yesterday, 2:33 PM · Quota range issue</div></div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon" style="background:#EAF3DE"><i class="ti ti-circuit-board" style="color:#3B6D11;font-size:14px"></i></div>
+                  <div><div><strong>H05.A</strong> mechanics validated</div><div class="activity-time">Yesterday, 9:14 AM · Enterprise AE</div></div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon" style="background:#E6F1FB"><i class="ti ti-world" style="color:#185FA5;font-size:14px"></i></div>
+                  <div><div><strong>H06.A</strong> published to Salesforce</div><div class="activity-time">Jun 10, 3:00 PM · SMB AE</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: LIBRARY -->
+      <div id="screen-library" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Compensation Plan Library</div><div class="page-subtitle">42 plans · FY27 planning cycle</div></div>
+          <div class="btn-group">
+            <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
+            <button class="btn btn-primary btn-sm" onclick="showScreen('builder')"><i class="ti ti-plus"></i> New Plan</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <select class="filter-select"><option>All Fiscal Years</option><option selected>FY27</option><option>FY26</option></select>
+          <select class="filter-select"><option>All Role Groups</option><option>Enterprise AE</option><option>Commercial AE</option><option>SMB AE</option><option>CXO Specialist</option></select>
+          <select class="filter-select"><option>All Statuses</option><option>Draft</option><option>In Review</option><option>Approved</option><option>Published</option></select>
+          <select class="filter-select"><option>All Owners</option><option>Melissa C.</option><option>Val R.</option></select>
+          <input class="search-input" placeholder="Search plans…" type="search">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Plan ID</th><th>Plan Name</th><th>Role</th><th>FY</th><th>Status</th><th>Ver.</th><th>Last Updated</th><th>Owner</th><th>Approval</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="lib-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SCREEN 3: BUILDER -->
+      <div id="screen-builder" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Plan Builder — H01.A</div><div class="page-subtitle">Digital Experience Account Executive · FY27 · Draft</div></div>
+          <div class="btn-group">
+            <button class="btn btn-sm"><i class="ti ti-device-floppy"></i> Save draft</button>
+            <button class="btn btn-sm" onclick="showScreen('compare')"><i class="ti ti-columns"></i> Compare</button>
+            <button class="btn btn-primary btn-sm"><i class="ti ti-send"></i> Submit for approval</button>
+          </div>
+        </div>
+        <div class="workflow-track">
+          <div class="wf-step"><div class="wf-circle done"><i class="ti ti-check" style="font-size:12px"></i></div><div class="wf-label">Plan info</div></div>
+          <div class="wf-step"><div class="wf-circle active">2</div><div class="wf-label">Measures</div></div>
+          <div class="wf-step"><div class="wf-circle pending">3</div><div class="wf-label">Payout tables</div></div>
+          <div class="wf-step"><div class="wf-circle pending">4</div><div class="wf-label">Bonus/Tether</div></div>
+          <div class="wf-step"><div class="wf-circle pending">5</div><div class="wf-label">Review</div></div>
+        </div>
+        <div class="plan-builder">
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="ti ti-info-circle" style="color:var(--adobe-red);margin-right:6px"></i>Plan information</div></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Plan name</label><input class="form-input" value="Digital Experience AE FY27 Plan"></div>
+              <div class="form-group"><label class="form-label">Plan number</label><input class="form-input" value="H01.A"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Role</label><input class="form-input" value="Digital Experience Account Executive"></div>
+              <div class="form-group"><label class="form-label">Pay mix (base / variable)</label><input class="form-input" value="70 / 30"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Headcount</label><input class="form-input" type="number" value="284"></div>
+              <div class="form-group"><label class="form-label">Fiscal year</label><select class="form-select"><option>FY27</option><option>FY26</option></select></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="ti ti-target" style="color:var(--adobe-red);margin-right:6px"></i>Performance measures</div>
+              <button class="btn btn-sm"><i class="ti ti-plus"></i> Add measure</button>
+            </div>
+            <table>
+              <thead><tr><th>Measure name</th><th>VCT Weight</th><th>Performance period</th><th>Payout frequency</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>ARR New Business</td><td><input class="form-input" value="50%" style="width:70px"></td><td><select class="form-select"><option>Annual</option><option>Semi-annual</option></select></td><td><select class="form-select"><option>Quarterly</option><option selected>Monthly</option></select></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+                <tr><td>ARR Renewal</td><td><input class="form-input" value="30%" style="width:70px"></td><td><select class="form-select"><option selected>Annual</option></select></td><td><select class="form-select"><option selected>Quarterly</option></select></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+                <tr><td>Strategic Products</td><td><input class="form-input" value="20%" style="width:70px"></td><td><select class="form-select"><option>Annual</option><option selected>Semi-annual</option></select></td><td><select class="form-select"><option selected>Quarterly</option></select></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="ti ti-gift" style="color:var(--adobe-red);margin-right:6px"></i>Bonus configuration</div></div>
+              <div class="form-group" style="margin-bottom:8px"><label class="form-label">Bonus type</label><select class="form-select"><option>Quarterly Business Bonus</option><option>Annual Strategic Bonus</option></select></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Bonus % of OTC</label><input class="form-input" value="10%"></div>
+                <div class="form-group"><label class="form-label">Threshold</label><input class="form-input" value="75%"></div>
+              </div>
+              <div class="form-group"><label class="form-label">Linked measure</label><select class="form-select"><option>ARR New Business</option></select></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="ti ti-link" style="color:var(--adobe-red);margin-right:6px"></i>Tether configuration</div></div>
+              <div class="form-group" style="margin-bottom:8px"><label class="form-label">Tether rule</label><select class="form-select"><option>Renewal Tether</option><option>ARR Tether</option></select></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Tether threshold</label><input class="form-input" value="80%"></div>
+                <div class="form-group"><label class="form-label">Cap if below</label><input class="form-input" value="100%"></div>
+              </div>
+              <div class="form-group"><label class="form-label">Applies to</label><select class="form-select"><option>All measures</option><option>New Business only</option></select></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="ti ti-table" style="color:var(--adobe-red);margin-right:6px"></i>Payout tables — ARR New Business</div>
+              <button class="btn btn-sm"><i class="ti ti-plus"></i> Add payout table</button>
+            </div>
+            <div class="payout-table-wrap">
+              <table>
+                <thead><tr><th>Attainment tier</th><th>Multiplier</th><th>MCR</th><th>Incentive cap</th><th></th></tr></thead>
+                <tbody>
+                  <tr><td><input class="form-input" value="0% – 50%" style="width:100px"></td><td><input class="form-input" value="0.00x" style="width:70px"></td><td><input class="form-input" value="0%" style="width:60px"></td><td><input class="form-input" value="None" style="width:80px"></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+                  <tr><td><input class="form-input" value="50% – 75%" style="width:100px"></td><td><input class="form-input" value="0.50x" style="width:70px"></td><td><input class="form-input" value="50%" style="width:60px"></td><td><input class="form-input" value="100%" style="width:80px"></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+                  <tr><td><input class="form-input" value="75% – 100%" style="width:100px"></td><td><input class="form-input" value="1.00x" style="width:70px"></td><td><input class="form-input" value="100%" style="width:60px"></td><td><input class="form-input" value="150%" style="width:80px"></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+                  <tr><td><input class="form-input" value="100% – 150%" style="width:100px"></td><td><input class="form-input" value="1.50x" style="width:70px"></td><td><input class="form-input" value="150%" style="width:60px"></td><td><input class="form-input" value="200%" style="width:80px"></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+                  <tr><td><input class="form-input" value="150%+" style="width:100px"></td><td><input class="form-input" value="2.00x" style="width:70px"></td><td><input class="form-input" value="200%" style="width:60px"></td><td><input class="form-input" value="Uncapped" style="width:80px"></td><td><button class="btn btn-sm"><i class="ti ti-trash"></i></button></td></tr>
+                </tbody>
+              </table>
+              <div class="add-row-btn"><i class="ti ti-plus"></i> Add tier</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="ti ti-notes" style="color:var(--adobe-red);margin-right:6px"></i>Business rationale &amp; YoY changes</div></div>
+            <textarea class="form-textarea" style="width:100%;margin-bottom:12px">Shifting Digital Experience AE payout frequency from monthly to quarterly to align with deal cycle realities. Removing incentive cap on the 150%+ tier to better reward top performers. Adding renewal tether to ensure balanced portfolio management. Strategic products weight increased from 15% to 20% to drive DX focus.</textarea>
+            <div class="form-label" style="margin-bottom:8px">YoY change categories</div>
+            <div>
+              <span class="change-chip chip-payline"><i class="ti ti-check" style="font-size:10px"></i> Payline</span>
+              <span class="change-chip chip-freq"><i class="ti ti-check" style="font-size:10px"></i> Payout frequency</span>
+              <span class="change-chip chip-vct"><i class="ti ti-check" style="font-size:10px"></i> VCT weight</span>
+              <span class="change-chip chip-tether"><i class="ti ti-check" style="font-size:10px"></i> Tether</span>
+              <span class="change-chip chip-other" style="opacity:.5">Accelerators</span>
+              <span class="change-chip chip-other" style="opacity:.5">Performance measures</span>
+              <span class="change-chip chip-bonus" style="opacity:.5">Bonus</span>
+              <span class="change-chip chip-other" style="opacity:.5">Role assignment</span>
+              <span class="change-chip chip-other" style="opacity:.5">Quota ranges</span>
+              <span class="change-chip chip-other" style="opacity:.5">Definitions</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 4: COMPARISON -->
+      <div id="screen-compare" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Plan Comparison — H01.A Digital Experience AE</div><div class="page-subtitle">FY26 Current vs. FY27 Proposed · 6 changes detected</div></div>
+          <div class="btn-group">
+            <select class="filter-select"><option>H01.A — Digital Experience AE</option><option>H02.A — CXO Product Specialist</option><option>H03.A — Commerce AE</option></select>
+            <button class="btn btn-sm"><i class="ti ti-download"></i> Export diff</button>
+            <button class="btn btn-primary btn-sm" onclick="showScreen('approval')"><i class="ti ti-send"></i> Submit for approval</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;font-size:11px">
+          <span style="display:flex;align-items:center;gap:5px;padding:3px 10px;background:#EAF3DE;border-radius:10px;color:#3B6D11"><span style="width:8px;height:8px;border-radius:2px;background:#639922;display:inline-block"></span>Added</span>
+          <span style="display:flex;align-items:center;gap:5px;padding:3px 10px;background:#FAEEDA;border-radius:10px;color:#633806"><span style="width:8px;height:8px;border-radius:2px;background:#BA7517;display:inline-block"></span>Modified</span>
+          <span style="display:flex;align-items:center;gap:5px;padding:3px 10px;background:#FCEBEB;border-radius:10px;color:#791F1F"><span style="width:8px;height:8px;border-radius:2px;background:#E24B4A;display:inline-block"></span>Removed</span>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="comparison-grid">
+              <div class="comp-row">
+                <div class="comp-cell" style="background:var(--bg-secondary);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 16px"><i class="ti ti-arrow-left" style="font-size:11px;color:#888"></i> FY26 Current plan</div>
+                <div class="comp-cell" style="background:var(--bg-secondary);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 16px"><i class="ti ti-arrow-right" style="font-size:11px;color:#185FA5"></i> FY27 Proposed plan</div>
+              </div>
+              <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:var(--border);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px"><i class="ti ti-info-circle" style="font-size:11px;margin-right:5px"></i>Plan information</div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Plan ID</div>H01.A</div><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Plan ID</div>H01.A</div></div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Headcount</div>271</div><div class="comp-cell changed-mod"><div style="font-size:10px;color:#854F0B">Headcount <i class="ti ti-edit" style="font-size:10px"></i></div><strong>284</strong> <span style="font-size:10px;color:#854F0B">(+13)</span></div></div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Pay mix</div>70 / 30</div><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Pay mix</div>70 / 30</div></div>
+              <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:var(--border);border-top:var(--border);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px"><i class="ti ti-target" style="font-size:11px;margin-right:5px"></i>Performance measures</div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">ARR New Business weight</div><strong>60%</strong></div><div class="comp-cell changed-mod"><div style="font-size:10px;color:#854F0B">ARR New Business weight <i class="ti ti-edit" style="font-size:10px"></i></div><strong>50%</strong> <span style="font-size:10px;color:#854F0B">(-10pp)</span></div></div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">ARR Renewal weight</div>25%</div><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">ARR Renewal weight</div>30%</div></div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Strategic Products weight</div><strong>15%</strong></div><div class="comp-cell changed-mod"><div style="font-size:10px;color:#854F0B">Strategic Products weight <i class="ti ti-edit" style="font-size:10px"></i></div><strong>20%</strong> <span style="font-size:10px;color:#854F0B">(+5pp)</span></div></div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Payout frequency</div><strong>Monthly</strong></div><div class="comp-cell changed-mod"><div style="font-size:10px;color:#854F0B">Payout frequency <i class="ti ti-edit" style="font-size:10px"></i></div><strong>Quarterly</strong></div></div>
+              <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:var(--border);border-top:var(--border);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px"><i class="ti ti-table" style="font-size:11px;margin-right:5px"></i>Payout table</div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">150%+ multiplier</div>1.80x</div><div class="comp-cell changed-mod"><div style="font-size:10px;color:#854F0B">150%+ multiplier <i class="ti ti-edit" style="font-size:10px"></i></div><strong>2.00x</strong></div></div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Incentive cap (150%+)</div><strong>250%</strong></div><div class="comp-cell changed-rem"><div style="font-size:10px;color:#A32D2D">Incentive cap (150%+) <i class="ti ti-trash" style="font-size:10px"></i></div><strong>Removed</strong> — uncapped</div></div>
+              <div style="padding:8px 16px;background:var(--bg-secondary);border-bottom:var(--border);border-top:var(--border);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px"><i class="ti ti-link" style="font-size:11px;margin-right:5px"></i>Tether &amp; bonus</div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Renewal tether</div>—</div><div class="comp-cell changed-add"><div style="font-size:10px;color:#3B6D11">Renewal tether <i class="ti ti-plus" style="font-size:10px"></i></div><strong>Added</strong> — threshold 80%</div></div>
+              <div class="comp-row"><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Quarterly bonus</div>10% of OTC</div><div class="comp-cell"><div style="font-size:10px;color:var(--muted)">Quarterly bonus</div>10% of OTC</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="border-left:2.5px solid #BA7517">
+              <div class="card-header"><div class="card-title"><i class="ti ti-git-diff" style="color:#BA7517;margin-right:6px"></i>Change summary</div><span class="badge badge-warning">6 changes</span></div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="padding:8px 10px;background:#FAEEDA;border-radius:var(--radius);font-size:12px;border-left:2.5px solid #BA7517"><strong>VCT Weight:</strong> ARR New Biz 60% → 50%</div>
+                <div style="padding:8px 10px;background:#FAEEDA;border-radius:var(--radius);font-size:12px;border-left:2.5px solid #BA7517"><strong>VCT Weight:</strong> Strategic Products 15% → 20%</div>
+                <div style="padding:8px 10px;background:#FAEEDA;border-radius:var(--radius);font-size:12px;border-left:2.5px solid #BA7517"><strong>Payout frequency:</strong> Monthly → Quarterly</div>
+                <div style="padding:8px 10px;background:#FAEEDA;border-radius:var(--radius);font-size:12px;border-left:2.5px solid #BA7517"><strong>Accelerator:</strong> 150%+ multiplier 1.80x → 2.00x</div>
+                <div style="padding:8px 10px;background:#FCEBEB;border-radius:var(--radius);font-size:12px;border-left:2.5px solid #E24B4A"><strong>Incentive cap removed</strong> at 150%+ tier</div>
+                <div style="padding:8px 10px;background:#EAF3DE;border-radius:var(--radius);font-size:12px;border-left:2.5px solid #639922"><strong>Renewal tether added</strong> — 80% threshold</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="ti ti-message" style="color:var(--adobe-red);margin-right:6px"></i>Design rationale</div></div>
+              <textarea class="form-textarea" style="width:100%">FY27 DX AE plan shifts from a new business-heavy structure to a more balanced portfolio approach. The monthly→quarterly payout change addresses rep feedback that monthly measurement created short-term deal manipulation. Adding the renewal tether ensures reps maintain existing book while hunting new logos.</textarea>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="ti ti-list-check" style="color:var(--adobe-red);margin-right:6px"></i>Approval readiness</div><span style="font-size:11px;color:#3B6D11;font-weight:500">4/5 complete</span></div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> Business rationale documented</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> YoY changes categorized</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> Pay mix validated (70/30)</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> Payout table complete</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#BA7517"><i class="ti ti-alert-circle" style="color:#BA7517;font-size:15px"></i> Finance modeling sign-off pending</div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;margin-top:12px;justify-content:center" onclick="showScreen('approval')"><i class="ti ti-send"></i> Submit for approval</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 5: MULTI-ROLE -->
+      <div id="screen-multi" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Multi-Role Comparison — FY26 vs FY27</div><div class="page-subtitle">18 roles · Commercial segment · Draft comparison</div></div>
+          <div class="btn-group">
+            <select class="filter-select"><option>All segments</option><option selected>Commercial</option></select>
+            <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
+          </div>
+        </div>
+        <div class="grid-4" style="margin-bottom:16px">
+          <div class="metric-card"><div class="metric-label">Roles with changes</div><div class="metric-value">12</div><div class="metric-sub">of 18 total</div></div>
+          <div class="metric-card"><div class="metric-label">Pay mix unchanged</div><div class="metric-value">15</div><div class="metric-sub">3 modified</div></div>
+          <div class="metric-card"><div class="metric-label">Freq. changes</div><div class="metric-value" style="color:#BA7517">7</div><div class="metric-sub">Monthly → Quarterly</div></div>
+          <div class="metric-card"><div class="metric-label">New tethers</div><div class="metric-value" style="color:#3B6D11">4</div><div class="metric-sub">Added in FY27</div></div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Role</th><th>HC</th><th>Pay mix</th><th>ARR %</th><th>Renewal %</th><th>Perf period</th><th>Payout freq</th><th>Bonus</th><th>Tether</th><th>FY26 HC</th><th>FY27 change</th></tr></thead>
+          <tbody id="multi-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- SCREEN 6: APPROVAL -->
+      <div id="screen-approval" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Approval Review — H01.A</div><div class="page-subtitle">Digital Experience AE · Submitted Jun 11, 2026 · Version 2.1</div></div>
+          <div class="btn-group">
+            <button class="btn btn-sm" onclick="showScreen('compare')"><i class="ti ti-columns"></i> View comparison</button>
+            <button class="btn btn-sm" onclick="showScreen('document')"><i class="ti ti-file-text"></i> View document</button>
+          </div>
+        </div>
+        <div class="workflow-track" style="margin-bottom:20px">
+          <div class="wf-step"><div class="wf-circle done"><i class="ti ti-check" style="font-size:12px"></i></div><div class="wf-label">Design team</div></div>
+          <div class="wf-step"><div class="wf-circle active">2</div><div class="wf-label">Susan approval</div></div>
+          <div class="wf-step"><div class="wf-circle pending">3</div><div class="wf-label">SEO validation</div></div>
+          <div class="wf-step"><div class="wf-circle pending">4</div><div class="wf-label">Publishing</div></div>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="approval-card">
+              <div class="card-header" style="margin-bottom:0"><div class="card-title">Approval stages</div></div>
+              <div class="approver-row">
+                <div class="approver-avatar" style="background:#EAF3DE;color:#3B6D11">MC</div>
+                <div style="flex:1"><div style="font-size:12px;font-weight:500">Melissa Chen — Design Lead</div><div style="font-size:11px;color:var(--muted)">Submitted for review · Jun 11, 2:14 PM</div></div>
+                <span class="badge badge-approved"><i class="ti ti-check" style="font-size:10px"></i> Submitted</span>
+              </div>
+              <div class="approver-row" style="background:#E6F1FB20;border-radius:var(--radius);margin:4px 0;padding:12px;border-bottom:none">
+                <div class="approver-avatar" style="background:#E6F1FB;color:#185FA5">SL</div>
+                <div style="flex:1"><div style="font-size:12px;font-weight:500">Susan L. — VP Compensation</div><div style="font-size:11px;color:#185FA5">Awaiting review · Assigned Jun 11</div></div>
+                <span class="badge badge-review"><i class="ti ti-clock" style="font-size:10px"></i> Pending</span>
+              </div>
+              <div class="approver-row">
+                <div class="approver-avatar" style="background:var(--bg-secondary);color:var(--muted)">SE</div>
+                <div style="flex:1"><div style="font-size:12px;font-weight:500">SEO Team</div><div style="font-size:11px;color:var(--muted)">Waiting for Susan approval</div></div>
+                <span class="badge badge-draft">Not started</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Approval actions</div></div>
+              <div style="display:flex;gap:8px;margin-bottom:12px">
+                <button class="btn" style="flex:1;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11"><i class="ti ti-circle-check"></i> Approve</button>
+                <button class="btn" style="flex:1;justify-content:center;background:#FAEEDA;border-color:#BA7517;color:#633806"><i class="ti ti-message-plus"></i> Request changes</button>
+                <button class="btn" style="flex:1;justify-content:center;background:#FCEBEB;border-color:#E24B4A;color:#A32D2D"><i class="ti ti-x"></i> Reject</button>
+              </div>
+              <textarea class="form-textarea" style="width:100%;min-height:70px" placeholder="Add approval comments or notes…"></textarea>
+              <button class="btn btn-sm" style="margin-top:8px;background:#FBEAF0;border-color:#D4537E;color:#72243E"><i class="ti ti-rotate-clockwise"></i> Rescind approval</button>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Comment history</div></div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;gap:8px">
+                  <div style="width:28px;height:28px;border-radius:50%;background:#EAF3DE;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#3B6D11;flex-shrink:0">VR</div>
+                  <div><div style="font-size:12px"><strong>Val R.</strong> — Jun 11, 10:02 AM</div><div style="font-size:12px;margin-top:3px">Confirmed tether threshold aligns with FY26 renewal actuals. Renewal rate was 84% last year so 80% is achievable.</div></div>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <div style="width:28px;height:28px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#185FA5;flex-shrink:0">MC</div>
+                  <div><div style="font-size:12px"><strong>Melissa C.</strong> — Jun 11, 11:22 AM</div><div style="font-size:12px;margin-top:3px">Updated payout table per finance feedback. Multiplier at 150%+ moved from 1.80x to 2.00x. Ready for Susan's review.</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title"><i class="ti ti-clock" style="color:var(--adobe-red);margin-right:6px"></i>Approval timeline</div></div>
+              <div class="audit-timeline">
+                <div class="audit-item"><div class="audit-dot green"></div><div style="font-size:12px;font-weight:500">Plan created</div><div class="audit-meta">Melissa C. · Jun 3, 9:00 AM</div></div>
+                <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Version 1.0 draft saved</div><div class="audit-meta">Melissa C. · Jun 5, 4:45 PM</div></div>
+                <div class="audit-item"><div class="audit-dot" style="background:#E24B4A"></div><div style="font-size:12px;font-weight:500">Returned for revision</div><div class="audit-meta">Susan L. · Jun 7, 2:30 PM</div></div>
+                <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Version 2.1 saved</div><div class="audit-meta">Melissa C. · Jun 11, 11:20 AM</div></div>
+                <div class="audit-item"><div class="audit-dot blue"></div><div style="font-size:12px;font-weight:500">Submitted for approval</div><div class="audit-meta">Melissa C. · Jun 11, 11:22 AM</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Electronic sign-off record</div></div>
+              <table>
+                <thead><tr><th>User</th><th>Role</th><th>Action</th><th>Date/time</th></tr></thead>
+                <tbody>
+                  <tr><td>Melissa C.</td><td>Design Lead</td><td><span class="badge badge-info">Submitted</span></td><td style="font-size:11px">Jun 11, 11:22 AM</td></tr>
+                  <tr><td>Susan L.</td><td>VP Comp</td><td><span class="badge badge-pending">Pending</span></td><td style="font-size:11px">—</td></tr>
+                  <tr><td>SEO Team</td><td>Operations</td><td><span class="badge badge-draft">Not started</span></td><td style="font-size:11px">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 7: TRACKER -->
+      <div id="screen-tracker" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Approval Tracker</div><div class="page-subtitle">FY27 · All plans · Live status</div></div>
+          <div class="btn-group">
+            <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
+            <button class="btn btn-sm"><i class="ti ti-refresh"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <input class="search-input" placeholder="Search by plan ID or role…" type="search">
+          <select class="filter-select"><option>All statuses</option><option>Pending Susan</option><option>SEO review</option><option>Approved</option></select>
+          <select class="filter-select"><option>All owners</option><option>Melissa C.</option><option>Val R.</option></select>
+          <button class="btn btn-sm"><i class="ti ti-checks"></i> Bulk approve</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:20px"><input type="checkbox"></th>
+              <th>Plan ID</th><th>Role</th><th>Status</th><th>Susan</th><th>SEO</th><th>Doc</th><th>Mechanics</th><th>Published</th><th>Updated</th>
+            </tr></thead>
+            <tbody id="tracker-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SCREEN 8: MECHANICS -->
+      <div id="screen-mechanics" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Plan Mechanics Review — H01.A</div><div class="page-subtitle">Digital Experience AE · SEO validation required · 1 warning</div></div>
+          <div class="btn-group">
+            <button class="btn btn-sm"><i class="ti ti-refresh"></i> Re-validate</button>
+            <button class="btn" style="background:#EAF3DE;border-color:#639922;color:#3B6D11"><i class="ti ti-circle-check"></i> Approve mechanics</button>
+            <button class="btn" style="background:#FCEBEB;border-color:#E24B4A;color:#A32D2D"><i class="ti ti-x"></i> Reject</button>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="metric-card"><div class="metric-label">Validation checks</div><div class="metric-value">18</div></div>
+          <div class="metric-card"><div class="metric-label">Passed</div><div class="metric-value" style="color:#3B6D11">16</div></div>
+          <div class="metric-card"><div class="metric-label">Warnings</div><div class="metric-value" style="color:#BA7517">1</div><div class="metric-sub">+ 1 failed</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Source plan → generated mechanics mapping</div></div>
+          <div>
+            <div style="display:grid;grid-template-columns:220px 1fr 130px;gap:12px;padding:8px 10px;background:var(--bg-secondary);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:var(--border)">
+              <div>Source component</div><div>Generated mechanics</div><div>Validation</div>
+            </div>
+            <div class="mechanics-row">
+              <div><div class="mech-source">ARR New Business 50%</div><div style="font-size:11px;color:var(--muted)">VCT weight measure</div></div>
+              <div><div class="mech-generated">MEASURE_ARR_NB_WEIGHT=0.50
+MEASURE_ARR_NB_PERIOD=ANNUAL
+MEASURE_ARR_NB_PAYOUT=QUARTERLY</div></div>
+              <div><span class="badge badge-passed"><i class="ti ti-check" style="font-size:10px"></i> Passed</span></div>
+            </div>
+            <div class="mechanics-row">
+              <div><div class="mech-source">Payout table: 150%+ = 2.00x</div><div style="font-size:11px;color:var(--muted)">Accelerator tier</div></div>
+              <div><div class="mech-generated">ACCEL_TIER_4_FLOOR=1.50
+ACCEL_TIER_4_MULT=2.00
+ACCEL_TIER_4_CAP=UNCAPPED</div></div>
+              <div><span class="badge badge-passed"><i class="ti ti-check" style="font-size:10px"></i> Passed</span></div>
+            </div>
+            <div class="mechanics-row" style="background:#FAEEDA20">
+              <div><div class="mech-source">Renewal tether: 80%</div><div style="font-size:11px;color:var(--muted)">New tether rule</div></div>
+              <div>
+                <div class="mech-generated">TETHER_RENEWAL_THRESHOLD=0.80
+TETHER_RENEWAL_CAP_ACTION=LIMIT_PAYOUT
+TETHER_APPLIES_TO=ALL_MEASURES</div>
+                <div class="mech-error"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Warning: Tether rule "LIMIT_PAYOUT" requires Salesforce custom field COMP_TETHER_FLAG — not yet provisioned in sandbox.</div>
+              </div>
+              <div><span class="badge badge-warning"><i class="ti ti-alert-triangle" style="font-size:10px"></i> Warning</span></div>
+            </div>
+            <div class="mechanics-row">
+              <div><div class="mech-source">Quarterly bonus 10% OTC</div><div style="font-size:11px;color:var(--muted)">Bonus definition</div></div>
+              <div><div class="mech-generated">BONUS_TYPE=QBB
+BONUS_PCT_OTC=0.10
+BONUS_THRESHOLD=0.75</div></div>
+              <div><span class="badge badge-passed"><i class="ti ti-check" style="font-size:10px"></i> Passed</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">SEO sign-off</div></div>
+          <textarea class="form-textarea" style="width:100%;margin-bottom:8px">Mechanics validated. Warning on COMP_TETHER_FLAG noted — Salesforce ticket #SF-9821 opened to provision the field. Approve conditional on field deployment by Jun 20.</textarea>
+          <div class="btn-group">
+            <button class="btn" style="background:#EAF3DE;border-color:#639922;color:#3B6D11"><i class="ti ti-circle-check"></i> Approve with condition</button>
+            <button class="btn btn-sm">Save notes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 9: DOCUMENT -->
+      <div id="screen-document" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Plan Document — H01.A v2.1</div><div class="page-subtitle">Digital Experience AE · Generated Jun 11, 2026 · Approved version</div></div>
+          <div class="btn-group">
+            <button class="btn btn-sm"><i class="ti ti-file-type-doc"></i> Download Word</button>
+            <button class="btn btn-primary btn-sm"><i class="ti ti-download"></i> Download PDF</button>
+            <button class="btn btn-sm"><i class="ti ti-refresh"></i> Generate new version</button>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="doc-preview">
+            <div class="doc-header">
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                  <div style="font-size:10px;opacity:.7;letter-spacing:.8px;text-transform:uppercase">Adobe Confidential</div>
+                  <div style="font-size:18px;font-weight:500;margin-top:4px">Sales Compensation Plan</div>
+                  <div style="font-size:13px;opacity:.85;margin-top:2px">Digital Experience Account Executive · FY27</div>
+                </div>
+                <div style="width:36px;height:36px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center">
+                  <div style="font-size:11px;font-weight:500;color:var(--adobe-red)">Ac</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:16px;margin-top:14px;font-size:11px;opacity:.8">
+                <span><strong>Plan ID:</strong> H01.A</span>
+                <span><strong>Version:</strong> 2.1</span>
+                <span><strong>Effective:</strong> Feb 1, 2027</span>
+                <span><strong>Headcount:</strong> 284</span>
+              </div>
+            </div>
+            <div class="doc-section">
+              <div class="doc-section-title">Plan details</div>
+              <table style="font-size:12px">
+                <tr><td style="color:var(--muted);padding:3px 0;width:150px">Role title</td><td>Digital Experience Account Executive</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Pay mix</td><td>70% base / 30% variable</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">OTC target</td><td>Per grade band (see Appendix A)</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Performance period</td><td>Annual (Feb 1 – Jan 31)</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Payout frequency</td><td>Quarterly</td></tr>
+              </table>
+            </div>
+            <div class="doc-section">
+              <div class="doc-section-title">Performance measures</div>
+              <table style="font-size:12px">
+                <thead><tr><th>Measure</th><th>Weight</th><th>Period</th><th>Payout</th></tr></thead>
+                <tbody>
+                  <tr><td>ARR New Business</td><td>50%</td><td>Annual</td><td>Quarterly</td></tr>
+                  <tr><td>ARR Renewal</td><td>30%</td><td>Annual</td><td>Quarterly</td></tr>
+                  <tr><td>Strategic Products</td><td>20%</td><td>Semi-annual</td><td>Quarterly</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-section">
+              <div class="doc-section-title">Payout table — ARR New Business</div>
+              <table style="font-size:12px">
+                <thead><tr><th>Attainment</th><th>Multiplier</th><th>MCR</th><th>Incentive cap</th></tr></thead>
+                <tbody>
+                  <tr><td>0% – 50%</td><td>0.00x</td><td>0%</td><td>—</td></tr>
+                  <tr><td>50% – 75%</td><td>0.50x</td><td>50%</td><td>100%</td></tr>
+                  <tr><td>75% – 100%</td><td>1.00x</td><td>100%</td><td>150%</td></tr>
+                  <tr><td>100% – 150%</td><td>1.50x</td><td>150%</td><td>200%</td></tr>
+                  <tr><td>150%+</td><td>2.00x</td><td>200%</td><td>Uncapped</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="doc-section">
+              <div class="doc-section-title">Bonus &amp; tether</div>
+              <table style="font-size:12px">
+                <tr><td style="color:var(--muted);padding:3px 0;width:180px">Quarterly business bonus</td><td>10% of annual OTC target, paid quarterly at ≥75% attainment</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Renewal tether</td><td>If renewal attainment &lt;80%, all measure payouts capped at 100%</td></tr>
+              </table>
+            </div>
+            <div class="doc-section" style="font-size:11px;color:var(--muted)">
+              <div class="doc-section-title">Terms &amp; conditions</div>
+              This compensation plan is subject to Adobe's Sales Compensation Policy and may be amended at Adobe's discretion. Participation is contingent on active employment. All calculations are subject to final close and audit. Adobe confidential — do not distribute externally.
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Version history</div></div>
+              <table>
+                <thead><tr><th>Version</th><th>Date</th><th>Changed by</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td style="font-weight:500">v2.1</td><td style="font-size:11px">Jun 11, 2026</td><td style="font-size:11px">Melissa C.</td><td><span class="badge badge-approved">Current</span></td></tr>
+                  <tr><td>v2.0</td><td style="font-size:11px">Jun 9, 2026</td><td style="font-size:11px">Melissa C.</td><td><span class="badge badge-rejected">Returned</span></td></tr>
+                  <tr><td>v1.1</td><td style="font-size:11px">Jun 5, 2026</td><td style="font-size:11px">Val R.</td><td><span class="badge badge-draft">Superseded</span></td></tr>
+                  <tr><td>v1.0</td><td style="font-size:11px">Jun 3, 2026</td><td style="font-size:11px">Melissa C.</td><td><span class="badge badge-draft">Superseded</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 10: AUDIT -->
+      <div id="screen-audit" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">Audit &amp; Version History</div><div class="page-subtitle">H01.A — Digital Experience AE · All events since plan creation</div></div>
+          <div class="btn-group">
+            <select class="filter-select"><option>H01.A — Digital Experience AE</option><option>H02.A — CXO Product Specialist</option></select>
+            <button class="btn btn-sm"><i class="ti ti-download"></i> Export log</button>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Full audit timeline</div><span class="badge badge-info">12 events</span></div>
+            <div class="audit-timeline">
+              <div class="audit-item"><div class="audit-dot green"></div><div style="font-size:12px;font-weight:500">Plan created</div><div class="audit-meta">Melissa Chen · Jun 3, 2026, 9:00 AM · IP 10.0.1.22</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Performance measures added</div><div class="audit-meta">Melissa Chen · Jun 3, 9:45 AM</div><div class="audit-change">ARR New Business 60%, ARR Renewal 25%, Strategic Products 15%</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Payout table configured</div><div class="audit-meta">Melissa Chen · Jun 4, 2:10 PM</div><div class="audit-change">150%+ multiplier set to 1.80x · Incentive cap 250%</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Draft v1.0 saved</div><div class="audit-meta">Melissa Chen · Jun 5, 4:45 PM</div></div>
+              <div class="audit-item"><div class="audit-dot blue"></div><div style="font-size:12px;font-weight:500">Submitted for approval (v1.0)</div><div class="audit-meta">Melissa Chen · Jun 6, 10:00 AM</div></div>
+              <div class="audit-item"><div class="audit-dot" style="background:#E24B4A"></div><div style="font-size:12px;font-weight:500">Returned for revision</div><div class="audit-meta">Susan L. · Jun 7, 2:30 PM</div><div class="audit-change" style="border-left-color:#E24B4A">"Increase 150%+ multiplier to 2.00x. Add renewal tether. Remove cap at top tier."</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">VCT weights modified</div><div class="audit-meta">Melissa Chen · Jun 9, 11:15 AM</div><div class="audit-change">ARR New Business: 60% → 50% · Strategic Products: 15% → 20%</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Payout frequency changed</div><div class="audit-meta">Melissa Chen · Jun 9, 11:18 AM</div><div class="audit-change">Monthly → Quarterly · Aligns with deal cycle feedback</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Renewal tether added</div><div class="audit-meta">Val Reyes · Jun 10, 3:00 PM</div><div class="audit-change">Threshold: 80% · Applies to all measures</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Incentive cap removed (150%+ tier)</div><div class="audit-meta">Melissa Chen · Jun 11, 11:00 AM</div><div class="audit-change">Cap 250% removed → Uncapped · Multiplier 1.80x → 2.00x</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Draft v2.1 saved</div><div class="audit-meta">Melissa Chen · Jun 11, 11:20 AM</div></div>
+              <div class="audit-item"><div class="audit-dot blue"></div><div style="font-size:12px;font-weight:500">Submitted for approval (v2.1)</div><div class="audit-meta">Melissa Chen · Jun 11, 11:22 AM</div></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Version diff viewer</div></div>
+              <div style="display:flex;gap:8px;margin-bottom:12px">
+                <select class="filter-select" style="flex:1"><option>v1.0 (Jun 6)</option><option>v2.0 (Jun 9)</option></select>
+                <span style="font-size:13px;align-self:center;color:var(--muted)">vs</span>
+                <select class="filter-select" style="flex:1"><option selected>v2.1 (Jun 11)</option><option>v2.0 (Jun 9)</option></select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="padding:8px 10px;background:#FCEBEB;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #E24B4A"><span style="color:#A32D2D;font-weight:500">− v1.0:</span> ARR NB weight = 60%</div>
+                <div style="padding:8px 10px;background:#EAF3DE;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #639922"><span style="color:#3B6D11;font-weight:500">+ v2.1:</span> ARR NB weight = 50%</div>
+                <div style="padding:8px 10px;background:#FCEBEB;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #E24B4A"><span style="color:#A32D2D;font-weight:500">− v1.0:</span> Payout frequency = Monthly</div>
+                <div style="padding:8px 10px;background:#EAF3DE;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #639922"><span style="color:#3B6D11;font-weight:500">+ v2.1:</span> Payout frequency = Quarterly</div>
+                <div style="padding:8px 10px;background:#FCEBEB;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #E24B4A"><span style="color:#A32D2D;font-weight:500">− v1.0:</span> Incentive cap (150%+) = 250%</div>
+                <div style="padding:8px 10px;background:#EAF3DE;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #639922"><span style="color:#3B6D11;font-weight:500">+ v2.1:</span> Incentive cap = Uncapped</div>
+                <div style="padding:8px 10px;background:#EAF3DE;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #639922"><span style="color:#3B6D11;font-weight:500">+ v2.1:</span> Renewal tether added @ 80%</div>
+                <div style="padding:8px 10px;background:#EAF3DE;border-radius:var(--radius);font-size:11px;border-left:2.5px solid #639922"><span style="color:#3B6D11;font-weight:500">+ v2.1:</span> Strategic Products weight 15% → 20%</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Audit metadata</div></div>
+              <table style="font-size:11px">
+                <tr><td style="color:var(--muted);padding:3px 0;width:120px">Plan ID</td><td>H01.A</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Total edits</td><td>34 field changes</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Contributors</td><td>Melissa Chen, Val Reyes</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Versions</td><td>4 (v1.0, v1.1, v2.0, v2.1)</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Approvals</td><td>1 rejection, 0 approvals</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0">Data retention</td><td>7 years (policy)</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const screens={
+  dashboard:{title:'Executive Dashboard'},
+  library:{title:'Compensation Plan Library'},
+  builder:{title:'Plan Builder — H01.A'},
+  compare:{title:'Plan Comparison — H01.A'},
+  multi:{title:'Multi-Role Comparison'},
+  approval:{title:'Approval Review — H01.A'},
+  tracker:{title:'Approval Tracker'},
+  mechanics:{title:'Plan Mechanics — H01.A'},
+  document:{title:'Plan Document — H01.A v2.1'},
+  audit:{title:'Audit & Version History — H01.A'}
+};
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('screen-'+id);
+  if(el)el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes("'"+id+"'"))n.classList.add('active');
+  });
+  document.getElementById('topbar-title').textContent=screens[id]?.title||id;
+  document.getElementById('content').scrollTop=0;
+}
+
+const plans=[
+  {id:'H01.A',name:'Digital Experience AE',role:'DX Account Exec',fy:'FY27',status:'review',ver:'2.1',updated:'Jun 11',owner:'Melissa C.',approval:'pending'},
+  {id:'H02.A',name:'CXO Product Specialist',role:'CXO Specialist',fy:'FY27',status:'approved',ver:'1.3',updated:'Jun 10',owner:'Melissa C.',approval:'approved'},
+  {id:'H03.A',name:'Commerce AE',role:'Commerce AE',fy:'FY27',status:'approved',ver:'1.2',updated:'Jun 9',owner:'Val R.',approval:'approved'},
+  {id:'H04.A',name:'SMB Account Executive',role:'SMB AE',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 8',owner:'Val R.',approval:'none'},
+  {id:'H05.A',name:'Enterprise AE',role:'Enterprise AE',fy:'FY27',status:'approved',ver:'2.0',updated:'Jun 7',owner:'Melissa C.',approval:'approved'},
+  {id:'H06.A',name:'SMB Renewal Specialist',role:'SMB Renewal',fy:'FY27',status:'published',ver:'1.1',updated:'Jun 5',owner:'Val R.',approval:'approved'},
+  {id:'H07.A',name:'Partner Channel AE',role:'Channel AE',fy:'FY27',status:'draft',ver:'0.9',updated:'Jun 4',owner:'Melissa C.',approval:'none'},
+  {id:'H08.A',name:'Strategic Named Account',role:'SNA AE',fy:'FY27',status:'review',ver:'1.0',updated:'Jun 3',owner:'Val R.',approval:'pending'},
+  {id:'H09.A',name:'EMEA Enterprise AE',role:'EMEA Ent AE',fy:'FY27',status:'rejected',ver:'1.1',updated:'Jun 2',owner:'Melissa C.',approval:'rejected'},
+  {id:'H10.A',name:'Emerging Markets AE',role:'EM AE',fy:'FY27',status:'draft',ver:'0.5',updated:'Jun 1',owner:'Val R.',approval:'none'},
+];
+
+function badgeHtml(status){
+  const m={draft:'badge-draft',review:'badge-review',approved:'badge-approved',rejected:'badge-rejected',published:'badge-published',rescinded:'badge-rescinded'};
+  const sl={draft:'Draft',review:'In review',approved:'Approved',rejected:'Rejected',published:'Published',rescinded:'Rescinded'};
+  return`<span class="badge ${m[status]||'badge-draft'}">${sl[status]||status}</span>`;
+}
+
+function buildLibrary(){
+  const tbody=document.getElementById('lib-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=plans.map(p=>`<tr>
+    <td style="font-weight:500;color:#185FA5;cursor:pointer" onclick="showScreen('builder')">${p.id}</td>
+    <td>${p.name}</td><td style="font-size:11px;color:var(--muted)">${p.role}</td>
+    <td>${p.fy}</td><td>${badgeHtml(p.status)}</td>
+    <td style="font-size:11px">v${p.ver}</td>
+    <td style="font-size:11px;color:var(--muted)">${p.updated}</td>
+    <td style="font-size:11px">${p.owner}</td>
+    <td>${p.approval==='approved'?'<span class="badge badge-approved">Approved</span>':p.approval==='pending'?'<span class="badge badge-pending">Pending</span>':p.approval==='rejected'?'<span class="badge badge-rejected">Rejected</span>':'<span class="badge badge-draft">—</span>'}</td>
+    <td><div style="display:flex;gap:4px">
+      <button class="btn btn-sm" onclick="showScreen('builder')" title="Open"><i class="ti ti-eye"></i></button>
+      <button class="btn btn-sm" onclick="showScreen('compare')" title="Compare"><i class="ti ti-columns"></i></button>
+      <button class="btn btn-sm" title="Clone"><i class="ti ti-copy"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+const multiData=[
+  {role:'DX Account Exec',hc:284,mix:'70/30',arr:'50%',renewal:'30%',period:'Annual',freq:'Quarterly',bonus:'10%',tether:'Yes',fy26hc:271,change:'+13'},
+  {role:'CXO Product Spec.',hc:156,mix:'65/35',arr:'60%',renewal:'20%',period:'Annual',freq:'Quarterly',bonus:'15%',tether:'No',fy26hc:148,change:'+8'},
+  {role:'Commerce AE',hc:203,mix:'70/30',arr:'55%',renewal:'25%',period:'Annual',freq:'Quarterly',bonus:'10%',tether:'No',fy26hc:210,change:'-7'},
+  {role:'SMB AE',hc:412,mix:'75/25',arr:'65%',renewal:'20%',period:'Semi-annual',freq:'Monthly',bonus:'8%',tether:'No',fy26hc:398,change:'+14'},
+  {role:'Enterprise AE',hc:89,mix:'60/40',arr:'45%',renewal:'35%',period:'Annual',freq:'Quarterly',bonus:'20%',tether:'Yes',fy26hc:92,change:'-3'},
+  {role:'SMB Renewal Spec.',hc:178,mix:'80/20',arr:'20%',renewal:'65%',period:'Annual',freq:'Quarterly',bonus:'10%',tether:'Yes',fy26hc:165,change:'+13'},
+  {role:'Partner Channel AE',hc:67,mix:'65/35',arr:'50%',renewal:'25%',period:'Annual',freq:'Semi-annual',bonus:'12%',tether:'No',fy26hc:70,change:'-3'},
+  {role:'Strategic Named Acct',hc:44,mix:'55/45',arr:'40%',renewal:'35%',period:'Annual',freq:'Quarterly',bonus:'25%',tether:'Yes',fy26hc:41,change:'+3'},
+];
+
+function buildMulti(){
+  const tbody=document.getElementById('multi-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=multiData.map(r=>{
+    const chg=parseInt(r.change);
+    const chgColor=chg>0?'#3B6D11':chg<0?'#A32D2D':'var(--muted)';
+    return`<tr>
+      <td style="font-weight:500;font-size:12px">${r.role}</td>
+      <td>${r.hc}</td><td style="font-size:11px">${r.mix}</td>
+      <td>${r.arr}</td><td>${r.renewal}</td>
+      <td style="font-size:11px">${r.period}</td>
+      <td style="font-size:11px">${r.freq}</td>
+      <td>${r.bonus}</td>
+      <td>${r.tether==='Yes'?'<span class="badge badge-approved">Yes</span>':'<span class="badge badge-draft">No</span>'}</td>
+      <td>${r.fy26hc}</td>
+      <td style="font-weight:500;color:${chgColor}">${r.change}</td>
+    </tr>`;
+  }).join('');
+}
+
+const trackerData=[
+  {id:'H01.A',role:'DX AE',status:'review',susan:'pending',seo:'—',doc:'Ready',mech:'Warning',pub:'—',updated:'Jun 11'},
+  {id:'H02.A',role:'CXO Spec.',status:'approved',susan:'approved',seo:'approved',doc:'Generated',mech:'Passed',pub:'—',updated:'Jun 10'},
+  {id:'H03.A',role:'Commerce AE',status:'approved',susan:'approved',seo:'pending',doc:'Generated',mech:'Passed',pub:'—',updated:'Jun 9'},
+  {id:'H04.A',role:'SMB AE',status:'draft',susan:'—',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 8'},
+  {id:'H05.A',role:'Enterprise AE',status:'approved',susan:'approved',seo:'approved',doc:'Generated',mech:'Passed',pub:'Yes',updated:'Jun 7'},
+  {id:'H06.A',role:'SMB Renewal',status:'published',susan:'approved',seo:'approved',doc:'Published',mech:'Passed',pub:'Yes',updated:'Jun 5'},
+  {id:'H07.A',role:'Channel AE',status:'draft',susan:'—',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 4'},
+  {id:'H08.A',role:'SNA AE',status:'review',susan:'pending',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 3'},
+  {id:'H09.A',role:'EMEA Ent. AE',status:'rejected',susan:'rejected',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 2'},
+];
+
+function spill(s){
+  if(s==='approved')return'<span class="badge badge-approved">Approved</span>';
+  if(s==='pending')return'<span class="badge badge-pending">Pending</span>';
+  if(s==='rejected')return'<span class="badge badge-rejected">Rejected</span>';
+  if(s==='review')return'<span class="badge badge-review">In review</span>';
+  if(s==='draft')return'<span class="badge badge-draft">Draft</span>';
+  if(s==='published')return'<span class="badge badge-published">Published</span>';
+  return`<span style="font-size:11px;color:var(--muted)">${s}</span>`;
+}
+
+function buildTracker(){
+  const tbody=document.getElementById('tracker-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=trackerData.map(r=>`<tr>
+    <td><input type="checkbox"></td>
+    <td style="font-weight:500;color:#185FA5;cursor:pointer" onclick="showScreen('approval')">${r.id}</td>
+    <td style="font-size:11px">${r.role}</td>
+    <td>${spill(r.status)}</td>
+    <td>${r.susan==='approved'?'<span class="badge badge-approved">Done</span>':r.susan==='pending'?'<span class="badge badge-pending">Waiting</span>':r.susan==='rejected'?'<span class="badge badge-rejected">Rejected</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+    <td>${r.seo==='approved'?'<span class="badge badge-approved">Done</span>':r.seo==='pending'?'<span class="badge badge-pending">Waiting</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+    <td>${r.doc==='Generated'||r.doc==='Published'?'<span class="badge badge-approved">'+r.doc+'</span>':r.doc==='Ready'?'<span class="badge badge-info">Ready</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+    <td>${r.mech==='Passed'?'<span class="badge badge-passed">Passed</span>':r.mech==='Warning'?'<span class="badge badge-warning">Warning</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+    <td>${r.pub==='Yes'?'<span class="badge badge-published">Yes</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+    <td style="font-size:11px;color:var(--muted)">${r.updated}</td>
+  </tr>`).join('');
+}
+
+function buildCharts(){
+  const a=document.getElementById('approvalChart');
+  if(a&&window.Chart){
+    new Chart(a,{
+      type:'bar',
+      data:{
+        labels:['DX AE','CXO Spec.','Commerce','SMB','Enterprise','Renewal'],
+        datasets:[
+          {label:'Approved',data:[0,4,3,2,5,3],backgroundColor:'#639922',borderRadius:3},
+          {label:'In review',data:[2,1,1,2,0,1],backgroundColor:'#BA7517',borderRadius:3},
+          {label:'Draft',data:[1,0,1,3,0,1],backgroundColor:'#B4B2A9',borderRadius:3}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,ticks:{font:{size:10}},beginAtZero:true}}
+      }
+    });
+  }
+  const s=document.getElementById('statusChart');
+  if(s&&window.Chart){
+    new Chart(s,{
+      type:'doughnut',
+      data:{
+        labels:['Approved','In review','Draft','Published','Rejected'],
+        datasets:[{data:[17,11,14,8,3],backgroundColor:['#639922','#BA7517','#B4B2A9','#378ADD','#E24B4A'],borderWidth:0}]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,cutout:'65%',
+        plugins:{legend:{display:false}}
+      }
+    });
+  }
+}
+
+buildLibrary();
+buildMulti();
+buildTracker();
+buildCharts();
+</script>
+</body>
+</html>
