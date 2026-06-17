@@ -95,6 +95,7 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:13px;background:va
 .badge-published{background:#E6F1FB;color:#0C447C}
 .badge-current-plan{background:#E6F1FB;color:#0C447C;font-weight:600}
 .badge-proposal{background:#F1EFE8;color:#444441}
+.plan-fy-chip{font-size:10px;padding:2px 8px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-weight:600;display:inline-block}
 .badge-rescinded{background:#FBEAF0;color:#72243E}
 .badge-pending{background:#FAEEDA;color:#633806}
 .badge-passed{background:#EAF3DE;color:#27500A}
@@ -365,18 +366,18 @@ tr:hover td{background:var(--bg-secondary)}
       <!-- SCREEN 2: LIBRARY -->
       <div id="screen-library" class="screen">
         <div class="page-header">
-          <div><div class="page-title">Compensation Plan Library</div><div class="page-subtitle">42 plans · FY27 planning cycle</div></div>
+          <div><div class="page-title">Compensation Plan Library</div><div class="page-subtitle" id="library-subtitle">42 plans · FY27 planning cycle</div></div>
           <div class="btn-group">
             <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
             <button class="btn btn-primary btn-sm" onclick="showScreen('builder')"><i class="ti ti-plus"></i> New Plan</button>
           </div>
         </div>
         <div class="filter-bar">
-          <select class="filter-select"><option>All Fiscal Years</option><option selected>FY27</option><option>FY26</option></select>
+          <select class="filter-select" id="library-fy-filter" onchange="buildLibrary()"><option value="">All Fiscal Years</option><option value="FY27" selected>FY27</option><option value="FY26">FY26</option></select>
           <select class="filter-select"><option>All Role Groups</option><option>Enterprise AE</option><option>Commercial AE</option><option>SMB AE</option><option>CXO Specialist</option></select>
           <select class="filter-select"><option>All Statuses</option><option>Draft</option><option>In Review</option><option>Approved</option><option>Published</option></select>
           <select class="filter-select"><option>All Owners</option><option>Melissa C.</option><option>Val R.</option></select>
-          <input class="search-input" placeholder="Search plans…" type="search">
+          <input class="search-input" id="library-search" placeholder="Search plans…" type="search" oninput="buildLibrary()">
         </div>
         <div class="table-wrap">
           <table>
@@ -697,9 +698,9 @@ tr:hover td{background:var(--bg-secondary)}
             <div class="card">
               <div class="card-header"><div class="card-title">Approval actions</div></div>
               <div style="display:flex;gap:8px;margin-bottom:12px">
-                <button class="btn" style="flex:1;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11"><i class="ti ti-circle-check"></i> Approve</button>
+                <button class="btn" onclick="approveCurrentVersion()" style="flex:1;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11"><i class="ti ti-circle-check"></i> Approve</button>
                 <button class="btn" style="flex:1;justify-content:center;background:#FAEEDA;border-color:#BA7517;color:#633806"><i class="ti ti-message-plus"></i> Request changes</button>
-                <button class="btn" style="flex:1;justify-content:center;background:#FCEBEB;border-color:#E24B4A;color:#A32D2D"><i class="ti ti-x"></i> Reject</button>
+                <button class="btn" onclick="rejectCurrentVersion()" style="flex:1;justify-content:center;background:#FCEBEB;border-color:#E24B4A;color:#A32D2D"><i class="ti ti-x"></i> Reject</button>
               </div>
               <textarea class="form-textarea" style="width:100%;min-height:70px" placeholder="Add approval comments or notes…"></textarea>
               <button class="btn btn-sm" style="margin-top:8px;background:#FBEAF0;border-color:#D4537E;color:#72243E"><i class="ti ti-rotate-clockwise"></i> Rescind approval</button>
@@ -1103,6 +1104,7 @@ let versions=[
 let auditLog=[
   {id:'aud-1',planId:'H01.A',fy:'FY27',versionId:'ver-H01.A-FY27-2',action:'Version submitted for approval',user:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',detail:'Version 2 submitted to Susan L.'},
   {id:'aud-2',planId:'H05.A',fy:'FY27',versionId:'ver-H05.A-FY27-1',action:'Version released',user:'Susan L.',timestamp:'Jun 7, 2026 3:40 PM',detail:'Version 1 released — Enterprise uncapped tier.'},
+  {id:'aud-3',planId:'H03.A',fy:'FY27',versionId:'ver-H03.A-FY27-1',action:'Version released',user:'Susan L.',timestamp:'Jun 9, 2026 2:00 PM',detail:'Version 1 released — Commerce FY27 plan.'},
   {id:'aud-4',planId:'H06.A',fy:'FY27',versionId:'ver-H06.A-FY27-1',action:'Version released',user:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',detail:'Version 1 released — Renewal-focused plan.'},
   {id:'aud-5',planId:'H01.A',fy:'FY27',versionId:'ver-H01.A-FY27-3',action:'Version marked ready for review',user:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',detail:'Version 3 ready for internal design review.'},
 ];
