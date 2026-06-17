@@ -197,6 +197,18 @@ tr:hover td{background:var(--bg-secondary)}
 .qa-desc{font-size:11px;color:var(--muted);margin-top:2px}
 
 .payout-table-wrap{overflow-x:auto}
+.proposal-card{background:var(--bg-secondary);border:var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
+.proposal-card.is-submitted{border-left:2.5px solid #BA7517}
+.proposal-card.is-current-published{border-left:2.5px solid #639922;background:#EAF3DE22}
+.proposal-card-main{flex:1;min-width:0}
+.proposal-card-title{font-weight:500;font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.proposal-card-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.proposal-card-actions{display:flex;gap:4px;flex-shrink:0}
+.published-rev-banner{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:#EAF3DE;border-left:3px solid #639922;border-radius:0 0 var(--radius) var(--radius)}
+.revision-history-row{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:var(--border);font-size:12px}
+.revision-history-row:last-child{border-bottom:none}
+.change-log-item{font-size:12px;padding:6px 0;border-bottom:var(--border)}
+.change-log-item:last-child{border-bottom:none}
 </style>
 </head>
 <body>
@@ -362,6 +374,67 @@ tr:hover td{background:var(--bg-secondary)}
             </tr></thead>
             <tbody id="lib-tbody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- SCREEN: PLAN DETAIL -->
+      <div id="screen-plan" class="screen">
+        <div class="page-header">
+          <div>
+            <div class="page-title" id="plan-detail-title">Plan Detail</div>
+            <div class="page-subtitle" id="plan-detail-subtitle">Designer view · versions &amp; release history</div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm" onclick="showScreen('library')"><i class="ti ti-arrow-left"></i> Back to Library</button>
+            <button class="btn btn-sm" onclick="openCreateVersionModal()"><i class="ti ti-plus"></i> Create Version</button>
+            <button class="btn btn-primary btn-sm" onclick="openCompareCurrentVsVersion()"><i class="ti ti-columns"></i> Compare to Current Plan</button>
+          </div>
+        </div>
+        <div class="two-col">
+          <div style="flex:2;min-width:0">
+            <div class="card" style="margin-bottom:12px">
+              <div class="card-header">
+                <div>
+                  <div class="card-title" id="plan-container-name">Plan</div>
+                  <div id="plan-container-meta" style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap"></div>
+                </div>
+                <span style="font-size:11px;color:var(--muted)" id="plan-proposal-count">0 versions</span>
+              </div>
+              <div id="plan-published-banner" style="margin:0 -16px -16px;border-top:var(--border);padding:12px 16px;background:var(--bg-secondary);border-radius:0 0 var(--radius) var(--radius)"></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="ti ti-versions" style="color:#534AB7;margin-right:6px"></i>Versions</div>
+              </div>
+              <div id="plan-versions-list" style="display:flex;flex-direction:column;gap:8px"></div>
+              <div style="padding-top:12px;border-top:var(--border);margin-top:12px">
+                <button class="btn btn-sm" onclick="openCreateVersionModal()"><i class="ti ti-plus"></i> Create Version</button>
+              </div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="ti ti-info-circle" style="color:var(--adobe-red);margin-right:6px"></i>Downstream reference</div>
+              </div>
+              <table style="width:100%;border-collapse:collapse">
+                <tr><td style="color:var(--muted);padding:3px 0;width:110px;font-size:11px">Plan ID · FY</td><td id="plan-downstream-id" style="font-size:12px">—</td></tr>
+                <tr><td style="color:var(--muted);padding:3px 0;font-size:11px">Current plan</td><td id="plan-current-rev-label" style="font-size:12px">Not yet released</td></tr>
+              </table>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="ti ti-history" style="color:var(--adobe-red);margin-right:6px"></i>Release history</div>
+              </div>
+              <div id="plan-version-history" style="display:flex;flex-direction:column;gap:6px"></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="ti ti-notes" style="color:var(--adobe-red);margin-right:6px"></i>Change log</div>
+              </div>
+              <div id="plan-change-log" style="display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -900,6 +973,7 @@ BONUS_THRESHOLD=0.75</div></div>
 const screens={
   dashboard:{title:'Executive Dashboard'},
   library:{title:'Compensation Plan Library'},
+  plan:{title:'Plan Detail'},
   builder:{title:'Plan Builder — H01.A'},
   compare:{title:'Plan Comparison — H01.A'},
   multi:{title:'Multi-Role Comparison'},
