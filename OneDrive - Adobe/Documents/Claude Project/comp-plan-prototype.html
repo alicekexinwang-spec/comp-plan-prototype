@@ -199,6 +199,15 @@ tr:hover td{background:var(--bg-secondary)}
 .payout-table-wrap{overflow-x:auto}
 .builder-proposal-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--card-bg);border-bottom:var(--border);gap:12px;flex-wrap:wrap}
 .builder-proposal-switch{display:flex;align-items:center;gap:8px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card-bg);border-radius:var(--radius-lg);width:520px;max-width:96vw;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:var(--border)}
+.modal-title{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:2px 6px;border-radius:4px}
+.modal-close:hover{background:var(--bg-secondary)}
+.modal-body{padding:20px;display:flex;flex-direction:column;gap:14px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:var(--border)}
 .proposal-card{background:var(--bg-secondary);border:var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
 .proposal-card.is-submitted{border-left:2.5px solid #BA7517}
 .proposal-card.is-current-published{border-left:2.5px solid #639922;background:#EAF3DE22}
@@ -979,6 +988,31 @@ BONUS_THRESHOLD=0.75</div></div>
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="create-version-modal" role="dialog">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ti ti-versions" style="color:#534AB7;margin-right:6px"></i> <span id="version-modal-title">Create Version</span></div>
+      <button class="modal-close" onclick="closeCreateVersionModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Plan ID · Fiscal year</label><input class="form-input" id="version-plan-id" readonly><input type="hidden" id="version-plan-key"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Version name</label><input class="form-input" id="version-name" placeholder="e.g. Version 3"></div>
+        <div class="form-group"><label class="form-label">Label</label><input class="form-input" id="version-draft-label" placeholder="e.g. Option C — Higher accelerators"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Copy from</label>
+        <select class="form-select" id="version-copy-from"><option value="">Blank version</option></select>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px">Copy from Current Plan or another version as a starting point.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeCreateVersionModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmCreateVersion()"><i class="ti ti-check"></i> Create version</button>
     </div>
   </div>
 </div>
