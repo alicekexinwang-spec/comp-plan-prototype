@@ -93,6 +93,8 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:13px;background:va
 .badge-approved{background:#EAF3DE;color:#27500A}
 .badge-rejected{background:#FCEBEB;color:#791F1F}
 .badge-published{background:#E6F1FB;color:#0C447C}
+.badge-current-plan{background:#E6F1FB;color:#0C447C;font-weight:600}
+.badge-proposal{background:#F1EFE8;color:#444441}
 .badge-rescinded{background:#FBEAF0;color:#72243E}
 .badge-pending{background:#FAEEDA;color:#633806}
 .badge-passed{background:#EAF3DE;color:#27500A}
@@ -356,7 +358,7 @@ tr:hover td{background:var(--bg-secondary)}
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Plan ID</th><th>Plan Name</th><th>Role</th><th>FY</th><th>Status</th><th>Ver.</th><th>Last Updated</th><th>Owner</th><th>Approval</th><th>Actions</th>
+              <th>Plan ID</th><th>Plan Name</th><th>Role</th><th>FY</th><th>Current Plan</th><th>Versions</th><th>Last Updated</th><th>Owner</th><th>Actions</th>
             </tr></thead>
             <tbody id="lib-tbody"></tbody>
           </table>
@@ -1287,20 +1289,58 @@ function badgeHtml(status){
 function buildLibrary(){
   const tbody=document.getElementById('lib-tbody');
   if(!tbody)return;
-  tbody.innerHTML=plans.map(p=>`<tr>
-    <td style="font-weight:500;color:#185FA5;cursor:pointer" onclick="showScreen('builder')">${p.id}</td>
-    <td>${p.name}</td><td style="font-size:11px;color:var(--muted)">${p.role}</td>
-    <td>${p.fy}</td><td>${badgeHtml(p.status)}</td>
-    <td style="font-size:11px">v${p.ver}</td>
-    <td style="font-size:11px;color:var(--muted)">${p.updated}</td>
-    <td style="font-size:11px">${p.owner}</td>
-    <td>${p.approval==='approved'?'<span class="badge badge-approved">Approved</span>':p.approval==='pending'?'<span class="badge badge-pending">Pending</span>':p.approval==='rejected'?'<span class="badge badge-rejected">Rejected</span>':'<span class="badge badge-draft">—</span>'}</td>
+  const fyF=document.getElementById('library-fy-filter')?.value||'';
+  const q=(document.getElementById('library-search')?.value||'').toLowerCase();
+  let rows=plans.filter(p=>{
+    if(fyF&&p.fy!==fyF)return false;
+    if(q&&!(`${p.planId} ${p.name} ${p.role} ${p.fy}`.toLowerCase().includes(q)))return false;
+    return true;
+  });
+  const sub=document.getElementById('library-subtitle');
+  if(sub)sub.textContent=`${rows.length} plan${rows.length===1?'':'s'} · ${fyF||'FY26 & FY27'}`;
+  tbody.innerHTML=rows.map(p=>{
+    const pk=planKey(p.planId,p.fy);
+    const relVer=getReleasedVersion(pk);
+    const verCount=getActiveVersionsForPlan(pk).length;
+    const inReview=versions.find(v=>v.planId===p.planId&&v.fy===p.fy&&v.status==='in-review');
+    return`<tr>
+    <td style="font-weight:500;color:#185FA5;cursor:pointer" onclick="openPlanDetail('${pk}')">${p.planId}</td>
+    <td>${p.name||''}</td><td style="font-size:11px;color:var(--muted)">${p.role||''}</td>
+    <td><span class="plan-fy-chip" style="font-size:10px;padding:2px 8px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-weight:600">${p.fy}</span></td>
+    <td>${relVer?`<span class="badge badge-current-plan">${relVer.name}</span>`:'<span style="font-size:11px;color:var(--muted)">Not released</span>'}</td>
+    <td><span class="badge badge-proposal">${verCount} version${verCount===1?'':'s'}</span>${inReview?' <span class="badge badge-review">1 in review</span>':''}</td>
+    <td style="font-size:11px;color:var(--muted)">${p.updated||'—'}</td>
+    <td style="font-size:11px">${p.owner||'—'}</td>
     <td><div style="display:flex;gap:4px">
-      <button class="btn btn-sm" onclick="showScreen('builder')" title="Open"><i class="ti ti-eye"></i></button>
-      <button class="btn btn-sm" onclick="showScreen('compare')" title="Compare"><i class="ti ti-columns"></i></button>
-      <button class="btn btn-sm" title="Clone"><i class="ti ti-copy"></i></button>
+      <button class="btn btn-sm" onclick="openPlanDetail('${pk}')" title="Versions"><i class="ti ti-versions"></i></button>
+      <button class="btn btn-sm" onclick="openComparePlatform('standalone','${pk}')" title="Compare"><i class="ti ti-columns"></i></button>
+      <button class="btn btn-sm" onclick="currentPlanKey='${pk}';openCreateVersionModal()" title="New version"><i class="ti ti-plus"></i></button>
     </div></td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
+}
+
+function openComparePlatform(context,pk){currentPlanKey=pk||currentPlanKey;showScreen('compare');}
+function buildSourcePlanList(){
+  const list=document.getElementById('source-plan-list');
+  if(!list)return;
+  list.innerHTML=plans.filter(p=>p.fy==='FY27').map(p=>{
+    const relVer=getReleasedVersion(planKey(p.planId,p.fy));
+    return`<div class="source-picker-item" onclick="selectSourcePlan('${p.planId}')"><strong>${p.planId}</strong> — ${p.name} <span style="color:var(--muted)">· ${p.role}</span><span class="source-status"><span class="badge ${relVer?'badge-published':'badge-draft'}">${relVer?'Released':'Draft'}</span></span></div>`;
+  }).join('');
+}
+function selectSourcePlan(id){
+  const p=plans.find(x=>x.planId===id&&x.fy==='FY27')||plans.find(x=>x.planId===id);
+  const src=document.getElementById('source-plan-search');if(src)src.value=`${id} — ${p?.name||''}`;
+  const list=document.getElementById('source-plan-list');if(list)list.classList.remove('open');
+}
+function getPlanFromList(id){
+  const p=plans.find(x=>x.planId===id);
+  return p?{id:p.planId,name:p.name,role:p.role}:null;
+}
+function nextPlanId(){
+  const nums=plans.map(p=>parseInt(p.planId.replace(/\D/g,''))||0);
+  return 'H'+String(Math.max(...nums,10)+1).padStart(2,'0')+'.A';
 }
 
 const multiData=[
