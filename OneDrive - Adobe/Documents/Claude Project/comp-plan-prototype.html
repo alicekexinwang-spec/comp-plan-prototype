@@ -1373,6 +1373,28 @@ function buildTracker(){
   </tr>`).join('');
 }
 
+let planSnapshots=[];
+let compareReturnScreen='dashboard';
+let compareContext='standalone';
+let currentDraftPlan={};
+
+const comparePresets={
+  standalone:{left:null,right:null,preset:'Custom comparison',ctx:'standalone',ctxDesc:'Compare Current Plan, versions, or prior releases — designer view only'},
+  builder:{left:'version|ver-H01.A-FY26-1',right:'version|ver-H01.A-FY27-2',preset:'Current Plan vs version',ctx:'builder',ctxDesc:'Compare your version against the Current Plan for this Plan ID'},
+  approval:{left:'version|ver-H01.A-FY26-1',right:'version|ver-H01.A-FY27-2',preset:'Current Plan vs submitted version',ctx:'approval',ctxDesc:'Approver view — Current Plan vs version submitted for approval'},
+  duplicate:{left:'version|ver-H02.A-FY27-1',right:'version|ver-H07.A-FY27-1',preset:'Duplicate comparison',ctx:'duplicate',ctxDesc:'New version compared to source after duplication'}
+};
+
+function buildPlanSnapshots(){}
+function buildCompareSelects(){}
+function showBuilderWorkspace(){showScreen('builder');}
+function openBuilder(planId){showScreen('builder');}
+function applyCompareContext(preset){}
+function setCompareSelection(left,right){}
+function syncCompareSelects(){}
+function runComparison(){}
+function clearCompareSelection(){}
+
 function buildCharts(){
   const a=document.getElementById('approvalChart');
   if(a&&window.Chart){
