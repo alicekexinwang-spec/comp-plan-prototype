@@ -902,7 +902,7 @@ const screens={
   compare:{title:'Plan Comparison — H01.A'},
   multi:{title:'Multi-Role Comparison'},
   approval:{title:'Approval Review — H01.A'},
-  tracker:{title:'Approval Tracker'},
+  tracker:{title:'Version Tracker'},
   mechanics:{title:'Plan Mechanics — H01.A'},
   document:{title:'Plan Document — H01.A v2.1'},
   audit:{title:'Audit & Version History — H01.A'}
@@ -920,17 +920,67 @@ function showScreen(id){
   document.getElementById('content').scrollTop=0;
 }
 
+let currentPlanKey='H01.A|FY27';
+let currentVersionId=null;
+let approvalVersionId='ver-H01.A-FY27-2';
+
+const VERSION_STATUS_LABELS={
+  draft:'Draft','in-review':'In Review',released:'Released',
+  rejected:'Rejected',archived:'Archived'
+};
+const VALID_FYS=['FY26','FY27'];
+
+function planKey(planId,fy){return `${planId}|${fy}`;}
+function parsePlanKey(key){
+  if(!key)return {planId:'',fy:'FY27'};
+  const i=String(key).lastIndexOf('|');
+  if(i<0)return {planId:key,fy:'FY27'};
+  return {planId:key.slice(0,i),fy:key.slice(i+1)};
+}
+function planExists(planId,fy){return !!plans.find(p=>p.planId===planId&&p.fy===fy);}
+
 const plans=[
-  {id:'H01.A',name:'Digital Experience AE',role:'DX Account Exec',fy:'FY27',status:'review',ver:'2.1',updated:'Jun 11',owner:'Melissa C.',approval:'pending'},
-  {id:'H02.A',name:'CXO Product Specialist',role:'CXO Specialist',fy:'FY27',status:'approved',ver:'1.3',updated:'Jun 10',owner:'Melissa C.',approval:'approved'},
-  {id:'H03.A',name:'Commerce AE',role:'Commerce AE',fy:'FY27',status:'approved',ver:'1.2',updated:'Jun 9',owner:'Val R.',approval:'approved'},
-  {id:'H04.A',name:'SMB Account Executive',role:'SMB AE',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 8',owner:'Val R.',approval:'none'},
-  {id:'H05.A',name:'Enterprise AE',role:'Enterprise AE',fy:'FY27',status:'approved',ver:'2.0',updated:'Jun 7',owner:'Melissa C.',approval:'approved'},
-  {id:'H06.A',name:'SMB Renewal Specialist',role:'SMB Renewal',fy:'FY27',status:'published',ver:'1.1',updated:'Jun 5',owner:'Val R.',approval:'approved'},
-  {id:'H07.A',name:'Partner Channel AE',role:'Channel AE',fy:'FY27',status:'draft',ver:'0.9',updated:'Jun 4',owner:'Melissa C.',approval:'none'},
-  {id:'H08.A',name:'Strategic Named Account',role:'SNA AE',fy:'FY27',status:'review',ver:'1.0',updated:'Jun 3',owner:'Val R.',approval:'pending'},
-  {id:'H09.A',name:'EMEA Enterprise AE',role:'EMEA Ent AE',fy:'FY27',status:'rejected',ver:'1.1',updated:'Jun 2',owner:'Melissa C.',approval:'rejected'},
-  {id:'H10.A',name:'Emerging Markets AE',role:'EM AE',fy:'FY27',status:'draft',ver:'0.5',updated:'Jun 1',owner:'Val R.',approval:'none'},
+  {planId:'H01.A',name:'Digital Experience AE',fy:'FY27',role:'Digital Experience Account Executive',owner:'Melissa C.',releasedVersionId:null,updated:'Jun 11'},
+  {planId:'H02.A',name:'Hybrid CXO & C&P Sales Leader',fy:'FY27',role:'CXO & C&P Hybrid Sales Leader A',owner:'Melissa C.',releasedVersionId:'ver-H02.A-FY27-1',updated:'Jun 10'},
+  {planId:'H03.A',name:'Commerce AE',fy:'FY27',role:'Commerce Account Executive',owner:'Val R.',releasedVersionId:'ver-H03.A-FY27-1',updated:'Jun 9'},
+  {planId:'H04.A',name:'SMB Account Executive',fy:'FY27',role:'SMB Account Executive',owner:'Val R.',releasedVersionId:null,updated:'Jun 8'},
+  {planId:'H05.A',name:'Enterprise AE',fy:'FY27',role:'Enterprise Account Executive',owner:'Melissa C.',releasedVersionId:'ver-H05.A-FY27-1',updated:'Jun 7'},
+  {planId:'H06.A',name:'SMB Renewal Specialist',fy:'FY27',role:'SMB Renewal Specialist',owner:'Val R.',releasedVersionId:'ver-H06.A-FY27-1',updated:'Jun 5'},
+  {planId:'H07.A',name:'Partner Channel AE',fy:'FY27',role:'Partner Channel AE',owner:'Melissa C.',releasedVersionId:null,updated:'Jun 4'},
+  {planId:'H08.A',name:'Strategic Named Account',fy:'FY27',role:'Strategic Named Account AE',owner:'Val R.',releasedVersionId:null,updated:'Jun 3'},
+  {planId:'H09.A',name:'EMEA Enterprise AE',fy:'FY27',role:'EMEA Enterprise AE',owner:'Melissa C.',releasedVersionId:null,updated:'Jun 2'},
+  {planId:'H10.A',name:'Emerging Markets AE',fy:'FY27',role:'Emerging Markets AE',owner:'Val R.',releasedVersionId:null,updated:'Jun 1'},
+  {planId:'H01.A',name:'Digital Experience AE',fy:'FY26',role:'Digital Experience Account Executive',owner:'Melissa C.',releasedVersionId:'ver-H01.A-FY26-1',updated:'Oct 12'},
+  {planId:'H02.A',name:'Hybrid CXO & C&P Sales Leader',fy:'FY26',role:'CXO & C&P Hybrid Sales Leader A',owner:'Melissa C.',releasedVersionId:'ver-H02.A-FY26-1',updated:'Oct 15'},
+  {planId:'H03.A',name:'Commerce AE',fy:'FY26',role:'Commerce Account Executive',owner:'Val R.',releasedVersionId:'ver-H03.A-FY26-1',updated:'Oct 20'},
+  {planId:'H05.A',name:'Enterprise AE',fy:'FY26',role:'Enterprise Account Executive',owner:'Melissa C.',releasedVersionId:'ver-H05.A-FY26-1',updated:'Nov 1'},
+  {planId:'H06.A',name:'SMB Renewal Specialist',fy:'FY26',role:'SMB Renewal Specialist',owner:'Val R.',releasedVersionId:'ver-H06.A-FY26-1',updated:'Oct 28'},
+];
+
+let versions=[
+  {versionId:'ver-H01.A-FY26-1',versionNum:1,planId:'H01.A',fy:'FY26',name:'Version 1',label:'FY26 baseline',status:'released',createdBy:'Susan L.',createdAt:'Oct 12, 2025',updatedAt:'Oct 12, 2025',submittedAt:'Oct 12, 2025',releasedAt:'Oct 12, 2025',releasedBy:'Susan L.',supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H02.A-FY26-1',versionNum:1,planId:'H02.A',fy:'FY26',name:'Version 1',label:'FY26 baseline',status:'released',createdBy:'Susan L.',createdAt:'Oct 15, 2025',updatedAt:'Oct 15, 2025',submittedAt:'Oct 15, 2025',releasedAt:'Oct 15, 2025',releasedBy:'Susan L.',supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H03.A-FY26-1',versionNum:1,planId:'H03.A',fy:'FY26',name:'Version 1',label:'FY26 baseline',status:'released',createdBy:'Susan L.',createdAt:'Oct 20, 2025',updatedAt:'Oct 20, 2025',submittedAt:'Oct 20, 2025',releasedAt:'Oct 20, 2025',releasedBy:'Susan L.',supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H05.A-FY26-1',versionNum:1,planId:'H05.A',fy:'FY26',name:'Version 1',label:'FY26 baseline',status:'released',createdBy:'Susan L.',createdAt:'Nov 1, 2025',updatedAt:'Nov 1, 2025',submittedAt:'Nov 1, 2025',releasedAt:'Nov 1, 2025',releasedBy:'Susan L.',supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H06.A-FY26-1',versionNum:1,planId:'H06.A',fy:'FY26',name:'Version 1',label:'FY26 baseline',status:'released',createdBy:'Susan L.',createdAt:'Oct 28, 2025',updatedAt:'Oct 28, 2025',submittedAt:'Oct 28, 2025',releasedAt:'Oct 28, 2025',releasedBy:'Susan L.',supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H01.A-FY27-1',versionNum:1,planId:'H01.A',fy:'FY27',name:'Version 1',label:'Option A — FY26 structure carry-forward',status:'draft',createdBy:'Melissa C.',createdAt:'Jun 3, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId:'ver-H01.A-FY26-1'},
+  {versionId:'ver-H01.A-FY27-2',versionNum:2,planId:'H01.A',fy:'FY27',name:'Version 2',label:'Option B — Quarterly payout & renewal tether',status:'in-review',createdBy:'Melissa C.',createdAt:'Jun 8, 2026',updatedAt:'Jun 11, 2026',submittedAt:'Jun 11, 2026',releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId:'ver-H01.A-FY27-1'},
+  {versionId:'ver-H01.A-FY27-3',versionNum:3,planId:'H01.A',fy:'FY27',name:'Version 3',label:'Option C — Higher 150%+ accelerators',status:'draft',createdBy:'Val R.',createdAt:'Jun 10, 2026',updatedAt:'Jun 10, 2026',submittedAt:null,releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H02.A-FY27-1',versionNum:1,planId:'H02.A',fy:'FY27',name:'Version 1',label:'Hybrid CXO baseline FY27',status:'released',createdBy:'Melissa C.',createdAt:'May 28, 2026',updatedAt:'Jun 10, 2026',submittedAt:'Jun 8, 2026',releasedAt:'Jun 10, 2026',releasedBy:'Susan L.',supersededAt:null,parentVersionId:'ver-H02.A-FY26-1'},
+  {versionId:'ver-H02.A-FY27-2',versionNum:2,planId:'H02.A',fy:'FY27',name:'Version 2',label:'VCT adjustment variant',status:'archived',createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 9, 2026',submittedAt:null,releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId:'ver-H02.A-FY27-1'},
+  {versionId:'ver-H03.A-FY27-1',versionNum:1,planId:'H03.A',fy:'FY27',name:'Version 1',label:'Commerce FY27 plan',status:'released',createdBy:'Val R.',createdAt:'May 25, 2026',updatedAt:'Jun 9, 2026',submittedAt:'Jun 6, 2026',releasedAt:'Jun 9, 2026',releasedBy:'Susan L.',supersededAt:null,parentVersionId:'ver-H03.A-FY26-1'},
+  {versionId:'ver-H04.A-FY27-1',versionNum:1,planId:'H04.A',fy:'FY27',name:'Version 1',label:'Initial SMB draft',status:'draft',createdBy:'Val R.',createdAt:'Jun 8, 2026',updatedAt:'Jun 8, 2026',submittedAt:null,releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H05.A-FY27-1',versionNum:1,planId:'H05.A',fy:'FY27',name:'Version 1',label:'Enterprise uncapped tier',status:'released',createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 7, 2026',submittedAt:'Jun 5, 2026',releasedAt:'Jun 7, 2026',releasedBy:'Susan L.',supersededAt:null,parentVersionId:'ver-H05.A-FY26-1'},
+  {versionId:'ver-H06.A-FY27-1',versionNum:1,planId:'H06.A',fy:'FY27',name:'Version 1',label:'Renewal-focused plan',status:'released',createdBy:'Val R.',createdAt:'May 20, 2026',updatedAt:'Jun 5, 2026',submittedAt:'Jun 3, 2026',releasedAt:'Jun 5, 2026',releasedBy:'Susan L.',supersededAt:null,parentVersionId:'ver-H06.A-FY26-1'},
+  {versionId:'ver-H07.A-FY27-1',versionNum:1,planId:'H07.A',fy:'FY27',name:'Version 1',label:'Channel AE draft',status:'draft',createdBy:'Melissa C.',createdAt:'Jun 4, 2026',updatedAt:'Jun 4, 2026',submittedAt:null,releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId:null},
+  {versionId:'ver-H09.A-FY27-1',versionNum:1,planId:'H09.A',fy:'FY27',name:'Version 1',label:'EMEA enterprise revision',status:'rejected',createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 2, 2026',submittedAt:'Jun 2, 2026',releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId:null},
+];
+
+let auditLog=[
+  {id:'aud-1',planId:'H01.A',fy:'FY27',versionId:'ver-H01.A-FY27-2',action:'Version submitted for approval',user:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',detail:'Version 2 submitted to Susan L.'},
+  {id:'aud-2',planId:'H05.A',fy:'FY27',versionId:'ver-H05.A-FY27-1',action:'Version released',user:'Susan L.',timestamp:'Jun 7, 2026 3:40 PM',detail:'Version 1 released — Enterprise uncapped tier.'},
+  {id:'aud-4',planId:'H06.A',fy:'FY27',versionId:'ver-H06.A-FY27-1',action:'Version released',user:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',detail:'Version 1 released — Renewal-focused plan.'},
+  {id:'aud-5',planId:'H01.A',fy:'FY27',versionId:'ver-H01.A-FY27-3',action:'Version marked ready for review',user:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',detail:'Version 3 ready for internal design review.'},
 ];
 
 function badgeHtml(status){
