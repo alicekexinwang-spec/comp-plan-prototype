@@ -249,7 +249,7 @@ tr:hover td{background:var(--bg-secondary)}
     <div class="sidebar-section">
       <div class="sidebar-label">Workflow</div>
       <div class="nav-item" onclick="showScreen('approval')"><i class="ti ti-circle-check"></i> Approvals <span class="nav-badge">5</span></div>
-      <div class="nav-item" onclick="showScreen('tracker')"><i class="ti ti-list-check"></i> Approval Tracker</div>
+      <div class="nav-item" onclick="showScreen('tracker')"><i class="ti ti-list-check"></i> Version Tracker</div>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Outputs</div>
@@ -747,23 +747,22 @@ tr:hover td{background:var(--bg-secondary)}
       <!-- SCREEN 7: TRACKER -->
       <div id="screen-tracker" class="screen">
         <div class="page-header">
-          <div><div class="page-title">Approval Tracker</div><div class="page-subtitle">FY27 · All plans · Live status</div></div>
+          <div><div class="page-title">Version Tracker</div><div class="page-subtitle">All plans · All versions · Live status</div></div>
           <div class="btn-group">
             <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
             <button class="btn btn-sm"><i class="ti ti-refresh"></i> Refresh</button>
           </div>
         </div>
         <div class="filter-bar">
-          <input class="search-input" placeholder="Search by plan ID or role…" type="search">
-          <select class="filter-select"><option>All statuses</option><option>Pending Susan</option><option>SEO review</option><option>Approved</option></select>
-          <select class="filter-select"><option>All owners</option><option>Melissa C.</option><option>Val R.</option></select>
-          <button class="btn btn-sm"><i class="ti ti-checks"></i> Bulk approve</button>
+          <input class="search-input" id="tracker-search" placeholder="Search Plan ID or version…" type="search" oninput="filterVersionTracker()">
+          <select class="filter-select" id="tracker-status-filter" onchange="filterVersionTracker()"><option value="">All statuses</option><option value="draft">Draft</option><option value="in-review">In Review</option><option value="released">Released</option><option value="rejected">Rejected</option><option value="archived">Archived</option></select>
+          <select class="filter-select" id="tracker-fy-filter" onchange="filterVersionTracker()"><option value="">All FYs</option><option value="FY27">FY27</option><option value="FY26">FY26</option></select>
+          <select class="filter-select" id="tracker-approval-filter" onchange="filterVersionTracker()"><option value="">All versions</option><option value="pending">Pending approval</option><option value="approved">Approved</option><option value="released">Is Current Plan</option></select>
         </div>
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th style="width:20px"><input type="checkbox"></th>
-              <th>Plan ID</th><th>Role</th><th>Status</th><th>Susan</th><th>SEO</th><th>Doc</th><th>Mechanics</th><th>Published</th><th>Updated</th>
+              <th>Plan ID</th><th>Version</th><th>FY</th><th>Status</th><th>Submitted</th><th>Current Plan</th><th>Updated</th><th>Actions</th>
             </tr></thead>
             <tbody id="tracker-tbody"></tbody>
           </table>
