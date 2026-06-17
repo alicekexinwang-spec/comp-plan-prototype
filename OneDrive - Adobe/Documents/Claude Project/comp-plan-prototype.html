@@ -197,6 +197,8 @@ tr:hover td{background:var(--bg-secondary)}
 .qa-desc{font-size:11px;color:var(--muted);margin-top:2px}
 
 .payout-table-wrap{overflow-x:auto}
+.builder-proposal-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--card-bg);border-bottom:var(--border);gap:12px;flex-wrap:wrap}
+.builder-proposal-switch{display:flex;align-items:center;gap:8px}
 .proposal-card{background:var(--bg-secondary);border:var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
 .proposal-card.is-submitted{border-left:2.5px solid #BA7517}
 .proposal-card.is-current-published{border-left:2.5px solid #639922;background:#EAF3DE22}
@@ -455,6 +457,18 @@ tr:hover td{background:var(--bg-secondary)}
           <div class="wf-step"><div class="wf-circle pending">3</div><div class="wf-label">Payout tables</div></div>
           <div class="wf-step"><div class="wf-circle pending">4</div><div class="wf-label">Bonus/Tether</div></div>
           <div class="wf-step"><div class="wf-circle pending">5</div><div class="wf-label">Review</div></div>
+        </div>
+        <div class="builder-proposal-bar" id="builder-version-bar">
+          <div class="builder-proposal-switch">
+            <span class="badge badge-proposal">Version</span>
+            <strong id="builder-version-label">Version 1</strong>
+            <span style="color:var(--muted);font-size:11px" id="builder-version-meta">Draft · H01.A</span>
+            <select class="form-select" id="builder-version-select" style="width:auto;min-width:180px" onchange="switchBuilderVersion(this.value)"></select>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm" onclick="openPlanDetail(currentPlanKey)"><i class="ti ti-layout-list"></i> All versions</button>
+            <button class="btn btn-sm" onclick="submitCurrentVersion()"><i class="ti ti-send"></i> Submit version</button>
+          </div>
         </div>
         <div class="plan-builder">
           <div class="card">
