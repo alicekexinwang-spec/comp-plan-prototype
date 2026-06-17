@@ -1402,11 +1402,6 @@ function buildVersionTracker(){
   }).join('')||'<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--muted)">No versions match filters</td></tr>';
 }
 
-function badgeHtml(status){
-  const m={draft:'badge-draft',review:'badge-review',approved:'badge-approved',rejected:'badge-rejected',published:'badge-published',rescinded:'badge-rescinded'};
-  const sl={draft:'Draft',review:'In review',approved:'Approved',rejected:'Rejected',published:'Published',rescinded:'Rescinded'};
-  return`<span class="badge ${m[status]||'badge-draft'}">${sl[status]||status}</span>`;
-}
 
 function buildLibrary(){
   const tbody=document.getElementById('lib-tbody');
@@ -1496,44 +1491,6 @@ function buildMulti(){
   }).join('');
 }
 
-const trackerData=[
-  {id:'H01.A',role:'DX AE',status:'review',susan:'pending',seo:'—',doc:'Ready',mech:'Warning',pub:'—',updated:'Jun 11'},
-  {id:'H02.A',role:'CXO Spec.',status:'approved',susan:'approved',seo:'approved',doc:'Generated',mech:'Passed',pub:'—',updated:'Jun 10'},
-  {id:'H03.A',role:'Commerce AE',status:'approved',susan:'approved',seo:'pending',doc:'Generated',mech:'Passed',pub:'—',updated:'Jun 9'},
-  {id:'H04.A',role:'SMB AE',status:'draft',susan:'—',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 8'},
-  {id:'H05.A',role:'Enterprise AE',status:'approved',susan:'approved',seo:'approved',doc:'Generated',mech:'Passed',pub:'Yes',updated:'Jun 7'},
-  {id:'H06.A',role:'SMB Renewal',status:'published',susan:'approved',seo:'approved',doc:'Published',mech:'Passed',pub:'Yes',updated:'Jun 5'},
-  {id:'H07.A',role:'Channel AE',status:'draft',susan:'—',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 4'},
-  {id:'H08.A',role:'SNA AE',status:'review',susan:'pending',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 3'},
-  {id:'H09.A',role:'EMEA Ent. AE',status:'rejected',susan:'rejected',seo:'—',doc:'—',mech:'—',pub:'—',updated:'Jun 2'},
-];
-
-function spill(s){
-  if(s==='approved')return'<span class="badge badge-approved">Approved</span>';
-  if(s==='pending')return'<span class="badge badge-pending">Pending</span>';
-  if(s==='rejected')return'<span class="badge badge-rejected">Rejected</span>';
-  if(s==='review')return'<span class="badge badge-review">In review</span>';
-  if(s==='draft')return'<span class="badge badge-draft">Draft</span>';
-  if(s==='published')return'<span class="badge badge-published">Published</span>';
-  return`<span style="font-size:11px;color:var(--muted)">${s}</span>`;
-}
-
-function buildTracker(){
-  const tbody=document.getElementById('tracker-tbody');
-  if(!tbody)return;
-  tbody.innerHTML=trackerData.map(r=>`<tr>
-    <td><input type="checkbox"></td>
-    <td style="font-weight:500;color:#185FA5;cursor:pointer" onclick="showScreen('approval')">${r.id}</td>
-    <td style="font-size:11px">${r.role}</td>
-    <td>${spill(r.status)}</td>
-    <td>${r.susan==='approved'?'<span class="badge badge-approved">Done</span>':r.susan==='pending'?'<span class="badge badge-pending">Waiting</span>':r.susan==='rejected'?'<span class="badge badge-rejected">Rejected</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-    <td>${r.seo==='approved'?'<span class="badge badge-approved">Done</span>':r.seo==='pending'?'<span class="badge badge-pending">Waiting</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-    <td>${r.doc==='Generated'||r.doc==='Published'?'<span class="badge badge-approved">'+r.doc+'</span>':r.doc==='Ready'?'<span class="badge badge-info">Ready</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-    <td>${r.mech==='Passed'?'<span class="badge badge-passed">Passed</span>':r.mech==='Warning'?'<span class="badge badge-warning">Warning</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-    <td>${r.pub==='Yes'?'<span class="badge badge-published">Yes</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-    <td style="font-size:11px;color:var(--muted)">${r.updated}</td>
-  </tr>`).join('');
-}
 
 let planSnapshots=[];
 let compareReturnScreen='dashboard';
@@ -1594,8 +1551,8 @@ function buildCharts(){
 }
 
 buildLibrary();
+buildVersionTracker();
 buildMulti();
-buildTracker();
 buildCharts();
 </script>
 </body>
