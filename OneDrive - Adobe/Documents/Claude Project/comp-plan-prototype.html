@@ -983,6 +983,301 @@ let auditLog=[
   {id:'aud-5',planId:'H01.A',fy:'FY27',versionId:'ver-H01.A-FY27-3',action:'Version marked ready for review',user:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',detail:'Version 3 ready for internal design review.'},
 ];
 
+function getPlan(planId,fy){
+  if(fy===undefined){
+    if(String(planId).includes('|')){const parsed=parsePlanKey(planId);return getPlan(parsed.planId,parsed.fy);}
+    return plans.find(p=>p.planId===planId&&p.fy==='FY27')||plans.find(p=>p.planId===planId);
+  }
+  return plans.find(p=>p.planId===planId&&p.fy===fy);
+}
+function getVersion(versionId){return versions.find(v=>v.versionId===versionId);}
+function getVersionsForPlan(pk){
+  const {planId,fy}=parsePlanKey(pk);
+  return versions.filter(v=>v.planId===planId&&v.fy===fy);
+}
+function getActiveVersionsForPlan(pk){
+  const {planId,fy}=parsePlanKey(pk);
+  return versions.filter(v=>v.planId===planId&&v.fy===fy&&v.status!=='archived');
+}
+function getReleasedVersion(pk){
+  const {planId,fy}=parsePlanKey(pk);
+  const plan=getPlan(planId,fy);
+  if(plan?.releasedVersionId)return getVersion(plan.releasedVersionId);
+  return versions.find(v=>v.planId===planId&&v.fy===fy&&v.status==='released');
+}
+function getAuditForPlan(pk){
+  const {planId,fy}=parsePlanKey(pk);
+  return auditLog.filter(a=>a.planId===planId&&a.fy===fy);
+}
+
+function versionBadgeHtml(status){
+  const m={draft:'badge-draft','in-review':'badge-review',released:'badge-published',rejected:'badge-rejected',archived:'badge-draft'};
+  const label=VERSION_STATUS_LABELS[status]||status;
+  return`<span class="badge ${m[status]||'badge-draft'}">${label}</span>`;
+}
+
+function addAuditEntry(pk,action,detail,opts={}){
+  const {planId,fy}=parsePlanKey(pk);
+  auditLog.unshift({
+    id:'aud-'+Date.now(),planId,fy,versionId:opts.versionId||null,
+    action,user:'Melissa C.',
+    timestamp:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}),
+    detail,
+  });
+}
+
+function nextVersionId(pk){
+  const {planId,fy}=parsePlanKey(pk);
+  const n=getVersionsForPlan(pk).length+1;
+  return`ver-${planId}-${fy.replace('FY','')}-${n}`;
+}
+function nextVersionNum(pk){return getVersionsForPlan(pk).length+1;}
+function nextVersionName(pk){return'Version '+nextVersionNum(pk);}
+
+function openPlanDetail(pk){
+  currentPlanKey=pk;
+  renderPlanDetail(pk);
+  showScreen('plan');
+}
+
+function renderPlanDetail(pk){
+  const {planId,fy}=parsePlanKey(pk);
+  const plan=getPlan(planId,fy);
+  if(!plan)return;
+  const relVer=getReleasedVersion(pk);
+  const activeVers=getActiveVersionsForPlan(pk);
+  document.getElementById('plan-detail-title').textContent=`Plan — ${planId} · ${fy}`;
+  document.getElementById('plan-detail-subtitle').textContent=`${plan.name} · ${activeVers.length} version${activeVers.length===1?'':'s'}`;
+  document.getElementById('plan-downstream-id').textContent=`${planId} · ${fy}`;
+  document.getElementById('plan-container-name').textContent=plan.name;
+  document.getElementById('plan-container-meta').innerHTML=`
+    <span class="plan-fy-chip">${fy}</span>
+    <span style="font-size:11px;color:var(--muted)">${plan.role||''}</span>
+    <span style="font-size:11px;color:var(--muted)">Owner: ${plan.owner||'—'}</span>`;
+  document.getElementById('plan-current-rev-label').textContent=relVer?relVer.name:'Not yet released';
+  document.getElementById('plan-proposal-count').textContent=activeVers.length+' version'+(activeVers.length===1?'':'s');
+  const banner=document.getElementById('plan-published-banner');
+  if(relVer&&relVer.status==='released'){
+    banner.innerHTML=`<div class="published-rev-banner"><i class="ti ti-circle-check" style="color:#639922;font-size:18px"></i><div><strong>Current Plan</strong> — ${relVer.name}${relVer.label?' · '+relVer.label:''} · ${relVer.fy} · Released ${relVer.releasedAt} by ${relVer.releasedBy}<div style="font-size:11px;color:var(--muted);margin-top:2px">This is what downstream systems reference for Plan ID ${planId} in ${fy}.</div></div><span class="badge badge-current-plan">Current Plan</span></div>`;
+  }else{
+    banner.innerHTML=`<div class="published-rev-banner" style="background:#FAEEDA;border-left-color:#BA7517"><i class="ti ti-clock" style="color:#BA7517;font-size:18px"></i><div><strong>No released version yet</strong> — downstream consumers have no Current Plan for ${planId} in ${fy}. Submit and approve a version to release.</div></div>`;
+  }
+  document.getElementById('plan-versions-list').innerHTML=activeVers.length?activeVers.map(v=>{
+    const isReleased=relVer&&relVer.versionId===v.versionId;
+    return`<div class="proposal-card ${v.status==='in-review'?'is-submitted':''} ${isReleased?'is-current-published':''}">
+      <div class="proposal-card-main">
+        <div class="proposal-card-title">${v.name} ${versionBadgeHtml(v.status)} ${isReleased?'<span class="badge badge-current-plan">Current Plan</span>':''}</div>
+        <div class="proposal-card-sub">${v.label||'—'} · Updated ${v.updatedAt} · ${v.createdBy}${v.submittedAt?' · Submitted '+v.submittedAt:''}</div>
+        ${v.parentVersionId?`<div style="font-size:10px;color:var(--muted);margin-top:4px">Based on ${getVersion(v.parentVersionId)?.name||'prior version'}</div>`:''}
+      </div>
+      <div class="proposal-card-actions">
+        <button class="btn btn-sm" onclick="openVersionInBuilder('${v.versionId}')"><i class="ti ti-edit"></i> Edit</button>
+        <button class="btn btn-sm" onclick="compareReleasedToVersion('${pk}','${v.versionId}')"><i class="ti ti-columns"></i> Compare</button>
+        ${v.status==='draft'?`<button class="btn btn-sm btn-primary" onclick="submitVersionById('${v.versionId}')"><i class="ti ti-send"></i> Submit</button>`:''}
+      </div>
+    </div>`;
+  }).join(''):'<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No versions yet. Create Version 1 to begin design options.</div>';
+  document.getElementById('plan-version-history').innerHTML=getVersionsForPlan(pk).filter(v=>v.status==='released'||v.supersededAt).map(v=>`
+    <div class="revision-history-row">
+      <span style="font-weight:500;min-width:80px">${v.name}</span>
+      <span style="font-size:11px;color:var(--muted)">${v.fy}${v.releasedAt?' · '+v.releasedAt:''}</span>
+      ${!v.supersededAt&&v.status==='released'?'<span class="badge badge-current-plan">Current Plan</span>':''}
+      ${v.supersededAt?'<span class="badge badge-draft">Superseded</span>':''}
+    </div>`).join('')||'<div style="font-size:12px;color:var(--muted)">No released versions yet.</div>';
+  document.getElementById('plan-change-log').innerHTML=getAuditForPlan(pk).map(a=>`
+    <div class="change-log-item"><strong>${a.action}</strong> · ${a.user} · ${a.timestamp}<div style="font-size:11px;color:var(--muted);margin-top:2px">${a.detail}</div></div>`).join('')||'<div style="font-size:12px;color:var(--muted)">No audit entries yet.</div>';
+  screens.plan={title:`Plan — ${planId} · ${fy}`};
+}
+
+function openCreateVersionModal(){
+  document.getElementById('version-modal-title').textContent='Create Version';
+  const {planId,fy}=parsePlanKey(currentPlanKey);
+  document.getElementById('version-plan-id').value=`${planId} · ${fy}`;
+  document.getElementById('version-plan-key').value=currentPlanKey;
+  document.getElementById('version-name').value=nextVersionName(currentPlanKey);
+  document.getElementById('version-draft-label').value='';
+  populateCopyFromSelect(currentPlanKey);
+  document.getElementById('create-version-modal').classList.add('open');
+}
+
+function closeCreateVersionModal(){
+  document.getElementById('create-version-modal').classList.remove('open');
+}
+
+function populateCopyFromSelect(pk){
+  const relVer=getReleasedVersion(pk);
+  const sel=document.getElementById('version-copy-from');
+  let opts='<option value="">Blank version</option>';
+  if(relVer)opts+=`<option value="version:${relVer.versionId}">Current Plan · ${relVer.name}</option>`;
+  getActiveVersionsForPlan(pk).forEach(v=>{opts+=`<option value="version:${v.versionId}">${v.name} · ${v.label||VERSION_STATUS_LABELS[v.status]}</option>`;});
+  sel.innerHTML=opts;
+}
+
+function confirmCreateVersion(){
+  const pkVal=document.getElementById('version-plan-key').value||currentPlanKey;
+  const {planId,fy}=parsePlanKey(pkVal);
+  const name=document.getElementById('version-name').value.trim()||nextVersionName(pkVal);
+  const label=document.getElementById('version-draft-label').value.trim();
+  const dup=document.getElementById('version-copy-from').value;
+  let parentVersionId=null;
+  if(dup.startsWith('version:'))parentVersionId=dup.split(':')[1];
+  const id=nextVersionId(pkVal);
+  const num=nextVersionNum(pkVal);
+  const ver={
+    versionId:id,versionNum:num,planId,fy,
+    name:name||'Version '+num,label:label||name||'',status:'draft',
+    createdBy:'Melissa C.',
+    createdAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    updatedAt:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    submittedAt:null,releasedAt:null,releasedBy:null,supersededAt:null,parentVersionId,
+  };
+  versions.push(ver);
+  addAuditEntry(pkVal,'Version created',`${ver.name} created${dup?' from copy source':''}.`,{versionId:id});
+  closeCreateVersionModal();
+  buildPlanSnapshots();buildCompareSelects();
+  openVersionInBuilder(id);
+}
+
+function openVersionInBuilder(versionId){
+  const ver=getVersion(versionId);
+  if(!ver)return;
+  currentPlanKey=planKey(ver.planId,ver.fy);
+  currentVersionId=versionId;
+  currentDraftPlan={id:ver.planId,name:getPlan(ver.planId,ver.fy)?.name,versionId,fy:ver.fy,status:ver.status,designerNote:''};
+  showBuilderWorkspace();
+  openBuilder(ver.planId,false,false,versionId);
+}
+
+function switchBuilderVersion(versionId){
+  if(versionId)openVersionInBuilder(versionId);
+}
+
+function updateBuilderVersionBar(pk,versionId){
+  const {planId,fy}=parsePlanKey(pk);
+  const ver=getVersion(versionId);
+  const sel=document.getElementById('builder-version-select');
+  if(!ver||!sel)return;
+  const vList=getActiveVersionsForPlan(pk);
+  sel.innerHTML=vList.map(v=>`<option value="${v.versionId}" ${v.versionId===versionId?'selected':''}>${v.name} · ${VERSION_STATUS_LABELS[v.status]}</option>`).join('');
+  document.getElementById('builder-version-label').textContent=ver.name;
+  document.getElementById('builder-version-meta').textContent=`${VERSION_STATUS_LABELS[ver.status]} · ${planId} · ${fy}`;
+}
+
+function submitVersionById(versionId){
+  const ver=getVersion(versionId);
+  if(!ver)return;
+  const pk=planKey(ver.planId,ver.fy);
+  ver.status='in-review';
+  ver.submittedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  ver.updatedAt=ver.submittedAt;
+  approvalVersionId=versionId;
+  addAuditEntry(pk,'Version submitted for approval',`${ver.name} submitted.`,{versionId});
+  buildPlanSnapshots();buildCompareSelects();buildVersionTracker();
+  if(currentPlanKey===pk)renderPlanDetail(pk);
+  alert(`${ver.name} submitted for approval.`);
+}
+
+function submitCurrentVersion(){
+  if(currentVersionId)submitVersionById(currentVersionId);
+}
+
+function approveCurrentVersion(){
+  const ver=getVersion(approvalVersionId)||getVersion(currentVersionId);
+  if(!ver){alert('No version selected.');return;}
+  releaseVersion(ver.versionId);
+  showScreen('plan');
+  openPlanDetail(planKey(ver.planId,ver.fy));
+}
+
+function rejectCurrentVersion(){
+  const ver=getVersion(approvalVersionId);
+  if(!ver)return;
+  const pk=planKey(ver.planId,ver.fy);
+  ver.status='rejected';
+  ver.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  addAuditEntry(pk,'Version rejected',`${ver.name} rejected by approver.`,{versionId:ver.versionId});
+  buildPlanSnapshots();buildVersionTracker();renderPlanDetail(pk);
+}
+
+function releaseVersion(versionId){
+  const ver=getVersion(versionId);
+  if(!ver)return;
+  const pk=planKey(ver.planId,ver.fy);
+  const plan=getPlan(ver.planId,ver.fy);
+  if(plan?.releasedVersionId){
+    const prev=getVersion(plan.releasedVersionId);
+    if(prev&&!prev.supersededAt){
+      prev.supersededAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      addAuditEntry(pk,'Version superseded',`${prev.name} superseded when ${ver.name} released.`,{versionId:prev.versionId});
+    }
+  }
+  ver.status='released';
+  ver.releasedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  ver.releasedBy='Susan L.';
+  ver.updatedAt=ver.releasedAt;
+  if(plan)plan.releasedVersionId=versionId;
+  addAuditEntry(pk,'Version released',`${ver.name} released.`,{versionId});
+  buildPlanSnapshots();buildCompareSelects();buildLibrary();buildVersionTracker();
+}
+
+function compareReleasedToVersion(pk,versionId){
+  const relVer=getReleasedVersion(pk);
+  if(!relVer){alert('No Current Plan released yet for this fiscal year.');return;}
+  compareReturnScreen='plan';
+  currentPlanKey=pk;
+  setCompareSelection(`version|${relVer.versionId}`,`version|${versionId}`);
+  applyCompareContext(comparePresets.standalone);
+  showScreen('compare');
+  syncCompareSelects();
+  runComparison();
+}
+
+function openCompareCurrentVsVersion(){
+  const vers=getActiveVersionsForPlan(currentPlanKey).filter(v=>v.status==='in-review');
+  const ver=vers[0]||getActiveVersionsForPlan(currentPlanKey)[0];
+  if(ver)compareReleasedToVersion(currentPlanKey,ver.versionId);
+  else alert('Create a version first to compare against the Current Plan.');
+}
+
+function filterVersionTracker(){buildVersionTracker();}
+
+function buildVersionTracker(){
+  const tbody=document.getElementById('tracker-tbody');
+  if(!tbody)return;
+  const q=(document.getElementById('tracker-search')?.value||'').toLowerCase();
+  const fyF=document.getElementById('tracker-fy-filter')?.value||'';
+  const stF=document.getElementById('tracker-status-filter')?.value||'';
+  const apF=document.getElementById('tracker-approval-filter')?.value||'';
+  let rows=versions.filter(v=>{
+    if(fyF&&v.fy!==fyF)return false;
+    if(stF&&v.status!==stF)return false;
+    if(apF==='pending'&&v.status!=='in-review')return false;
+    if(apF==='approved'&&v.status!=='released')return false;
+    if(apF==='released'){const plan=getPlan(v.planId,v.fy);if(!plan||plan.releasedVersionId!==v.versionId)return false;}
+    if(q&&!(`${v.planId} ${v.fy} ${v.name} ${v.label}`.toLowerCase().includes(q)))return false;
+    return true;
+  });
+  tbody.innerHTML=rows.map(v=>{
+    const pk=planKey(v.planId,v.fy);
+    const plan=getPlan(v.planId,v.fy);
+    const isCurrentPlan=plan?.releasedVersionId===v.versionId;
+    return`<tr>
+      <td style="font-weight:500;color:#185FA5;cursor:pointer" onclick="openPlanDetail('${pk}')">${v.planId}</td>
+      <td><strong>${v.name}</strong><div style="font-size:10px;color:var(--muted)">${v.label||'—'}</div></td>
+      <td><span class="plan-fy-chip" style="font-size:10px;padding:2px 8px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-weight:600">${v.fy}</span></td>
+      <td>${versionBadgeHtml(v.status)}</td>
+      <td style="font-size:11px">${v.submittedAt||'—'}</td>
+      <td>${isCurrentPlan?'<span class="badge badge-current-plan">Current Plan</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+      <td style="font-size:11px;color:var(--muted)">${v.updatedAt}</td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn btn-sm" onclick="openVersionInBuilder('${v.versionId}')" title="Edit"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-sm" onclick="compareReleasedToVersion('${pk}','${v.versionId}')" title="Compare"><i class="ti ti-columns"></i></button>
+        ${v.status==='in-review'?`<button class="btn btn-sm" onclick="approvalVersionId='${v.versionId}';showScreen('approval')" title="Review"><i class="ti ti-circle-check"></i></button>`:''}
+      </div></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--muted)">No versions match filters</td></tr>';
+}
+
 function badgeHtml(status){
   const m={draft:'badge-draft',review:'badge-review',approved:'badge-approved',rejected:'badge-rejected',published:'badge-published',rescinded:'badge-rescinded'};
   const sl={draft:'Draft',review:'In review',approved:'Approved',rejected:'Rejected',published:'Published',rescinded:'Rescinded'};
