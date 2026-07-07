@@ -817,32 +817,24 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="pa-form-card pa-plan-header-card">
           <div class="pa-form-icon"><i class="ti ti-file-description"></i></div>
           <div style="flex:1;min-width:0">
-            <div class="pa-form-header-title" id="plan-detail-heading">A01.A · SOLUTION ARCHITECT</div>
-            <div class="pa-form-header-meta" id="plan-detail-meta"></div>
+            <div class="pa-form-header-title" id="plan-detail-heading">A01 · SOLUTION ARCHITECT · FY27</div>
           </div>
         </div>
+
+        <div class="pa-form-card" style="padding:10px 16px"><div class="approval-stage-track" id="plan-approval-line" style="margin:0"></div></div>
 
         <div class="pa-metric-strip" id="plan-flavor-kpi"></div>
 
         <div class="pa-form-card pa-plan-content-card">
           <div class="pa-pivot" id="plan-detail-tabs" role="tablist">
             <button type="button" class="pa-pivot-tab plan-tab active" data-tab="versions" onclick="switchPlanTab('versions')" role="tab">Versions</button>
-            <button type="button" class="pa-pivot-tab plan-tab" data-tab="compare" onclick="switchPlanTab('compare')" role="tab">Compare versions</button>
             <button type="button" class="pa-pivot-tab plan-tab" data-tab="approval" onclick="switchPlanTab('approval')" role="tab">Approval history</button>
             <button type="button" class="pa-pivot-tab plan-tab" data-tab="documents" onclick="switchPlanTab('documents')" role="tab">Documents</button>
           </div>
           <div class="pa-pivot-content">
             <div id="plan-tab-versions" class="pa-pivot-panel plan-tab-panel active" role="tabpanel">
+              <div style="margin-bottom:10px"><label class="form-label" style="font-size:11px;margin-right:6px">Status</label><select class="form-select" id="plan-versions-status-filter" style="min-width:180px" onchange="renderPlanVersionsTable(currentPlanKey)"></select></div>
               <div id="plan-versions-list"></div>
-            </div>
-            <div id="plan-tab-compare" class="pa-pivot-panel plan-tab-panel" role="tabpanel">
-              <div class="pa-section-header">Compare versions &amp; flavors <span class="pa-section-count">Pick two version · flavor snapshots of this plan</span></div>
-              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
-                <div><label class="form-label" style="font-size:11px">Baseline</label><select class="form-select" id="plan-compare-left" style="min-width:280px" onchange="runPlanFlavorCompare()"></select></div>
-                <button class="btn btn-sm" onclick="swapPlanFlavorCompare()" title="Swap"><i class="ti ti-arrows-left-right"></i></button>
-                <div><label class="form-label" style="font-size:11px">Compare</label><select class="form-select" id="plan-compare-right" style="min-width:280px" onchange="runPlanFlavorCompare()"></select></div>
-              </div>
-              <div id="plan-compare-results"></div>
             </div>
             <div id="plan-tab-approval" class="pa-pivot-panel plan-tab-panel" role="tabpanel">
               <div class="pa-split">
@@ -1843,13 +1835,12 @@ function openPlanDetail(planKey){
 }
 
 function switchPlanTab(tab){
-  const validTabs=['versions','compare','approval','documents'];
+  const validTabs=['versions','approval','documents'];
   if(!validTabs.includes(tab))tab='versions';
   currentPlanTab=tab;
   document.querySelectorAll('.plan-tab,.pa-pivot-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.plan-tab-panel,.pa-pivot-panel').forEach(p=>p.classList.toggle('active',p.id==='plan-tab-'+tab));
   if(tab==='documents')renderPlanOutputTabs(currentPlanKey);
-  if(tab==='compare')populatePlanCompareSelects();
 }
 
 function buildVersionRowActions(v,planKey){
@@ -1880,12 +1871,20 @@ function renderVersionGalleryRow(v,planKey){
   const actions=buildVersionRowActions(v,planKey);
   const statusHtml=`<div class="pa-gallery-status">${versionBadgeHtml(v.status)}${isPublishedActive?'<span class="badge badge-current-plan">Active</span>':''}</div>`;
   return`<tr class="pa-gallery-row ${isPublishedActive?'row-published':''} ${isPending?'row-pending':''}">
-    <td class="col-version"><div class="pa-gallery-primary">${v.label}</div><div class="pa-gallery-secondary">${v.description||'—'}</div></td>
+    <td class="col-version"><div class="pa-gallery-primary">${v.flavorId} v${v.versionNumber}</div></td>
     <td class="col-status">${statusHtml}</td>
     <td class="col-updated" style="font-size:11px;color:var(--pa-text-secondary)">${v.updatedAt||v.createdAt||'—'}</td>
     <td class="col-owner" style="font-size:11px;color:var(--pa-text-secondary)">${v.createdBy||'—'}</td>
     <td class="pa-gallery-actions col-actions"><div class="btn-group">${actions}</div></td>
   </tr>`;
+}
+
+function renderPlanVersionsTable(planKey){
+  const list=document.getElementById('plan-versions-list');
+  if(!list)return;
+  const statusF=document.getElementById('plan-versions-status-filter')?.value||'';
+  const items=getVersionsForFlavor(planKey).filter(v=>!statusF||v.status===statusF);
+  list.innerHTML=renderVersionSection('All versions',items,planKey);
 }
 
 function renderVersionSection(title,items,planKey){
@@ -1941,17 +1940,29 @@ function renderPlanDetail(planKey){
   const allVers=getVersionsForFlavor(planKey);
   const planName=plan.planName||planId;
   const approvalStatus=getPlanApprovalStatusLabel(planKey);
-  const titleText=`${planId} · ${planName}`;
+  const titleText=`${planId} · ${planName} · ${fy}`;
 
   const titleEl=document.getElementById('plan-detail-title');
   const headingEl=document.getElementById('plan-detail-heading');
   if(titleEl)titleEl.textContent=titleText;
   if(headingEl)headingEl.textContent=titleText;
-  const metaEl=document.getElementById('plan-detail-meta');
-  if(metaEl)metaEl.innerHTML=`
-    <span class="pa-fy-chip">${fy}</span>
-    <span>${flavors.length} flavor${flavors.length===1?'':'s'}: ${flavors.map(f=>`${f.flavorLabel} · ${f.role}`).join(' &nbsp;|&nbsp; ')}</span>
-    <span>Owner: ${plan.owner||'—'}</span>`;
+
+  // Approval progress line — current stage of the plan.
+  const repVer=getPendingApprovalVersions(planKey)[0]||pub||allVers[0];
+  const lineEl=document.getElementById('plan-approval-line');
+  if(lineEl){
+    const stageIdx={in_progress:0,susan_review:1,susan_approved:2,susan_rejected:1,seo_review:3,seo_approved:4,published:5};
+    const stageNames=['In Progress','Susan Review','Susan Approved','SEO Review','SEO Approved','Published'];
+    const stage=repVer?(repVer.status==='published'?'published':repVer.approvalStage):'in_progress';
+    const currentIdx=stageIdx[stage]??0;
+    lineEl.innerHTML=stageNames.map((name,i)=>{
+      let cls='pending';
+      if(repVer&&repVer.approvalStage==='susan_rejected'&&i===1)cls='rejected';
+      else if(i<currentIdx)cls='done';
+      else if(i===currentIdx)cls='active';
+      return`<div class="approval-stage ${cls}"><div class="approval-stage-dot">${i<currentIdx?'<i class="ti ti-check" style="font-size:11px"></i>':i+1}</div><div class="approval-stage-label">${name}</div></div>`;
+    }).join('');
+  }
 
   document.getElementById('plan-flavor-kpi').innerHTML=`
     <div class="pa-metric-tile">
@@ -1965,14 +1976,14 @@ function renderPlanDetail(planKey){
       <div class="pa-metric-tile-sub">${drafts.length} draft${drafts.length===1?'':'s'} · ${pending.length} pending</div>
     </div>`;
 
-  const sections=[
-    {title:'Published version',filter:v=>v.isActivePublished&&v.status==='published'},
-    {title:'Pending approval',filter:v=>['submitted','approved'].includes(v.status)||v.approvalStage==='seo_review'},
-    {title:'Working drafts',filter:v=>EDITABLE_STATUSES.includes(v.status)},
-  ];
-  document.getElementById('plan-versions-list').innerHTML=sections.map(s=>
-    renderVersionSection(s.title,allVers.filter(s.filter),planKey)
-  ).join('');
+  // Populate the version status filter (once per render) then draw the consolidated table.
+  const stFilter=document.getElementById('plan-versions-status-filter');
+  if(stFilter){
+    const cur=stFilter.value;
+    stFilter.innerHTML='<option value="">All statuses</option>'+Object.keys(VERSION_STATUS_LABELS).map(k=>`<option value="${k}">${VERSION_STATUS_LABELS[k]}</option>`).join('');
+    stFilter.value=cur;
+  }
+  renderPlanVersionsTable(planKey);
 
   document.getElementById('plan-approval-events').innerHTML=getApprovalEventsForFlavor(planKey).map(e=>{
     const v=getVersion(e.versionId);
