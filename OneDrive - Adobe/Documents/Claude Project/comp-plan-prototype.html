@@ -790,7 +790,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="filter-bar">
           <select class="filter-select" id="library-fy-filter" onchange="buildLibrary()"><option value="">All Fiscal Years</option><option value="FY27">FY27</option><option value="FY26">FY26</option></select>
           <select class="filter-select" id="library-role-filter" onchange="buildLibrary()"><option value="">All Role Groups</option><option value="Enterprise AE">Enterprise AE</option><option value="Commercial AE">Commercial AE</option><option value="SMB AE">SMB AE</option><option value="Inside Sales">Inside Sales</option><option value="Field Sales">Field Sales</option></select>
-          <select class="filter-select" id="library-status-filter" onchange="buildLibrary()"><option value="">All Statuses</option><option value="Draft">Draft</option><option value="In Review">In Review</option><option value="Approved">Approved</option><option value="Published">Published</option></select>
+          <select class="filter-select" id="library-status-filter" onchange="buildLibrary()"><option value="">All Statuses</option><option value="Draft">Draft</option><option value="Pending review">Pending review</option><option value="Approved">Approved</option><option value="Withdrawn">Withdrawn</option><option value="Published">Published</option></select>
           <select class="filter-select" id="library-owner-filter" onchange="buildLibrary()"><option value="">All Owners</option><option value="Melissa C.">Melissa C.</option><option value="Val R.">Val R.</option></select>
           <input class="search-input" id="library-search" placeholder="Search plans…" type="search" oninput="buildLibrary()">
         </div>
@@ -1614,17 +1614,26 @@ let approvalVersionId='ver-A01-FY27-2';
 let currentPlanTab='versions';
 
 const VERSION_STATUS_LABELS={
-  draft:'Draft',in_review:'In Review',submitted:'Submitted for Approval',approved:'Approved',
-  rejected:'Rejected',rescinded:'Rescinded',published:'Published',archived:'Archived'
+  draft:'Draft',pending_review:'Pending review',approved:'Approved',withdrawn:'Withdrawn',published:'Published'
 };
+const APPROVAL_STAGES=['draft','first_review','second_review','executive_review','release_validation','document_generation','payout_system_config','completed'];
 const APPROVAL_STAGE_LABELS={
-  in_progress:'In Progress',susan_review:'Ready for Susan Review',susan_approved:'Susan Approved',
-  susan_rejected:'Susan Rejected',seo_review:'SEO Review',seo_approved:'SEO Approved',published:'Published'
+  draft:'Draft',first_review:'1st Review',second_review:'2nd Review',executive_review:'Executive Review',
+  release_validation:'Release Validation',document_generation:'Document Generation',
+  payout_system_config:'Payout Review & System Configuration',completed:'Completed'
 };
-const APPROVAL_STAGES=['in_progress','susan_review','susan_approved','seo_review','seo_approved','published'];
 const VALID_FYS=['FY26','FY27'];
-const EDITABLE_STATUSES=['draft','in_review','rejected'];
-const LOCKED_STATUSES=['approved','published','rescinded','archived'];
+const EDITABLE_STATUSES=['draft','withdrawn'];
+const LOCKED_STATUSES=['pending_review','approved','published'];
+function stageIndex(stage){const i=APPROVAL_STAGES.indexOf(stage);return i<0?0:i;}
+/* Derive the coarse status from the fine-grained approval stage ("reviews, then ops"). */
+function statusFromStage(stage){
+  if(stage==='draft')return 'draft';
+  if(['first_review','second_review','executive_review'].includes(stage))return 'pending_review';
+  if(['release_validation','document_generation','payout_system_config'].includes(stage))return 'approved';
+  if(stage==='completed')return 'published';
+  return 'draft';
+}
 
 function planKey(planId,fy){return `${planId}|${fy}`;}
 function parsePlanKey(key){
@@ -1677,17 +1686,17 @@ const planFlavors=[
 
 /* Plan versions — anchored to planId (one approval chain per plan, covering all flavors). */
 let planVersions=[
-  {versionId:'ver-A01-FY26-1',flavorId:'A01',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Oct 1, 2025',updatedAt:'Oct 12, 2025',submittedAt:'Oct 8, 2025',approvedAt:'Oct 10, 2025',publishedAt:'Oct 12, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'FY26 baseline',description:'FY26 approved baseline',approvalStage:'published',isActivePublished:false},
-  {versionId:'ver-A01-FY27-1',flavorId:'A01',fy:'FY27',versionNumber:1,label:'Draft v1',status:'draft',sourceVersionId:'ver-A01-FY26-1',createdBy:'Melissa C.',createdAt:'Jun 3, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'FY26 structure carry-forward',approvalStage:'in_progress',isActivePublished:false},
-  {versionId:'ver-A01-FY27-2',flavorId:'A01',fy:'FY27',versionNumber:2,label:'Draft v2',status:'submitted',sourceVersionId:'ver-A01-FY27-1',createdBy:'Melissa C.',createdAt:'Jun 8, 2026',updatedAt:'Jun 11, 2026',submittedAt:'Jun 11, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Quarterly payout & renewal tether',approvalStage:'susan_review',isActivePublished:false},
-  {versionId:'ver-A01-FY27-3',flavorId:'A01',fy:'FY27',versionNumber:3,label:'Draft v3',status:'in_review',sourceVersionId:'ver-A01-FY27-1',createdBy:'Val R.',createdAt:'Jun 10, 2026',updatedAt:'Jun 10, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Higher 150%+ accelerators',approvalStage:'in_progress',isActivePublished:false},
-  {versionId:'ver-B01-FY26-1',flavorId:'B01',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 20, 2025',submittedAt:'Oct 12, 2025',approvedAt:'Oct 18, 2025',publishedAt:'Oct 20, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 renewal & field plan',approvalStage:'published',isActivePublished:false},
-  {versionId:'ver-B01-FY27-1',flavorId:'B01',fy:'FY27',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:'ver-B01-FY26-1',createdBy:'Val R.',createdAt:'Jun 1, 2026',updatedAt:'Jun 9, 2026',submittedAt:'Jun 5, 2026',approvedAt:'Jun 8, 2026',publishedAt:'Jun 9, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Renewal & field FY27 plan',approvalStage:'published',isActivePublished:true},
-  {versionId:'ver-S08-FY26-1',flavorId:'S08',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 28, 2025',submittedAt:'Oct 20, 2025',approvedAt:'Oct 25, 2025',publishedAt:'Oct 28, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 business plan',approvalStage:'published',isActivePublished:false},
-  {versionId:'ver-S08-FY27-1',flavorId:'S08',fy:'FY27',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:'ver-S08-FY26-1',createdBy:'Val R.',createdAt:'May 20, 2026',updatedAt:'Jun 5, 2026',submittedAt:'Jun 3, 2026',approvedAt:'Jun 4, 2026',publishedAt:'Jun 5, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Business-focused plan',approvalStage:'published',isActivePublished:true},
-  {versionId:'ver-S02-FY27-1',flavorId:'S02',fy:'FY27',versionNumber:1,label:'Draft v1',status:'approved',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'May 28, 2026',updatedAt:'Jun 10, 2026',submittedAt:'Jun 8, 2026',approvedAt:'Jun 10, 2026',publishedAt:null,rescindedAt:null,approvedBy:'Susan L.',publishedBy:null,comments:'Approved pending SEO',description:'Customer success baseline FY27',approvalStage:'seo_review',isActivePublished:false},
-  {versionId:'ver-T04-FY27-1',flavorId:'T04',fy:'FY27',versionNumber:1,label:'Draft v1',status:'rejected',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 2, 2026',submittedAt:'Jun 2, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'Increase 150%+ multiplier to 2.00x. Add renewal tether.',description:'Digital sales revision',approvalStage:'susan_rejected',isActivePublished:false},
-  {versionId:'ver-M01-FY27-1',flavorId:'M01',fy:'FY27',versionNumber:1,label:'Draft v1',status:'draft',sourceVersionId:null,createdBy:'Val R.',createdAt:'Jun 5, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Inside sales AE draft',approvalStage:'in_progress',isActivePublished:false},
+  {versionId:'ver-A01-FY26-1',flavorId:'A01',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Oct 1, 2025',updatedAt:'Oct 12, 2025',submittedAt:'Oct 8, 2025',approvedAt:'Oct 10, 2025',publishedAt:'Oct 12, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'FY26 baseline',description:'FY26 approved baseline',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-A01-FY27-1',flavorId:'A01',fy:'FY27',versionNumber:1,label:'Draft v1',status:'draft',sourceVersionId:'ver-A01-FY26-1',createdBy:'Melissa C.',createdAt:'Jun 3, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'FY26 structure carry-forward',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-A01-FY27-2',flavorId:'A01',fy:'FY27',versionNumber:2,label:'Draft v2',status:'pending_review',sourceVersionId:'ver-A01-FY27-1',createdBy:'Melissa C.',createdAt:'Jun 8, 2026',updatedAt:'Jun 11, 2026',submittedAt:'Jun 11, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Quarterly payout & renewal tether',approvalStage:'first_review',isActivePublished:false},
+  {versionId:'ver-A01-FY27-3',flavorId:'A01',fy:'FY27',versionNumber:3,label:'Draft v3',status:'draft',sourceVersionId:'ver-A01-FY27-1',createdBy:'Val R.',createdAt:'Jun 10, 2026',updatedAt:'Jun 10, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Higher 150%+ accelerators',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-B01-FY26-1',flavorId:'B01',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 20, 2025',submittedAt:'Oct 12, 2025',approvedAt:'Oct 18, 2025',publishedAt:'Oct 20, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 renewal & field plan',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-B01-FY27-1',flavorId:'B01',fy:'FY27',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:'ver-B01-FY26-1',createdBy:'Val R.',createdAt:'Jun 1, 2026',updatedAt:'Jun 9, 2026',submittedAt:'Jun 5, 2026',approvedAt:'Jun 8, 2026',publishedAt:'Jun 9, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Renewal & field FY27 plan',approvalStage:'completed',isActivePublished:true},
+  {versionId:'ver-S08-FY26-1',flavorId:'S08',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 28, 2025',submittedAt:'Oct 20, 2025',approvedAt:'Oct 25, 2025',publishedAt:'Oct 28, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 business plan',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-S08-FY27-1',flavorId:'S08',fy:'FY27',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:'ver-S08-FY26-1',createdBy:'Val R.',createdAt:'May 20, 2026',updatedAt:'Jun 5, 2026',submittedAt:'Jun 3, 2026',approvedAt:'Jun 4, 2026',publishedAt:'Jun 5, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Business-focused plan',approvalStage:'completed',isActivePublished:true},
+  {versionId:'ver-S02-FY27-1',flavorId:'S02',fy:'FY27',versionNumber:1,label:'Draft v1',status:'approved',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'May 28, 2026',updatedAt:'Jun 10, 2026',submittedAt:'Jun 8, 2026',approvedAt:'Jun 10, 2026',publishedAt:null,rescindedAt:null,approvedBy:'Susan L.',publishedBy:null,comments:'Approved pending SEO',description:'Customer success baseline FY27',approvalStage:'release_validation',isActivePublished:false},
+  {versionId:'ver-T04-FY27-1',flavorId:'T04',fy:'FY27',versionNumber:1,label:'Draft v1',status:'withdrawn',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 2, 2026',submittedAt:'Jun 2, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'Increase 150%+ multiplier to 2.00x. Add renewal tether.',description:'Digital sales revision',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-M01-FY27-1',flavorId:'M01',fy:'FY27',versionNumber:1,label:'Draft v1',status:'draft',sourceVersionId:null,createdBy:'Val R.',createdAt:'Jun 5, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Inside sales AE draft',approvalStage:'draft',isActivePublished:false},
 ];
 
 let approvalEvents=[
@@ -1711,12 +1720,12 @@ let auditLog=[
 let proposals=[];
 let publishedRevisions=[];
 function syncLegacyFromVersions(){
-  proposals=planVersions.filter(v=>!['published','rescinded'].includes(v.status)||v.status==='published'&&!v.isActivePublished).map(versionToLegacyProposal);
-  publishedRevisions=planVersions.filter(v=>v.status==='published'||v.status==='rescinded').map(v=>({
+  proposals=planVersions.filter(v=>v.status!=='published').map(versionToLegacyProposal);
+  publishedRevisions=planVersions.filter(v=>v.status==='published').map(v=>({
     revisionId:v.versionId,planId:v.flavorId,revisionNumber:v.versionNumber,fy:v.fy,
     publishedAt:v.publishedAt,publishedBy:v.publishedBy||v.approvedBy,
     sourceProposalId:v.sourceVersionId,isCurrent:v.isActivePublished,
-    status:v.status==='rescinded'?'rescinded':'published',rescindedAt:v.rescindedAt,
+    status:'published',rescindedAt:null,
   }));
 }
 syncLegacyFromVersions();
@@ -1751,7 +1760,7 @@ function getVersionsForFlavor(planKey){
   return planVersions.filter(v=>v.flavorId===planId&&v.fy===fy).sort((a,b)=>b.versionNumber-a.versionNumber);
 }
 function getActiveVersionsForFlavor(planKey){
-  return getVersionsForFlavor(planKey).filter(v=>v.status!=='archived');
+  return getVersionsForFlavor(planKey).filter(v=>v.status!=='withdrawn');
 }
 function getPublishedVersion(planKey){
   const {planId,fy}=parsePlanKey(planKey);
@@ -1763,10 +1772,10 @@ function getDraftVersions(planKey){
   return getVersionsForFlavor(planKey).filter(v=>EDITABLE_STATUSES.includes(v.status));
 }
 function getPendingApprovalVersions(planKey){
-  return getVersionsForFlavor(planKey).filter(v=>['submitted','approved'].includes(v.status)||v.approvalStage==='seo_review');
+  return getVersionsForFlavor(planKey).filter(v=>['pending_review','approved'].includes(v.status));
 }
 function getHistoryVersions(planKey){
-  return getVersionsForFlavor(planKey).filter(v=>['published','rescinded','archived','rejected'].includes(v.status));
+  return getVersionsForFlavor(planKey).filter(v=>['published','withdrawn'].includes(v.status));
 }
 function getApprovalEventsForVersion(versionId){
   return approvalEvents.filter(e=>e.versionId===versionId).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
@@ -1778,7 +1787,7 @@ function getApprovalEventsForFlavor(planKey){
 
 /* Legacy proposal/revision shims */
 function versionToLegacyProposal(v){
-  const statusMap={in_review:'ready',submitted:'submitted',approved:'approved',rejected:'rejected',draft:'draft',archived:'archived',rescinded:'rescinded',published:'approved'};
+  const statusMap={draft:'draft',pending_review:'submitted',approved:'approved',withdrawn:'rejected',published:'approved'};
   return{proposalId:v.versionId,planId:v.flavorId,proposalName:v.label,draftLabel:v.description,status:statusMap[v.status]||v.status,
     createdBy:v.createdBy,createdAt:v.createdAt,updatedAt:v.updatedAt,submittedAt:v.submittedAt,
     parentRevisionId:v.sourceVersionId,parentProposalId:v.sourceVersionId,fy:v.fy};
@@ -1786,12 +1795,12 @@ function versionToLegacyProposal(v){
 function getProposal(proposalId){const v=getVersion(proposalId);return v?versionToLegacyProposal(v):null;}
 function getRevision(revisionId){
   const v=getVersion(revisionId);
-  if(v)return{revisionId:v.versionId,planId:v.flavorId,revisionNumber:v.versionNumber,fy:v.fy,isCurrent:v.isActivePublished,status:v.status==='rescinded'?'rescinded':'published',sourceProposalId:v.sourceVersionId,publishedAt:v.publishedAt,publishedBy:v.publishedBy,rescindedAt:v.rescindedAt};
+  if(v)return{revisionId:v.versionId,planId:v.flavorId,revisionNumber:v.versionNumber,fy:v.fy,isCurrent:v.isActivePublished,status:'published',sourceProposalId:v.sourceVersionId,publishedAt:v.publishedAt,publishedBy:v.publishedBy,rescindedAt:v.rescindedAt};
   return publishedRevisions.find(r=>r.revisionId===revisionId);
 }
 function getProposalsForPlan(planKey){return getActiveVersionsForFlavor(planKey).map(versionToLegacyProposal);}
-function getActiveProposalsForPlan(planKey){return getVersionsForFlavor(planKey).filter(v=>v.status!=='archived').map(versionToLegacyProposal);}
-function getRevisionsForPlan(planKey){return getVersionsForFlavor(planKey).filter(v=>v.status==='published'||v.status==='rescinded').map(v=>({revisionId:v.versionId,planId:v.flavorId,revisionNumber:v.versionNumber,fy:v.fy,publishedAt:v.publishedAt,publishedBy:v.publishedBy,isCurrent:v.isActivePublished,status:v.status==='rescinded'?'rescinded':'published',sourceProposalId:v.sourceVersionId,rescindedAt:v.rescindedAt}));}
+function getActiveProposalsForPlan(planKey){return getVersionsForFlavor(planKey).filter(v=>v.status!=='withdrawn').map(versionToLegacyProposal);}
+function getRevisionsForPlan(planKey){return getVersionsForFlavor(planKey).filter(v=>v.status==='published').map(v=>({revisionId:v.versionId,planId:v.flavorId,revisionNumber:v.versionNumber,fy:v.fy,publishedAt:v.publishedAt,publishedBy:v.publishedBy,isCurrent:v.isActivePublished,status:'published',sourceProposalId:v.sourceVersionId,rescindedAt:null}));}
 function getCurrentRevision(planKey){const pub=getPublishedVersion(planKey);if(!pub)return null;return{revisionId:pub.versionId,planId:pub.flavorId,revisionNumber:pub.versionNumber,fy:pub.fy,publishedAt:pub.publishedAt,publishedBy:pub.publishedBy,isCurrent:true,status:'published',sourceProposalId:pub.sourceVersionId,rescindedAt:null};}
 function getAuditForPlan(planKey){const {planId,fy}=parsePlanKey(planKey);return auditLog.filter(a=>a.planId===planId&&a.fy===fy);}
 const PROPOSAL_STATUS_LABELS=VERSION_STATUS_LABELS;
@@ -1801,10 +1810,10 @@ Object.defineProperty(window,'currentProposalId',{get:()=>currentVersionId,set:v
 Object.defineProperty(window,'approvalProposalId',{get:()=>approvalVersionId,set:v=>{approvalVersionId=v;}});
 
 function versionBadgeHtml(status){
-  const m={draft:'badge-draft',in_review:'badge-in-review',submitted:'badge-submitted',approved:'badge-approved',rejected:'badge-rejected',rescinded:'badge-rescinded',published:'badge-published',archived:'badge-archived',ready:'badge-ready'};
+  const m={draft:'badge-draft',pending_review:'badge-review',approved:'badge-approved',withdrawn:'badge-rescinded',published:'badge-published'};
   return`<span class="badge ${m[status]||'badge-draft'}">${VERSION_STATUS_LABELS[status]||status}</span>`;
 }
-function proposalBadgeHtml(status){return versionBadgeHtml(status==='ready'?'in_review':status);}
+function proposalBadgeHtml(status){return versionBadgeHtml(status);}
 
 function isVersionEditable(v){return v&&EDITABLE_STATUSES.includes(v.status);}
 function formatVersionLabel(v){return v?`${v.status==='published'?'Published':'Draft'} v${v.versionNumber}`:'';}
@@ -1844,34 +1853,32 @@ function switchPlanTab(tab){
 }
 
 function buildVersionRowActions(v,planKey){
+  const inQueue=['pending_review','approved'].includes(v.status);
   const isPublishedActive=v.isActivePublished&&v.status==='published';
-  const locked=LOCKED_STATUSES.includes(v.status);
   let actions='';
   if(isVersionEditable(v)){
     actions+=`<button class="btn btn-sm" onclick="openVersionInBuilder('${v.versionId}')" title="Edit"><i class="ti ti-edit"></i></button>`;
-    actions+=`<button class="btn btn-sm" onclick="compareVersionToPublished('${planKey}','${v.versionId}')" title="Compare"><i class="ti ti-columns"></i></button>`;
-    if(v.status==='draft'||v.status==='in_review'||v.status==='rejected')
-      actions+=`<button class="btn btn-sm btn-primary" onclick="submitVersionById('${v.versionId}')" title="Submit"><i class="ti ti-send"></i></button>`;
+    actions+=`<button class="btn btn-sm btn-primary" onclick="submitVersionById('${v.versionId}')" title="Submit for approval"><i class="ti ti-send"></i></button>`;
+    actions+=`<button class="btn btn-sm" onclick="duplicateVersionById('${v.versionId}')" title="New revision"><i class="ti ti-copy"></i></button>`;
+  }else if(inQueue){
+    actions+=`<button class="btn btn-sm" onclick="approvalVersionId='${v.versionId}';showScreen('approval')" title="Open approval"><i class="ti ti-circle-check"></i></button>`;
+    actions+=`<button class="btn btn-sm btn-primary" onclick="advanceVersionStage('${v.versionId}')" title="Approve / advance to next stage"><i class="ti ti-arrow-right"></i></button>`;
+    actions+=`<button class="btn btn-sm" onclick="withdrawVersion('${v.versionId}')" title="Withdraw"><i class="ti ti-x"></i></button>`;
   }else{
-    actions+=`<button class="btn btn-sm" onclick="compareVersionToPublished('${planKey}','${v.versionId}')" title="Compare"><i class="ti ti-columns"></i></button>`;
-    if(v.status==='approved'||isPublishedActive)
-      actions+=`<button class="btn btn-sm" onclick="rescindVersionApproval('${v.versionId}')" title="Rescind"><i class="ti ti-rotate-clockwise"></i></button>`;
-    if(v.status==='approved'&&v.approvalStage==='seo_approved')
-      actions+=`<button class="btn btn-sm btn-primary" onclick="publishVersionById('${v.versionId}')" title="Publish"><i class="ti ti-upload"></i></button>`;
-    if(v.status==='submitted'||v.approvalStage==='susan_review')
-      actions+=`<button class="btn btn-sm" onclick="approvalVersionId='${v.versionId}';showScreen('approval')" title="Review"><i class="ti ti-circle-check"></i></button>`;
+    if(isPublishedActive)actions+=`<button class="btn btn-sm" onclick="withdrawVersion('${v.versionId}')" title="Withdraw"><i class="ti ti-rotate-clockwise"></i></button>`;
+    actions+=`<button class="btn btn-sm" onclick="duplicateVersionById('${v.versionId}')" title="New revision"><i class="ti ti-copy"></i></button>`;
   }
-  if(!locked)actions+=`<button class="btn btn-sm" onclick="duplicateVersionById('${v.versionId}')" title="New revision"><i class="ti ti-copy"></i></button>`;
   return actions;
 }
 
 function renderVersionGalleryRow(v,planKey){
   const isPublishedActive=v.isActivePublished&&v.status==='published';
-  const isPending=['submitted','approved'].includes(v.status)||v.approvalStage==='seo_review';
+  const isQueue=['pending_review','approved'].includes(v.status);
   const actions=buildVersionRowActions(v,planKey);
+  const queueChip=isQueue?`<span class="badge badge-review" style="margin-left:6px">In approval queue · ${APPROVAL_STAGE_LABELS[v.approvalStage]||''}</span>`:'';
   const statusHtml=`<div class="pa-gallery-status">${versionBadgeHtml(v.status)}${isPublishedActive?'<span class="badge badge-current-plan">Active</span>':''}</div>`;
-  return`<tr class="pa-gallery-row ${isPublishedActive?'row-published':''} ${isPending?'row-pending':''}">
-    <td class="col-version"><div class="pa-gallery-primary">${v.flavorId} v${v.versionNumber}</div></td>
+  return`<tr class="pa-gallery-row ${isPublishedActive?'row-published':''} ${isQueue?'row-pending':''}" ${isQueue?'style="background:#FFF8E6"':''}>
+    <td class="col-version"><div class="pa-gallery-primary">${v.flavorId} v${v.versionNumber}${queueChip}</div></td>
     <td class="col-status">${statusHtml}</td>
     <td class="col-updated" style="font-size:11px;color:var(--pa-text-secondary)">${v.updatedAt||v.createdAt||'—'}</td>
     <td class="col-owner" style="font-size:11px;color:var(--pa-text-secondary)">${v.createdBy||'—'}</td>
@@ -1884,6 +1891,12 @@ function renderPlanVersionsTable(planKey){
   if(!list)return;
   const statusF=document.getElementById('plan-versions-status-filter')?.value||'';
   const items=getVersionsForFlavor(planKey).filter(v=>!statusF||v.status===statusF);
+  // Pin the in-queue version (Pending review / Approved) to the top.
+  items.sort((a,b)=>{
+    const aq=['pending_review','approved'].includes(a.status)?0:1;
+    const bq=['pending_review','approved'].includes(b.status)?0:1;
+    return aq!==bq?aq-bq:b.versionNumber-a.versionNumber;
+  });
   list.innerHTML=renderVersionSection('All versions',items,planKey);
 }
 
@@ -1920,13 +1933,13 @@ function getPlanApprovalStatusLabel(planKey){
   const pub=getPublishedVersion(planKey);
   if(pending.length){
     const latest=pending[0];
-    if(latest.approvalStage==='seo_review')return{label:'SEO review',badge:'badge-review'};
-    if(latest.status==='approved')return{label:'Approved — pending publish',badge:'badge-approved'};
-    return{label:'Pending approval',badge:'badge-review'};
+    const stageLbl=APPROVAL_STAGE_LABELS[latest.approvalStage]||'Pending review';
+    if(latest.status==='approved')return{label:`Approved · ${stageLbl}`,badge:'badge-approved'};
+    return{label:`Pending review · ${stageLbl}`,badge:'badge-review'};
   }
   if(pub)return{label:'Published',badge:'badge-published'};
-  if(getDraftVersions(planKey).length)return{label:'In design',badge:'badge-draft'};
-  return{label:'Not started',badge:'badge-draft'};
+  if(getDraftVersions(planKey).length)return{label:'Draft',badge:'badge-draft'};
+  return{label:'Draft',badge:'badge-draft'};
 }
 
 function renderPlanDetail(planKey){
@@ -1947,20 +1960,18 @@ function renderPlanDetail(planKey){
   if(titleEl)titleEl.textContent=titleText;
   if(headingEl)headingEl.textContent=titleText;
 
-  // Approval progress line — current stage of the plan.
+  // Approval progress line — 8 stages, current stage of the plan.
   const repVer=getPendingApprovalVersions(planKey)[0]||pub||allVers[0];
   const lineEl=document.getElementById('plan-approval-line');
   if(lineEl){
-    const stageIdx={in_progress:0,susan_review:1,susan_approved:2,susan_rejected:1,seo_review:3,seo_approved:4,published:5};
-    const stageNames=['In Progress','Susan Review','Susan Approved','SEO Review','SEO Approved','Published'];
-    const stage=repVer?(repVer.status==='published'?'published':repVer.approvalStage):'in_progress';
-    const currentIdx=stageIdx[stage]??0;
-    lineEl.innerHTML=stageNames.map((name,i)=>{
+    const currentIdx=repVer?stageIndex(repVer.approvalStage):0;
+    const withdrawn=repVer&&repVer.status==='withdrawn';
+    lineEl.innerHTML=APPROVAL_STAGES.map((key,i)=>{
       let cls='pending';
-      if(repVer&&repVer.approvalStage==='susan_rejected'&&i===1)cls='rejected';
+      if(withdrawn&&i===0)cls='rejected';
       else if(i<currentIdx)cls='done';
       else if(i===currentIdx)cls='active';
-      return`<div class="approval-stage ${cls}"><div class="approval-stage-dot">${i<currentIdx?'<i class="ti ti-check" style="font-size:11px"></i>':i+1}</div><div class="approval-stage-label">${name}</div></div>`;
+      return`<div class="approval-stage ${cls}"><div class="approval-stage-dot">${i<currentIdx?'<i class="ti ti-check" style="font-size:11px"></i>':i+1}</div><div class="approval-stage-label">${APPROVAL_STAGE_LABELS[key]}</div></div>`;
     }).join('');
   }
 
@@ -1987,7 +1998,7 @@ function renderPlanDetail(planKey){
 
   document.getElementById('plan-approval-events').innerHTML=getApprovalEventsForFlavor(planKey).map(e=>{
     const v=getVersion(e.versionId);
-    const actionLabels={submitted:'Submitted for approval',approved:'Susan approved',rejected:'Susan rejected',seo_approved:'SEO approved',published:'Published',rescinded:'Rescinded',created:'Revision created'};
+    const actionLabels={submitted:'Submitted for approval',advanced:'Advanced stage',approved:'Approved',withdrawn:'Withdrawn',published:'Published',created:'Revision created',rejected:'Withdrawn',rescinded:'Withdrawn',seo_approved:'Advanced stage'};
     return`<div class="pa-timeline-item"><div class="pa-timeline-dot"></div><div><div class="pa-timeline-title">${actionLabels[e.action]||e.action} · ${v?.label||''}</div><div class="pa-timeline-meta">${e.actor} · ${e.timestamp}</div>${e.note?`<div style="font-size:11px;margin-top:4px;color:var(--pa-text-secondary)">${e.note}</div>`:''}</div></div>`;
   }).join('')||'<div class="pa-empty-state">No approval events yet</div>';
 
@@ -2099,7 +2110,7 @@ function createVersionRecord(planKey,opts={}){
     versionId:id,flavorId:planId,fy,versionNumber:num,label:`Draft v${num}`,status:'draft',
     sourceVersionId:opts.sourceVersionId||null,createdBy:'Melissa C.',createdAt:now,updatedAt:now,
     submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,
-    comments:'',description:opts.description||`Revision v${num}`,approvalStage:'in_progress',isActivePublished:false,
+    comments:'',description:opts.description||`Revision v${num}`,approvalStage:'draft',isActivePublished:false,
   };
   // Version-scoped content: clone from the source version, else start blank.
   const src=opts.sourceVersionId?getVersion(opts.sourceVersionId):null;
@@ -2152,7 +2163,7 @@ function updateBuilderVersionBar(planKey,versionId){
   const submitBtn=document.getElementById('builder-submit-btn');
   const headerSubmit=document.getElementById('builder-header-submit');
   const otherPending=getPendingApprovalVersions(planKey).filter(x=>x.versionId!==versionId);
-  const canSubmit=isVersionEditable(v)&&(v.status==='draft'||v.status==='in_review'||v.status==='rejected')&&!otherPending.length;
+  const canSubmit=isVersionEditable(v)&&!otherPending.length;
   if(submitBtn){submitBtn.style.display=canSubmit?'inline-flex':'none';}
   if(headerSubmit){headerSubmit.style.display=canSubmit?'inline-flex':'none';}
   const queueNote=document.getElementById('builder-approval-queue-note');
@@ -2172,125 +2183,96 @@ function duplicateVersionById(versionId){
 }
 function duplicateCurrentVersion(){if(currentVersionId)duplicateVersionById(currentVersionId);else openCreateRevisionModal();}
 
+function refreshAfterVersionChange(pk){
+  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildLibrary();buildProposalTracker();
+  if(document.getElementById('screen-approval')?.classList.contains('active'))renderApprovalScreen();
+  if(currentPlanKey===pk)renderPlanDetail(pk);
+}
+
 function submitVersionById(versionId){
   const v=getVersion(versionId);
   if(!v||!isVersionEditable(v))return;
   const pk=planKey(v.flavorId,v.fy);
   // Only one version per comp plan may be in the approval queue at a time.
   const inQueue=getPendingApprovalVersions(pk).filter(x=>x.versionId!==versionId);
-  if(inQueue.length){alert(`${inQueue[0].label} is already in the approval queue for ${v.flavorId} · ${v.fy}. Only one version can be in approval at a time — publish, reject, or withdraw it first.`);return;}
+  if(inQueue.length){alert(`${inQueue[0].flavorId} v${inQueue[0].versionNumber} is already in the approval queue for ${v.flavorId} · ${v.fy}. Only one version can be in approval at a time — advance or withdraw it first.`);return;}
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  v.status='submitted';v.approvalStage='susan_review';v.submittedAt=now;v.updatedAt=now;
+  v.status='pending_review';v.approvalStage='first_review';v.submittedAt=now;v.updatedAt=now;
   approvalVersionId=versionId;
-  addApprovalEvent(versionId,'submitted','Submitted for Susan review.');
-  addAuditEntry(pk,'Submitted for approval',`${v.label} submitted.`,{versionId});
-  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();
-  if(currentPlanKey===pk)renderPlanDetail(pk);
-  alert(`${v.label} submitted for approval.`);
+  addApprovalEvent(versionId,'submitted','Submitted for 1st Review.');
+  addAuditEntry(pk,'Submitted for approval',`${v.flavorId} v${v.versionNumber} submitted for 1st Review.`,{versionId});
+  refreshAfterVersionChange(pk);
+  alert(`${v.flavorId} v${v.versionNumber} submitted — now at 1st Review.`);
 }
 function submitProposalById(id){submitVersionById(id);}
 function submitCurrentVersion(){if(currentVersionId)submitVersionById(currentVersionId);}
 function submitCurrentProposal(){submitCurrentVersion();}
 
-function approveVersionSusan(versionId){
+/* Generic approve/advance — move one stage forward; auto-publish at Completed. */
+function advanceVersionStage(versionId){
   const v=getVersion(versionId);
   if(!v)return;
+  const pk=planKey(v.flavorId,v.fy);
+  const idx=stageIndex(v.approvalStage);
+  if(idx>=APPROVAL_STAGES.length-1)return; // already Completed
+  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const note=document.getElementById('approval-comment-input')?.value||'';
-  const pk=planKey(v.flavorId,v.fy);
-  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  v.status='approved';v.approvalStage='seo_review';v.approvedAt=now;v.approvedBy='Susan L.';v.updatedAt=now;
+  const nextStage=APPROVAL_STAGES[idx+1];
+  v.approvalStage=nextStage;
+  v.status=statusFromStage(nextStage);
+  v.updatedAt=now;
   if(note)v.comments=note;
-  addApprovalEvent(versionId,'approved',note||'Susan approved — awaiting SEO review.','Susan L.');
-  addAuditEntry(pk,'Susan approved',`${v.label} approved by Susan L.`,{versionId});
-  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();renderApprovalScreen();
-  if(currentPlanKey===pk)renderPlanDetail(pk);
-}
-function rejectVersionSusan(versionId){
-  const v=getVersion(versionId);
-  if(!v)return;
-  const note=document.getElementById('approval-comment-input')?.value||'Returned for revision.';
-  const pk=planKey(v.flavorId,v.fy);
-  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  v.status='rejected';v.approvalStage='susan_rejected';v.updatedAt=now;v.comments=note;
-  addApprovalEvent(versionId,'rejected',note,'Susan L.');
-  addAuditEntry(pk,'Rejected',`${v.label} rejected by Susan L.`,{versionId});
-  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();renderApprovalScreen();
-  if(currentPlanKey===pk)renderPlanDetail(pk);
-}
-function approveVersionSEO(versionId){
-  const v=getVersion(versionId);
-  if(!v||v.status!=='approved')return;
-  const pk=planKey(v.flavorId,v.fy);
-  v.approvalStage='seo_approved';v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  addApprovalEvent(versionId,'seo_approved','SEO mechanics validated.','SEO Team');
-  addAuditEntry(pk,'SEO approved',`${v.label} passed SEO review.`,{versionId});
-  syncLegacyFromVersions();renderApprovalScreen();
-  if(currentPlanKey===pk)renderPlanDetail(pk);
-}
-function publishVersionById(versionId){
-  const v=getVersion(versionId);
-  if(!v)return;
-  const pk=planKey(v.flavorId,v.fy);
-  const plan=getPlan(v.flavorId,v.fy);
-  const prevPub=getPublishedVersion(pk);
-  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  if(prevPub&&prevPub.versionId!==versionId){
-    prevPub.isActivePublished=false;prevPub.status='rescinded';prevPub.rescindedAt=now;
-    addApprovalEvent(prevPub.versionId,'rescinded',`Rescinded when ${v.label} published.`,'Susan L.');
-    addAuditEntry(pk,'Rescinded published version',`${prevPub.label} rescinded.`,{versionId:prevPub.versionId});
+  if(v.status==='approved'&&!v.approvedAt){v.approvedAt=now;v.approvedBy='Susan L.';}
+  if(nextStage==='completed'){
+    const prevPub=getPublishedVersion(pk);
+    if(prevPub&&prevPub.versionId!==versionId)prevPub.isActivePublished=false;
+    planVersions.forEach(x=>{if(x.flavorId===v.flavorId&&x.fy===v.fy)x.isActivePublished=false;});
+    v.isActivePublished=true;v.publishedAt=now;v.publishedBy='Susan L.';
+    const plan=getPlan(v.flavorId,v.fy);if(plan)plan.activePublishedVersionId=versionId;
+    getFlavorsForPlan(pk).forEach(f=>{const leg=plans.find(p=>p.id===f.flavorId&&p.fy===f.fiscalYear);if(leg){leg.status='published';leg.ver=String(v.versionNumber)+'.0';}});
+    addApprovalEvent(versionId,'published',note||`Completed — ${v.flavorId} v${v.versionNumber} is now the active published version.`,'Susan L.');
+    addAuditEntry(pk,'Published',`${v.flavorId} v${v.versionNumber} reached Completed and is published.`,{versionId});
+  }else{
+    addApprovalEvent(versionId,'advanced',note||`Advanced to ${APPROVAL_STAGE_LABELS[nextStage]}.`,'Susan L.');
+    addAuditEntry(pk,'Advanced stage',`${v.flavorId} v${v.versionNumber} → ${APPROVAL_STAGE_LABELS[nextStage]}.`,{versionId});
   }
-  planVersions.forEach(x=>{if(x.flavorId===v.flavorId&&x.fy===v.fy)x.isActivePublished=false;});
-  v.status='published';v.approvalStage='published';v.isActivePublished=true;
-  v.publishedAt=now;v.publishedBy='Susan L.';v.label=`Published v${v.versionNumber}`;v.updatedAt=now;
-  if(plan)plan.activePublishedVersionId=versionId;
-  // Publishing the chosen version archives the other competing drafts of this plan.
-  planVersions.forEach(x=>{
-    if(x.flavorId===v.flavorId&&x.fy===v.fy&&x.versionId!==versionId&&EDITABLE_STATUSES.includes(x.status)){
-      x.status='archived';x.updatedAt=now;
-      addApprovalEvent(x.versionId,'archived',`Archived when ${v.label} was published.`,'Susan L.');
-      addAuditEntry(pk,'Draft archived',`${x.label} archived — ${v.label} chosen.`,{versionId:x.versionId});
-    }
-  });
-  // Publishing the plan version publishes every flavor together — update each flavor's legacy row.
-  getFlavorsForPlan(pk).forEach(f=>{const leg=plans.find(p=>p.id===f.flavorId&&p.fy===f.fiscalYear);if(leg){leg.status='published';leg.ver=String(v.versionNumber)+'.0';}});
-  addApprovalEvent(versionId,'published',`Published v${v.versionNumber} is now the active downstream version.`,'Susan L.');
-  addAuditEntry(pk,'Published final version',`${v.label} published.`,{versionId});
-  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildLibrary();buildProposalTracker();
-  if(currentPlanKey===pk)renderPlanDetail(pk);
-  alert(`Published v${v.versionNumber} is now the active version for downstream systems.`);
+  refreshAfterVersionChange(pk);
 }
+/* Withdraw — pull a version out of the approval queue (editable again). */
+function withdrawVersion(versionId){
+  const v=getVersion(versionId);
+  if(!v)return;
+  const pk=planKey(v.flavorId,v.fy);
+  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const note=document.getElementById('approval-comment-input')?.value||'';
+  v.status='withdrawn';v.approvalStage='draft';v.isActivePublished=false;v.updatedAt=now;
+  if(note)v.comments=note;
+  const plan=getPlan(v.flavorId,v.fy);
+  if(plan&&plan.activePublishedVersionId===versionId)plan.activePublishedVersionId=null;
+  addApprovalEvent(versionId,'withdrawn',note||`${v.flavorId} v${v.versionNumber} withdrawn from approval.`,'Melissa C.');
+  addAuditEntry(pk,'Withdrawn',`${v.flavorId} v${v.versionNumber} withdrawn.`,{versionId});
+  refreshAfterVersionChange(pk);
+}
+/* Aliases for existing callers. */
+function approveVersionSusan(id){advanceVersionStage(id);}
+function approveVersionSEO(id){advanceVersionStage(id);}
+function publishVersionById(id){advanceVersionStage(id);}
+function publishProposalAsRevision(id){advanceVersionStage(id);}
+function rejectVersionSusan(id){withdrawVersion(id);}
+function rescindVersionApproval(id){withdrawVersion(id);}
 function approveCurrentProposal(){
   const v=getVersion(approvalVersionId)||getVersion(currentVersionId);
   if(!v){alert('No version selected.');return;}
-  if(v.approvalStage==='susan_review')approveVersionSusan(v.versionId);
-  else if(v.approvalStage==='seo_review')approveVersionSEO(v.versionId);
-  else if(v.approvalStage==='seo_approved')publishVersionById(v.versionId);
+  advanceVersionStage(v.versionId);
 }
 function rejectCurrentProposal(){
   const v=getVersion(approvalVersionId);
-  if(v)rejectVersionSusan(v.versionId);
-}
-function publishProposalAsRevision(id){publishVersionById(id);}
-
-function rescindVersionApproval(versionId){
-  const v=getVersion(versionId);
-  if(!v||!['approved','published'].includes(v.status)){alert('Only approved or published versions can be rescinded.');return;}
-  const pk=planKey(v.flavorId,v.fy);
-  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  v.status='rescinded';v.isActivePublished=false;v.rescindedAt=now;v.updatedAt=now;
-  const plan=getPlan(v.flavorId,v.fy);
-  if(plan&&plan.activePublishedVersionId===versionId)plan.activePublishedVersionId=null;
-  addApprovalEvent(versionId,'rescinded',`${v.label} rescinded — history preserved.`,'Melissa C.');
-  addAuditEntry(pk,'Rescinded approval',`${v.label} rescinded. New revision required.`,{versionId});
-  const newV=createVersionRecord(pk,{sourceVersionId:versionId,description:`New revision after rescinding ${v.label}`});
-  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildLibrary();buildProposalTracker();
-  if(currentPlanKey===pk)renderPlanDetail(pk);
-  alert(`${v.label} rescinded. ${newV.label} created — start a new approval cycle.`);
+  if(v)withdrawVersion(v.versionId);
 }
 function rescindCurrentPublishedRevision(){
   const pub=getPublishedVersion(currentPlanKey||'A01|FY27');
-  if(pub)rescindVersionApproval(pub.versionId);
-  else alert('No published version to rescind.');
+  if(pub)withdrawVersion(pub.versionId);
+  else alert('No published version to withdraw.');
 }
 function rescindCurrentPublishedRevisionForPlan(planKey){currentPlanKey=planKey;rescindCurrentPublishedRevision();}
 
@@ -2325,41 +2307,38 @@ function renderApprovalScreen(){
   document.getElementById('approval-version-name').textContent=v.label;
   document.getElementById('approval-published-label').textContent=pub?`Published v${pub.versionNumber}`:'none yet';
 
-  const stageIdx={in_progress:0,susan_review:1,susan_approved:2,susan_rejected:1,seo_review:3,seo_approved:4,published:5};
-  const currentIdx=stageIdx[v.approvalStage]??1;
-  const stageNames=['In Progress','Susan Review','Susan Approved','SEO Review','SEO Approved','Published'];
-  document.getElementById('approval-stage-track').innerHTML=stageNames.map((name,i)=>{
+  const currentIdx=stageIndex(v.approvalStage);
+  const withdrawn=v.status==='withdrawn';
+  document.getElementById('approval-stage-track').innerHTML=APPROVAL_STAGES.map((key,i)=>{
     let cls='pending';
-    if(v.approvalStage==='susan_rejected'&&i===1)cls='rejected';
+    if(withdrawn&&i===0)cls='rejected';
     else if(i<currentIdx)cls='done';
     else if(i===currentIdx)cls='active';
-    return`<div class="approval-stage ${cls}"><div class="approval-stage-dot">${i<currentIdx?'<i class="ti ti-check" style="font-size:11px"></i>':i+1}</div><div class="approval-stage-label">${name}</div></div>`;
+    return`<div class="approval-stage ${cls}"><div class="approval-stage-dot">${i<currentIdx?'<i class="ti ti-check" style="font-size:11px"></i>':i+1}</div><div class="approval-stage-label">${APPROVAL_STAGE_LABELS[key]}</div></div>`;
   }).join('');
 
-  const stages=[
-    {who:'Melissa C.',role:'Comp Design',status:v.submittedAt?'Submitted':'In progress',badge:v.submittedAt?'badge-approved':'badge-draft',detail:v.submittedAt?`Submitted ${v.submittedAt}`:'Working on draft'},
-    {who:'Susan L.',role:'VP Compensation',status:v.approvalStage==='susan_review'?'Awaiting review':v.approvalStage==='susan_rejected'?'Rejected':v.approvedAt?'Approved':'Waiting',badge:v.approvalStage==='susan_review'?'badge-review':v.approvalStage==='susan_rejected'?'badge-rejected':v.approvedAt?'badge-approved':'badge-draft',detail:v.approvedAt?`Approved ${v.approvedAt}`:v.approvalStage==='susan_review'?'Assigned for review':'Pending submission'},
-    {who:'SEO Team',role:'Operations',status:v.approvalStage==='seo_review'?'In review':v.approvalStage==='seo_approved'||v.status==='published'?'Approved':'Not started',badge:v.approvalStage==='seo_review'?'badge-review':v.approvalStage==='seo_approved'||v.status==='published'?'badge-approved':'badge-draft',detail:v.approvalStage==='seo_review'?'Reviewing mechanics':'Waiting for Susan approval'},
-  ];
-  document.getElementById('approval-stages-list').innerHTML=stages.map(s=>`
-    <div class="approver-row" style="padding:12px 0;border-bottom:var(--border)">
-      <div class="approver-avatar" style="background:#E6F1FB;color:#185FA5">${s.who.split(' ').map(x=>x[0]).join('')}</div>
-      <div style="flex:1"><div style="font-size:12px;font-weight:500">${s.who} — ${s.role}</div><div style="font-size:11px;color:var(--muted)">${s.detail}</div></div>
-      <span class="badge ${s.badge}">${s.status}</span>
-    </div>`).join('');
+  document.getElementById('approval-stages-list').innerHTML=APPROVAL_STAGES.map((key,i)=>{
+    let status='Pending',badge='badge-draft';
+    if(i<currentIdx){status='Done';badge='badge-approved';}
+    else if(i===currentIdx){status=withdrawn?'Withdrawn':'Current';badge=withdrawn?'badge-rejected':'badge-review';}
+    return`<div class="approver-row" style="padding:10px 0;border-bottom:var(--border)">
+      <div class="approver-avatar" style="background:#E6F1FB;color:#185FA5">${i+1}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:500">${APPROVAL_STAGE_LABELS[key]}</div></div>
+      <span class="badge ${badge}">${status}</span>
+    </div>`;
+  }).join('');
 
   let actions='';
-  if(v.approvalStage==='susan_review'){
+  if(isVersionEditable(v)){
+    actions=`<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitVersionById('${v.versionId}')"><i class="ti ti-send"></i> Submit for approval</button>`;
+  }else if(['pending_review','approved'].includes(v.status)){
+    const nextStage=APPROVAL_STAGES[currentIdx+1];
     actions=`<div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" style="flex:1;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11;min-width:140px" onclick="approveVersionSusan('${v.versionId}')"><i class="ti ti-circle-check"></i> Approve</button>
-      <button class="btn" style="flex:1;justify-content:center;background:#FCEBEB;border-color:#E24B4A;color:#A32D2D;min-width:140px" onclick="rejectVersionSusan('${v.versionId}')"><i class="ti ti-x"></i> Reject</button>
+      <button class="btn" style="flex:1;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11;min-width:180px" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Approve → ${APPROVAL_STAGE_LABELS[nextStage]}</button>
+      <button class="btn" style="flex:1;justify-content:center;background:#FCEBEB;border-color:#E24B4A;color:#A32D2D;min-width:140px" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
     </div>`;
-  }else if(v.approvalStage==='seo_review'){
-    actions=`<button class="btn" style="width:100%;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11" onclick="approveVersionSEO('${v.versionId}')"><i class="ti ti-circle-check"></i> SEO Approve</button>`;
-  }else if(v.approvalStage==='seo_approved'){
-    actions=`<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="publishVersionById('${v.versionId}')"><i class="ti ti-upload"></i> Publish Final Version</button>`;
   }else{
-    actions=`<div style="font-size:12px;color:var(--muted)">No actions available for current stage.</div>`;
+    actions=`<div style="font-size:12px;color:var(--muted)">No actions — ${VERSION_STATUS_LABELS[v.status]||v.status}.</div>`;
   }
   document.getElementById('approval-actions-panel').innerHTML=actions;
 
@@ -2369,14 +2348,12 @@ function renderApprovalScreen(){
     <div><div style="font-size:12px"><strong>${e.actor}</strong> — ${e.timestamp}</div><div style="font-size:12px;margin-top:3px">${e.note}</div></div></div>`).join('')||'<div style="font-size:12px;color:var(--muted)">No comments yet.</div>';
 
   document.getElementById('approval-status-timeline').innerHTML=events.map(e=>{
-    const colors={submitted:'blue',approved:'green',rejected:'#E24B4A',seo_approved:'green',published:'green',created:'gray',rescinded:'#E24B4A'};
+    const colors={submitted:'blue',advanced:'green',approved:'green',published:'green',created:'gray',withdrawn:'#E24B4A',rejected:'#E24B4A',rescinded:'#E24B4A',seo_approved:'green'};
     return`<div class="audit-item"><div class="audit-dot" style="background:${colors[e.action]||'gray'}"></div><div style="font-size:12px;font-weight:500">${e.action.replace(/_/g,' ')}</div><div class="audit-meta">${e.actor} · ${e.timestamp}</div></div>`;
   }).join('');
 
   document.getElementById('approval-signoff-tbody').innerHTML=`
-    <tr><td>Melissa C.</td><td>Design Lead</td><td><span class="badge badge-info">${v.submittedAt?'Submitted':'Draft'}</span></td><td style="font-size:11px">${v.submittedAt||'—'}</td></tr>
-    <tr><td>Susan L.</td><td>VP Comp</td><td><span class="badge ${v.approvedAt?'badge-approved':'badge-pending'}">${v.approvedAt?'Approved':v.approvalStage==='susan_rejected'?'Rejected':'Pending'}</span></td><td style="font-size:11px">${v.approvedAt||'—'}</td></tr>
-    <tr><td>SEO Team</td><td>Operations</td><td><span class="badge ${v.approvalStage==='seo_approved'||v.status==='published'?'badge-approved':'badge-draft'}">${v.approvalStage==='seo_approved'||v.status==='published'?'Approved':'Not started'}</span></td><td style="font-size:11px">${v.approvalStage==='seo_approved'?'Approved':'—'}</td></tr>`;
+    <tr><td>Current stage</td><td>${APPROVAL_STAGE_LABELS[v.approvalStage]||'—'}</td><td><span class="badge ${withdrawn?'badge-rejected':(v.status==='published'?'badge-published':'badge-review')}">${VERSION_STATUS_LABELS[v.status]||v.status}</span></td><td style="font-size:11px">${v.updatedAt||'—'}</td></tr>`;
 }
 
 function filterProposalTracker(){
@@ -2393,9 +2370,8 @@ function buildProposalTracker(){
   let rows=planVersions.filter(v=>{
     if(fyF&&v.fy!==fyF)return false;
     if(stF&&v.status!==stF)return false;
-    if(apF==='pending'&&v.approvalStage!=='susan_review')return false;
-    if(apF==='approved'&&v.approvalStage!=='susan_approved'&&v.status!=='approved')return false;
-    if(apF==='seo'&&v.approvalStage!=='seo_review')return false;
+    if(apF==='pending'&&v.status!=='pending_review')return false;
+    if(apF==='approved'&&v.status!=='approved')return false;
     if(apF==='published'&&!v.isActivePublished)return false;
     if(q&&!(`${v.flavorId} ${v.fy} ${v.label} ${v.description}`.toLowerCase().includes(q)))return false;
     return true;
@@ -2415,7 +2391,7 @@ function buildProposalTracker(){
       <td><div style="display:flex;gap:4px">
         <button class="btn btn-sm" onclick="openVersionInBuilder('${v.versionId}')" title="Edit"><i class="ti ti-edit"></i></button>
         <button class="btn btn-sm" onclick="compareVersionToPublished('${pk}','${v.versionId}')" title="Compare"><i class="ti ti-columns"></i></button>
-        ${v.approvalStage==='susan_review'?`<button class="btn btn-sm" onclick="approvalVersionId='${v.versionId}';showScreen('approval')" title="Review"><i class="ti ti-circle-check"></i></button>`:''}
+        ${['pending_review','approved'].includes(v.status)?`<button class="btn btn-sm" onclick="approvalVersionId='${v.versionId}';showScreen('approval')" title="Review"><i class="ti ti-circle-check"></i></button>`:''}
       </div></td>
     </tr>`;
   }).join('')||'<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--muted)">No versions match filters</td></tr>';
@@ -3795,7 +3771,7 @@ function buildFieldsFromContentFlavor(planId,fy,planMeta,flavor,payoutTables){
 
 function buildPlanSnapshots(){
   planSnapshots=[];
-  const statusMap={draft:'draft',in_review:'review',submitted:'review',approved:'approved',rejected:'rejected',rescinded:'rescinded',published:'published',archived:'draft'};
+  const statusMap={draft:'draft',pending_review:'review',approved:'approved',withdrawn:'rejected',published:'published'};
   planVersions.forEach(ver=>{
     const plan=getPlan(ver.flavorId,ver.fy);
     const planId=ver.flavorId;
@@ -3806,8 +3782,8 @@ function buildPlanSnapshots(){
       const snap=makeSnapshot(p,ver.fy,String(ver.versionNumber),statusMap[ver.status]||'draft',{},{
         key:`version|${ver.versionId}|${flavor.flavorId}`,
         fields,
-        entityType:ver.status==='published'||ver.status==='rescinded'?'revision':'proposal',
-        revisionId:ver.status==='published'||ver.status==='rescinded'?ver.versionId:null,
+        entityType:ver.status==='published'?'revision':'proposal',
+        revisionId:ver.status==='published'?ver.versionId:null,
         proposalId:ver.versionId,
         proposalName:ver.label,
         isCurrentPlan:ver.isActivePublished&&ver.status==='published',
@@ -4570,7 +4546,7 @@ function openComparePlatform(context,planKeyArg,returnScreen){
   if(planKeyArg){
     const {planId,fy}=parsePlanKey(planKeyArg);
     const pub=getPublishedVersion(planKeyArg);
-    const submitted=planVersions.find(v=>v.flavorId===planId&&v.fy===fy&&v.approvalStage==='susan_review')||planVersions.find(v=>v.flavorId===planId&&v.fy===fy&&EDITABLE_STATUSES.includes(v.status));
+    const submitted=planVersions.find(v=>v.flavorId===planId&&v.fy===fy&&v.status==='pending_review')||planVersions.find(v=>v.flavorId===planId&&v.fy===fy&&EDITABLE_STATUSES.includes(v.status));
     if(pub)preset.left=`version|${pub.versionId}`;
     if(submitted)preset.right=`version|${submitted.versionId}`;
     else if(currentVersionId){
@@ -4726,14 +4702,16 @@ function getFlavorLibraryStatus(planKey){
   const pub=getPublishedVersion(planKey);
   if(pub)return'Published';
   const vers=getVersionsForFlavor(planKey);
-  if(vers.some(v=>v.status==='submitted'||v.status==='in_review'||v.approvalStage==='susan_review'))return'In Review';
-  if(vers.some(v=>v.status==='approved'||v.approvalStage==='seo_review'||v.approvalStage==='seo_approved'))return'Approved';
+  if(vers.some(v=>v.status==='approved'))return'Approved';
+  if(vers.some(v=>v.status==='pending_review'))return'Pending review';
+  if(vers.some(v=>v.status==='draft'))return'Draft';
+  if(vers.some(v=>v.status==='withdrawn'))return'Withdrawn';
   return'Draft';
 }
 const getPlanLibraryStatus=getFlavorLibraryStatus;
 
 function libraryStatusBadge(status){
-  const m={Draft:'badge-draft','In Review':'badge-review',Approved:'badge-approved',Published:'badge-published'};
+  const m={Draft:'badge-draft','Pending review':'badge-review',Approved:'badge-approved',Withdrawn:'badge-rescinded',Published:'badge-published'};
   return`<span class="badge ${m[status]||'badge-draft'}">${status}</span>`;
 }
 
