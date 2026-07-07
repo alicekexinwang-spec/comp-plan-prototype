@@ -797,7 +797,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th style="width:28px"></th><th>Plan</th><th>Plan Name</th><th>Flavors</th><th>FY</th><th>Published Version</th><th>Status</th><th>Versions</th><th>Owner</th><th>Actions</th>
+              <th>Plan #</th><th>Plan Name</th><th>FY</th><th>Status</th><th>Published Version</th><th>Versions</th><th>Created</th><th>Last updated</th><th>Owner</th><th>Actions</th>
             </tr></thead>
             <tbody id="lib-tbody"></tbody>
           </table>
@@ -874,20 +874,18 @@ tr:hover td{background:var(--pa-surface-hover)}
       <div id="screen-builder" class="screen">
         <div id="builder-entry" class="builder-entry">
           <div class="builder-entry-title">Start a new compensation plan</div>
-          <div class="builder-entry-sub">A compensation plan (e.g. A01) has a name and one or more flavors (variants for different roles). All flavors are approved together as one plan, and each plan can have multiple working versions per fiscal year. Only one published version is active for downstream systems at a time.</div>
           <div class="builder-entry-grid">
             <div class="builder-entry-card" onclick="openCreatePlanModal()">
               <div class="builder-entry-icon" style="background:#F1EFE8;color:#444441"><i class="ti ti-file-plus"></i></div>
               <div class="builder-entry-label">Create from scratch</div>
-              <div class="builder-entry-desc">Enter a new Comp Plan # for a brand-new plan, or an existing # to add a new version of that plan.</div>
+              <div class="builder-entry-desc">New # creates a plan; an existing # adds a version.</div>
             </div>
             <div class="builder-entry-card" onclick="openClonePlanModal()">
               <div class="builder-entry-icon" style="background:#EAF3DE;color:#3B6D11"><i class="ti ti-copy"></i></div>
               <div class="builder-entry-label">Clone from existing plan + version</div>
-              <div class="builder-entry-desc">Copy a whole plan version (all flavors, measures, payout tables). The target # decides: same # → new version; new # → new comp plan.</div>
+              <div class="builder-entry-desc">Copy a plan version into a new or existing plan.</div>
             </div>
           </div>
-          <div class="builder-entry-note" id="builder-continue-note" style="display:none"><i class="ti ti-edit" style="font-size:12px;margin-right:4px"></i> You have an open draft. <a href="#" onclick="resumeBuilderDraft();return false" style="color:#185FA5;font-weight:500">Continue editing <span id="builder-continue-id"></span></a></div>
         </div>
         <div id="builder-workspace" style="display:none">
         <div id="builder-clone-banner" class="clone-banner" style="display:none">
@@ -944,14 +942,14 @@ tr:hover td{background:var(--pa-surface-hover)}
 
             <div class="plan-section-hdr">Flavors &amp; pay measures <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
             <div class="plan-section-body">
-              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">This version's flavors (variants for different roles). For each flavor, set its pay measures (measure, VCT weight, performance period, payout period). All flavors are approved together as one plan; a new version starts from a copy of this one.</p>
+              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Set each flavor's pay measures (measure, VCT weight, performance &amp; payout period).</p>
               <div id="builder-flavors-container"></div>
               <div class="measure-actions"><button class="btn btn-sm" type="button" id="builder-add-flavor-btn" onclick="addBuilderFlavor()"><i class="ti ti-plus"></i> Add flavor</button></div>
             </div>
 
             <div class="plan-section-hdr">Payout tables <span style="font-weight:400;color:var(--pa-text-secondary);font-size:12px">— one per pay measure type, shared across this version's flavors</span></div>
             <div class="plan-section-body">
-              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">One payout detail table per distinct pay measure used across all flavors in this version. Editing a table applies to every flavor that uses that measure.</p>
+              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">One table per pay measure, shared across flavors.</p>
               <div id="builder-payout-tables-container"></div>
             </div>
 
@@ -1084,7 +1082,7 @@ tr:hover td{background:var(--pa-surface-hover)}
               </div>
               <div class="card" id="compare-approval-card" style="display:none">
                 <div class="card-header"><div class="card-title"><i class="ti ti-circle-check" style="color:var(--adobe-red);margin-right:6px"></i>Approver view</div></div>
-                <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Comparing submitted version against currently approved baseline for sign-off review.</div>
+                <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Submitted version vs. approved baseline.</div>
                 <div style="display:flex;flex-direction:column;gap:6px;font-size:12px" id="compare-approval-details"></div>
               </div>
             </div>
@@ -1463,7 +1461,7 @@ BONUS_THRESHOLD=0.75</div></div>
           </div>
         </div>
         <div class="admin-banner"><i class="ti ti-lock"></i> Admin setup — component rows sum to a single attainment % for the composite metric.</div>
-        <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:12px">Each row describes one atomic input summed into the combined attainment. A composite metric requires at least two components.</p>
+        <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:12px">Each row is one input summed into the total. Composite metrics need 2+ components.</p>
         <div id="metric-components-error" class="metric-form-error"></div>
         <div class="metric-components-toolbar">
           <span style="font-size:11px;color:var(--pa-text-secondary)" id="metric-components-count"></span>
@@ -1523,20 +1521,20 @@ BONUS_THRESHOLD=0.75</div></div>
       <button class="modal-close" onclick="closeCreatePlanModal()" aria-label="Close"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Enter a Comp Plan #. A <strong>new</strong> # starts a brand-new comp plan; an <strong>existing</strong> # creates a new version of that plan.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">New Comp Plan # = new plan; existing # = new version.</p>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Comp Plan # *</label><input class="form-input" id="new-plan-id" placeholder="e.g. A11" oninput="onNewPlanIdInput()"><p style="font-size:10px;color:var(--muted);margin-top:4px" id="new-plan-id-hint">Letter(s) followed by a number, e.g. A11.</p></div>
         <div class="form-group"><label class="form-label">Fiscal year</label><select class="form-select" id="new-plan-fy" onchange="onNewPlanIdInput()"><option selected>FY27</option><option>FY26</option></select></div>
       </div>
       <div id="new-plan-newfields">
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Comp Plan Name *</label><input class="form-input" id="new-plan-name" placeholder="e.g. Digital Experience AE FY27 Plan"></div>
-          <div class="form-group"><label class="form-label">First flavor role</label><select class="form-select" id="new-plan-role"></select></div>
-        </div>
+        <div class="form-group"><label class="form-label">Comp Plan Name *</label><input class="form-input" id="new-plan-name" placeholder="e.g. Digital Experience AE FY27 Plan"></div>
       </div>
       <div id="new-plan-versionfields" style="display:none">
-        <div class="form-group"><label class="form-label">Clone from version</label><select class="form-select" id="new-plan-clone-version"></select>
-          <p style="font-size:11px;color:var(--muted);margin-top:6px">The new version starts as a copy of the selected version — all flavors included.</p></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Comp Plan Name</label><input class="form-input" id="new-plan-existing-name" readonly></div>
+          <div class="form-group"><label class="form-label">New version</label><input class="form-input" id="new-plan-next-version" readonly></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:2px">A new blank version will be created — build its content in the plan builder.</p>
       </div>
     </div>
     <div class="modal-footer">
@@ -1557,7 +1555,7 @@ BONUS_THRESHOLD=0.75</div></div>
       <button class="modal-close" onclick="closeDuplicatePlanModal()"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Clone from a source <strong>plan + version</strong> (all flavors, measures, and payout tables). The <strong>target #</strong> decides: an existing plan → a new version of it; a new # → a brand-new comp plan.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Clone a source plan + version into a target plan.</p>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Source plan</label><select class="form-select" id="dup-source-plan" onchange="onDupSourcePlanChange()"></select></div>
         <div class="form-group"><label class="form-label">Source version to copy</label><select class="form-select" id="dup-source-version"></select></div>
@@ -1590,7 +1588,7 @@ BONUS_THRESHOLD=0.75</div></div>
         <select class="form-select" id="revision-duplicate-from">
           <option value="">Blank draft (new version number)</option>
         </select>
-        <p style="font-size:11px;color:var(--muted);margin-top:6px">Copy from the published version, a working draft, or a prior version in history.</p>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px">Copy from any published, draft, or prior version.</p>
       </div>
     </div>
     <div class="modal-footer">
@@ -2448,13 +2446,6 @@ function showScreen(id){
 function showBuilderEntry(){
   document.getElementById('builder-entry').style.display='block';
   document.getElementById('builder-workspace').style.display='none';
-  const note=document.getElementById('builder-continue-note');
-  if(currentDraftPlan){
-    note.style.display='block';
-    document.getElementById('builder-continue-id').textContent=currentDraftPlan.id;
-  }else{
-    note.style.display='none';
-  }
 }
 
 function showBuilderWorkspace(){
@@ -2501,12 +2492,9 @@ function onNewPlanIdInput(){
     hint.textContent=`Existing plan — a new version of ${id} · ${fy} will be created.`;
     if(footerHint)footerHint.textContent=`New version of ${id}`;
     if(btn)btn.innerHTML='<i class="ti ti-versions"></i> Create version';
-    const sel=document.getElementById('new-plan-clone-version');
     const pk=planKey(id,fy);
-    const vers=getVersionsForFlavor(pk);
-    const pub=getPublishedVersion(pk);
-    sel.innerHTML=vers.map(v=>`<option value="${v.versionId}">${v.label} · ${VERSION_STATUS_LABELS[v.status]}</option>`).join('');
-    if(pub)sel.value=pub.versionId;else if(vers[0])sel.value=vers[0].versionId;
+    document.getElementById('new-plan-existing-name').value=getPlan(id,fy)?.planName||'';
+    document.getElementById('new-plan-next-version').value=`v${nextVersionNumber(pk)}`;
   }else{
     hint.textContent='Letter(s) followed by a number, e.g. A11.';
     if(footerHint)footerHint.textContent='New comp plan';
@@ -2519,11 +2507,10 @@ function createPlanNext(){
   const fy=document.getElementById('new-plan-fy').value;
   if(!id){alert('Please enter a Comp Plan #.');return;}
   if(compPlanExists(id,fy)){
-    // Existing # → new version of that plan, cloned from the chosen version.
-    const srcVid=document.getElementById('new-plan-clone-version').value;
+    // Existing # → new BLANK version of that plan (no cloning here — use the Clone flow to copy).
     const pk=planKey(id,fy);
-    const v=createVersionRecord(pk,{sourceVersionId:srcVid||null,description:'New version'});
-    addAuditEntry(pk,'Version created',`${v.label} created from ${getVersion(srcVid)?.label||'blank'}.`,{versionId:v.versionId});
+    const v=createVersionRecord(pk,{description:'New version'});
+    addAuditEntry(pk,'Version created',`${v.label} created (blank).`,{versionId:v.versionId});
     closeCreatePlanModal();
     openVersionInBuilder(v.versionId);
     return;
@@ -2532,7 +2519,7 @@ function createPlanNext(){
   if(!/^[A-Za-z]+\d+$/.test(id)){alert('Comp Plan # must be letter(s) followed by a number (e.g. A11) — no flavor suffix like ".A".');return;}
   const name=document.getElementById('new-plan-name').value.trim();
   if(!name){alert('Please enter a Comp Plan Name.');return;}
-  const role=document.getElementById('new-plan-role').value;
+  const role=''; // first flavor's role is defined in the builder
   const firstFlavorId=`${id}.A`;
   compPlans.push({planId:id,planName:name,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active',activePublishedVersionId:null});
   planFlavors.push({flavorId:firstFlavorId,planId:id,flavorLabel:'A',flavorName:name,role,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active'});
@@ -3217,7 +3204,7 @@ function renderMetricComponentRow(comp,idx,parentId){
       <div class="form-group span-2">
         <label class="form-label">Component metric *</label>
         <select class="form-select mc-field" data-field="component_metric_id">${atomicMetricOptionsHtml(comp.component_metric_id,parentId)}</select>
-        <p style="font-size:10px;color:var(--muted);margin-top:4px">Atomic (non-composite) metrics only. Parent metric cannot be selected.</p>
+        <p style="font-size:10px;color:var(--muted);margin-top:4px">Atomic metrics only.</p>
       </div>
       <div class="form-group span-2">
         <label class="form-label">Product scope *</label>
@@ -3228,14 +3215,14 @@ function renderMetricComponentRow(comp,idx,parentId){
           <input type="checkbox" class="mc-field" data-field="include_only_if_rep_has_quota" ${comp.include_only_if_rep_has_quota?'checked':''}>
           <div>
             <div class="toggle-label">Include only if rep has quota</div>
-            <div class="toggle-hint">Only include this component when the rep has an active quota for this product scope.</div>
+            <div class="toggle-hint">Include only when the rep has an active quota for this scope.</div>
           </div>
         </div>
       </div>
       <div class="form-group span-2">
         <label class="form-label">Minimum deal size (USD)</label>
         <input class="form-input mc-field" data-field="min_deal_size_usd" type="number" min="0" step="1" placeholder="Leave blank for no threshold" value="${comp.min_deal_size_usd??''}">
-        <p style="font-size:10px;color:var(--muted);margin-top:4px">Leave blank unless this component only counts deals above a minimum size.</p>
+        <p style="font-size:10px;color:var(--muted);margin-top:4px">Leave blank for no minimum.</p>
       </div>
     </div>
   </div>`;
@@ -4739,12 +4726,18 @@ function libraryStatusBadge(status){
   return`<span class="badge ${m[status]||'badge-draft'}">${status}</span>`;
 }
 
-const libraryExpanded={};
-function toggleLibPlan(pk){
-  libraryExpanded[pk]=!libraryExpanded[pk];
-  document.querySelectorAll(`tr[data-flavor-of="${pk}"]`).forEach(r=>r.style.display=libraryExpanded[pk]?'':'none');
-  const caret=document.getElementById(`lib-caret-${pk.replace(/[|.]/g,'_')}`);
-  if(caret)caret.className=libraryExpanded[pk]?'ti ti-chevron-down':'ti ti-chevron-right';
+/* Plan-level created / last-updated dates, derived from the plan's versions. */
+function getPlanDates(pk){
+  const vers=getVersionsForFlavor(pk);
+  if(!vers.length)return{created:'—',updated:'—'};
+  let created=null,updated=null;
+  vers.forEach(v=>{
+    const c=v.createdAt?new Date(v.createdAt):null;
+    const u=v.updatedAt?new Date(v.updatedAt):c;
+    if(c&&(!created||c<created.d))created={d:c,s:v.createdAt};
+    if(u&&(!updated||u>updated.d))updated={d:u,s:v.updatedAt||v.createdAt};
+  });
+  return{created:created?created.s:'—',updated:updated?updated.s:'—'};
 }
 
 function buildLibrary(){
@@ -4775,39 +4768,27 @@ function buildLibrary(){
   }
   tbody.innerHTML=rows.map(pl=>{
     const pk=planKey(pl.planId,pl.fiscalYear);
-    const flavors=getFlavorsForPlan(pk);
     const pub=getPublishedVersion(pk);
     const versionCount=getVersionsForFlavor(pk).length;
     const libStatus=getPlanLibraryStatus(pk);
-    const open=!!libraryExpanded[pk];
-    const caretId=`lib-caret-${pk.replace(/[|.]/g,'_')}`;
-    const flavorSummary=flavors.map(f=>`<span class="badge badge-draft" style="background:#EEF2F7;color:#33475B">${f.flavorLabel}</span>`).join(' ');
-    const parent=`<tr class="lib-plan-row">
-      <td style="text-align:center;cursor:pointer" onclick="toggleLibPlan('${pk}')"><i id="${caretId}" class="ti ti-chevron-${open?'down':'right'}"></i></td>
+    const dates=getPlanDates(pk);
+    return`<tr class="lib-plan-row">
       <td style="font-weight:600;color:#185FA5;cursor:pointer" onclick="openPlanDetail('${pk}')">${pl.planId}</td>
       <td style="font-weight:500">${pl.planName}</td>
-      <td>${flavors.length} <span style="font-size:11px;color:var(--muted)">(${flavors.map(f=>f.flavorLabel).join('/')})</span></td>
       <td><span class="plan-fy-chip" style="font-size:10px;padding:2px 8px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-weight:600">${pl.fiscalYear}</span></td>
-      <td>${pub?`<span class="badge badge-current-plan">v${pub.versionNumber}</span>`:'<span style="font-size:11px;color:var(--muted)">Not published</span>'}</td>
       <td>${libraryStatusBadge(libStatus)}</td>
+      <td>${pub?`<span class="badge badge-current-plan">v${pub.versionNumber}</span>`:'<span style="font-size:11px;color:var(--muted)">Not published</span>'}</td>
       <td style="font-size:12px;font-weight:500">${versionCount}</td>
+      <td style="font-size:11px;color:var(--muted)">${dates.created}</td>
+      <td style="font-size:11px;color:var(--muted)">${dates.updated}</td>
       <td style="font-size:11px">${pl.owner||'—'}</td>
       <td><div style="display:flex;gap:4px">
         <button class="btn btn-sm" onclick="openPlanDetail('${pk}')" title="Open plan"><i class="ti ti-versions"></i></button>
-        <button class="btn btn-sm" onclick="openComparePlatform('standalone','${pk}')" title="Compare"><i class="ti ti-columns"></i></button>
         <button class="btn btn-sm" onclick="openClonePlanModal('${pk}')" title="Clone plan / version"><i class="ti ti-copy"></i></button>
         <button class="btn btn-sm" onclick="currentPlanKey='${pk}';openCreateRevisionModal()" title="Create Revision"><i class="ti ti-plus"></i></button>
       </div></td>
     </tr>`;
-    const children=flavors.map(f=>`<tr data-flavor-of="${pk}" class="lib-flavor-row" style="display:${open?'':'none'};background:#FAFBFC">
-      <td></td>
-      <td style="font-size:11px;color:var(--muted);padding-left:18px">${f.flavorId}</td>
-      <td colspan="2"><span class="badge badge-draft" style="background:#EEF2F7;color:#33475B;margin-right:6px">Flavor ${f.flavorLabel}</span><span style="font-size:12px">${f.role}</span></td>
-      <td colspan="4" style="font-size:11px;color:var(--muted)">Role: ${f.role}</td>
-      <td colspan="2"><button class="btn btn-sm" onclick="openPlanDetail('${pk}')" title="Open flavor in plan"><i class="ti ti-arrow-right"></i> Open</button></td>
-    </tr>`).join('');
-    return parent+children;
-  }).join('');
+  }).join('')||'<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--muted)">No comp plans match filters</td></tr>';
 }
 
 const multiData=[
