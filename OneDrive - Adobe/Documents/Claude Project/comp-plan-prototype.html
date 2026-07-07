@@ -880,34 +880,16 @@ tr:hover td{background:var(--pa-surface-hover)}
           </div>
         </div>
         <div id="builder-workspace" style="display:none">
-        <div id="builder-clone-banner" class="clone-banner" style="display:none">
-          <i class="ti ti-copy"></i>
-          <div style="flex:1"><strong id="clone-banner-text">New draft created from source plan</strong><div style="font-size:11px;color:var(--muted);margin-top:2px" id="clone-banner-meta">Audit: cloned from H02.A · Jun 12, 2026</div></div>
-          <button class="btn btn-sm" onclick="openComparePlatform('builder')"><i class="ti ti-columns"></i> Compare to source</button>
-        </div>
-        <div class="builder-version-bar" id="builder-version-bar">
-          <div class="builder-version-switch">
-            <span class="badge badge-version">Version</span>
-            <strong id="builder-version-label">Draft v1</strong>
-            <span style="color:var(--muted);font-size:11px" id="builder-version-meta">Draft · H01.A</span>
-            <select class="form-select" id="builder-version-select" style="width:auto;min-width:200px" onchange="switchBuilderVersion(this.value)"></select>
-          </div>
+        <div class="page-header">
+          <div><div class="page-title" id="builder-title">Plan Builder</div></div>
           <div class="btn-group">
             <button class="btn btn-sm" onclick="openPlanDetail(currentPlanKey)"><i class="ti ti-layout-list"></i> All versions</button>
-            <button class="btn btn-sm" onclick="duplicateCurrentVersion()"><i class="ti ti-copy"></i> Create Revision</button>
-            <button class="btn btn-sm" id="builder-submit-btn" onclick="submitCurrentVersion()"><i class="ti ti-send"></i> Submit for Approval</button>
-          </div>
-          <div id="builder-approval-queue-note" style="display:none;align-items:center;gap:4px;font-size:11px;color:#8A6D00;background:#FFF6DB;border:1px solid #F0E0A0;border-radius:4px;padding:4px 8px;margin-top:6px"></div>
-        </div>
-        <div class="page-header">
-          <div><div class="page-title" id="builder-title">Plan Builder — H01.A</div><div class="page-subtitle" id="builder-subtitle">Digital Experience Account Executive · FY27 · Draft</div></div>
-          <div class="btn-group">
             <button class="btn btn-sm" onclick="saveBuilderVersion()"><i class="ti ti-device-floppy"></i> Save draft</button>
-            <button class="btn btn-sm" onclick="openComparePlatform('builder')"><i class="ti ti-columns"></i> Compare</button>
             <button class="btn btn-sm" onclick="enterPlanBuilder()"><i class="ti ti-plus"></i> New plan</button>
             <button class="btn btn-primary btn-sm" id="builder-header-submit" onclick="submitCurrentVersion()"><i class="ti ti-send"></i> Submit for Approval</button>
           </div>
         </div>
+        <div id="builder-approval-queue-note" style="display:none;align-items:center;gap:4px;font-size:11px;color:#8A6D00;background:#FFF6DB;border:1px solid #F0E0A0;border-radius:4px;padding:4px 8px;margin-bottom:10px"></div>
         <div class="plan-builder">
           <div class="plan-doc" id="builder-plan-doc">
             <div class="plan-doc-header" id="builder-plan-header">
@@ -917,22 +899,22 @@ tr:hover td{background:var(--pa-surface-hover)}
               </div>
               <div class="plan-doc-header-right" id="builder-header-context">Planning cycle · v1.0</div>
             </div>
+            <div class="plan-section-hdr">Plan information</div>
             <div class="plan-summary">
-              <div class="plan-summary-cell"><div class="lbl">Plan #</div><div class="val"><input class="form-input" id="builder-plan-id" value="A01" readonly style="border:none;padding:0;background:transparent;font-weight:500"></div></div>
-              <div class="plan-summary-cell"><div class="lbl">HC</div><div class="val"><input class="form-input" id="builder-headcount" type="number" value="284" style="width:80px"></div></div>
+              <div class="plan-summary-cell"><div class="lbl">Plan ID</div><div class="val"><input class="form-input" id="builder-plan-id" value="A01" readonly style="border:none;padding:0;background:transparent;font-weight:500"></div></div>
+              <div class="plan-summary-cell"><div class="lbl">HC <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· system</span></div><div class="val"><input class="form-input" id="builder-headcount" type="text" value="" readonly title="System-generated for completed plans" style="width:120px"></div></div>
               <div class="plan-summary-cell"><div class="lbl">Paymix (Base / Variable)</div><div class="val paymix-dual">
                 <input class="form-input" id="builder-paymix-base" type="number" min="0" max="100" value="70">
                 <span class="paymix-sep">/</span>
                 <input class="form-input" id="builder-paymix-var" type="number" min="0" max="100" value="30">
               </div></div>
             </div>
-
-            <div class="plan-section-hdr">Plan information</div>
             <div class="plan-section-body">
               <div class="plan-kv-row"><span class="k">Plan Name</span><input class="form-input" id="builder-plan-name" value=""></div>
+              <div class="plan-kv-row"><span class="k">New hire guarantee *</span><select class="form-select" id="builder-newhire-guarantee"><option value="">Select…</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
             </div>
 
-            <div class="plan-section-hdr">Flavors &amp; pay measures <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
+            <div class="plan-section-hdr">Performance measures <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
             <div class="plan-section-body">
               <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Set each flavor's pay measures (measure, VCT weight, performance &amp; payout period).</p>
               <div id="builder-flavors-container"></div>
@@ -2150,28 +2132,20 @@ function openProposalInBuilder(id){openVersionInBuilder(id);}
 function switchBuilderVersion(versionId){if(versionId)openVersionInBuilder(versionId);}
 function switchBuilderProposal(id){switchBuilderVersion(id);}
 
-function updateBuilderVersionBar(planKey,versionId){
-  const {planId,fy}=parsePlanKey(planKey);
-  const v=getVersion(versionId);
-  const sel=document.getElementById('builder-version-select');
-  if(!v||!sel)return;
-  const vers=getVersionsForFlavor(planKey).filter(x=>EDITABLE_STATUSES.includes(x.status)||x.versionId===versionId);
-  sel.innerHTML=getVersionsForFlavor(planKey).map(x=>`<option value="${x.versionId}" ${x.versionId===versionId?'selected':''}>${x.label} · ${VERSION_STATUS_LABELS[x.status]}</option>`).join('');
-  document.getElementById('builder-version-label').textContent=v.label;
-  document.getElementById('builder-version-meta').textContent=`${VERSION_STATUS_LABELS[v.status]} · ${planId} · ${fy}`;
-  builderMeasuresEditable=isVersionEditable(v);
-  const submitBtn=document.getElementById('builder-submit-btn');
+/* Submit button visibility + approval-queue note (no version bar). */
+function updateBuilderSubmitState(planKey,v){
+  if(!v)return;
   const headerSubmit=document.getElementById('builder-header-submit');
-  const otherPending=getPendingApprovalVersions(planKey).filter(x=>x.versionId!==versionId);
+  const otherPending=getPendingApprovalVersions(planKey).filter(x=>x.versionId!==v.versionId);
   const canSubmit=isVersionEditable(v)&&!otherPending.length;
-  if(submitBtn){submitBtn.style.display=canSubmit?'inline-flex':'none';}
-  if(headerSubmit){headerSubmit.style.display=canSubmit?'inline-flex':'none';}
+  if(headerSubmit)headerSubmit.style.display=canSubmit?'inline-flex':'none';
   const queueNote=document.getElementById('builder-approval-queue-note');
   if(queueNote){
-    if(otherPending.length&&isVersionEditable(v)){queueNote.style.display='inline-flex';queueNote.textContent=`${otherPending[0].label} is in the approval queue — only one version can be in approval at a time.`;}
+    if(otherPending.length&&isVersionEditable(v)){queueNote.style.display='flex';queueNote.textContent=`${otherPending[0].flavorId} v${otherPending[0].versionNumber} is in the approval queue — only one version can be in approval at a time.`;}
     else queueNote.style.display='none';
   }
 }
+function updateBuilderVersionBar(planKey,versionId){updateBuilderSubmitState(planKey,getVersion(versionId));}
 function updateBuilderProposalBar(planKey,id){updateBuilderVersionBar(planKey,id);}
 
 function duplicateVersionById(versionId){
@@ -2196,6 +2170,8 @@ function submitVersionById(versionId){
   // Only one version per comp plan may be in the approval queue at a time.
   const inQueue=getPendingApprovalVersions(pk).filter(x=>x.versionId!==versionId);
   if(inQueue.length){alert(`${inQueue[0].flavorId} v${inQueue[0].versionNumber} is already in the approval queue for ${v.flavorId} · ${v.fy}. Only one version can be in approval at a time — advance or withdraw it first.`);return;}
+  const errs=v.content?validateVersionContent(v.content):[];
+  if(errs.length){alert(`Cannot submit — fix these first:\n• ${errs.join('\n• ')}`);return;}
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   v.status='pending_review';v.approvalStage='first_review';v.submittedAt=now;v.updatedAt=now;
   approvalVersionId=versionId;
@@ -2205,7 +2181,17 @@ function submitVersionById(versionId){
   alert(`${v.flavorId} v${v.versionNumber} submitted — now at 1st Review.`);
 }
 function submitProposalById(id){submitVersionById(id);}
-function submitCurrentVersion(){if(currentVersionId)submitVersionById(currentVersionId);}
+function submitCurrentVersion(){
+  // Persist current builder edits into the version first so validation/submit see them.
+  const v=getVersion(currentVersionId);
+  if(v&&builderWorkingContent&&isVersionEditable(v)){
+    const gv=id=>document.getElementById(id)?.value;
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
+    syncBuilderPayoutTablesFromDOM();
+    v.content=JSON.parse(JSON.stringify(builderWorkingContent));
+  }
+  if(currentVersionId)submitVersionById(currentVersionId);
+}
 function submitCurrentProposal(){submitCurrentVersion();}
 
 /* Generic approve/advance — move one stage forward; auto-publish at Completed. */
@@ -2606,29 +2592,6 @@ function openBuilder(planId,isNew,fromClone,versionId){
     if(ver)currentPlanKey=planKey(ver.flavorId,ver.fy);
   }
   const pk=currentPlanKey||(currentDraftPlan?planKey(currentDraftPlan.id,currentDraftPlan.fy||'FY27'):planKey(planId||'A01','FY27'));
-  if(currentDraftPlan&&currentDraftPlan.id===planId){
-    document.getElementById('builder-title').textContent=`Plan Builder — ${currentDraftPlan.id} · ${currentDraftPlan.fy||'FY27'}`;
-    document.getElementById('builder-subtitle').textContent=`${currentDraftPlan.role||currentDraftPlan.name} · ${currentDraftPlan.fy||'FY27'} · Draft v${currentDraftPlan.version||'1.0'}`;
-    const fyChip=document.getElementById('builder-fy-chip');
-    if(fyChip)fyChip.textContent=currentDraftPlan.fy||'FY27';
-    const banner=document.getElementById('builder-clone-banner');
-    if(fromClone&&currentDraftPlan.clonedFrom){
-      banner.style.display='flex';
-      document.getElementById('clone-banner-text').textContent=`New draft v${currentDraftPlan.version} — cloned from ${currentDraftPlan.clonedFrom}`;
-      document.getElementById('clone-banner-meta').textContent=`Audit: Plan cloned from ${currentDraftPlan.clonedFrom} · Fields: ${(currentDraftPlan.carriedFields||[]).join(', ')} · ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
-    }else if(isNew&&!fromClone){
-      banner.style.display='none';
-    }else{
-      banner.style.display='none';
-    }
-  }else{
-    const {planId:pid,fy}=parsePlanKey(pk);
-    document.getElementById('builder-title').textContent=`Plan Builder — ${pid} · ${fy}`;
-    document.getElementById('builder-subtitle').textContent='Digital Experience Account Executive · FY27 · Draft';
-    document.getElementById('builder-clone-banner').style.display='none';
-    const fyChip=document.getElementById('builder-fy-chip');
-    if(fyChip)fyChip.textContent=fy;
-  }
   // Resolve the version to edit and drive the builder from its stored content.
   let v=versionId?getVersion(versionId):null;
   if(!v)v=getVersionsForFlavor(pk).find(x=>EDITABLE_STATUSES.includes(x.status))||getPublishedVersion(pk)||getVersionsForFlavor(pk)[0];
@@ -2637,7 +2600,7 @@ function openBuilder(planId,isNew,fromClone,versionId){
   if(v){
     if(!v.content)v.content=blankVersionContent(pk);
     populateBuilderFromVersion(v);
-    updateBuilderVersionBar(pk,v.versionId);
+    updateBuilderSubmitState(pk,v);
   }
   document.getElementById('builder-plan-id').value=parsePlanKey(pk).planId;
   showScreen('builder');
@@ -2653,17 +2616,26 @@ function populateBuilderFromVersion(v){
   const pk=planKey(v.flavorId,v.fy);
   builderWorkingContent=JSON.parse(JSON.stringify(v.content||blankVersionContent(pk)));
   const pm=builderWorkingContent.planMeta||{};
+  const {planId}=parsePlanKey(pk);
+  const plan=getPlan(planId,v.fy);
   const setVal=(id,val)=>{const el=document.getElementById(id);if(el&&val!=null)el.value=val;};
-  setVal('builder-headcount',pm.headcount);
+  // HC: system-generated for completed (published) plans; N/A otherwise.
+  const hcEl=document.getElementById('builder-headcount');
+  if(hcEl)hcEl.value=v.status==='published'?(pm.headcount||'—'):'N/A';
   setVal('builder-paymix-base',pm.payMixBase);
   setVal('builder-paymix-var',pm.payMixVar);
   setVal('builder-plan-name',pm.planName);
   const bonusSel=document.getElementById('builder-bonus');
   if(bonusSel)bonusSel.innerHTML=selectOptionsHtml(BONUS_TYPE_OPTIONS,normalizeBonusType(pm.bonus||'None'));
   setVal('builder-tether',pm.tether);
+  const nhg=document.getElementById('builder-newhire-guarantee');if(nhg)nhg.value=pm.newHireGuarantee||'';
+  document.getElementById('builder-plan-id').value=planId;
+  // Title: FY · Plan ID · Plan Name · vN · Status
+  const titleEl=document.getElementById('builder-title');
+  if(titleEl)titleEl.textContent=`${v.fy} · ${planId} · ${plan?.planName||pm.planName||planId} · v${v.versionNumber} · ${VERSION_STATUS_LABELS[v.status]||v.status}`;
   const fyChip=document.getElementById('builder-fy-chip');if(fyChip)fyChip.textContent=v.fy;
   const statusBadge=document.getElementById('builder-status-badge');if(statusBadge)statusBadge.textContent=VERSION_STATUS_LABELS[v.status]||v.status;
-  const hint=document.getElementById('builder-version-hint');if(hint)hint.textContent=`— ${v.label} · ${VERSION_STATUS_LABELS[v.status]}${builderMeasuresEditable?'':' · locked'}`;
+  const hint=document.getElementById('builder-version-hint');if(hint)hint.textContent=builderMeasuresEditable?'':'— locked (create a revision to edit)';
   renderBuilderFlavors();
   renderBuilderPayoutTables();
   loadBuilderPlanNote(v.flavorId);
@@ -2676,21 +2648,28 @@ function renderBuilderFlavors(){
   cont.innerHTML=builderWorkingContent.flavors.map((fl,fi)=>renderBuilderFlavorBlock(fl,fi,editable)).join('');
   const addBtn=document.getElementById('builder-add-flavor-btn');if(addBtn)addBtn.style.display=editable?'inline-flex':'none';
 }
+function flavorVctSum(fl){return (fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);}
+function flavorVctSumBadge(fi){
+  const fl=builderWorkingContent.flavors[fi];const sum=flavorVctSum(fl);const ok=Math.round(sum)===100;
+  return `<span id="flavor-vctsum-${fi}" class="badge ${ok?'badge-approved':'badge-rejected'}" title="Pay measures must total 100%">VCT total ${sum%1===0?sum:sum.toFixed(1)}%</span>`;
+}
 function renderBuilderFlavorBlock(fl,fi,editable){
   const rows=fl.measures.map((m,mi)=>renderBuilderFlavorMeasureRow(fi,mi,m,editable)).join('');
+  const atMax=fl.measures.length>=MAX_BUILDER_MEASURES;
   return `<div class="measure-payout-unit" style="margin-bottom:14px">
-    <div class="measure-payout-unit-hdr" style="justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:8px;flex:1">
-        <span class="badge badge-draft" style="background:#EEF2F7;color:#33475B">Flavor ${fl.flavorLabel}</span>
-        <input class="form-input" value="${(fl.role||'').replace(/"/g,'&quot;')}" placeholder="Self-defined role" oninput="onBuilderFlavorRole(${fi},this.value)" ${editable?'':'readonly'} style="max-width:280px" title="Self-defined role for this flavor">
+    <div class="measure-payout-unit-hdr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
+        <span class="badge badge-draft" style="background:#EEF2F7;color:#33475B">${fl.flavorLabel}</span>
+        <input class="form-input" value="${(fl.role||'').replace(/"/g,'&quot;')}" placeholder="Role" oninput="onBuilderFlavorField(${fi},'role',this.value)" ${editable?'':'readonly'} style="max-width:260px" title="Self-defined role">
+        ${flavorVctSumBadge(fi)}
       </div>
       ${editable&&builderWorkingContent.flavors.length>1?`<button type="button" class="measure-remove-btn" onclick="removeBuilderFlavor(${fi})"><i class="ti ti-trash" style="font-size:11px"></i> Remove flavor</button>`:''}
     </div>
     <table class="payout-tier-table" style="margin-top:8px">
-      <thead><tr><th>Pay measure</th><th>VCT Wt%</th><th>Performance period</th><th>Payout period</th><th></th></tr></thead>
+      <thead><tr><th>Pay measure</th><th>Description</th><th>VCT Wt%</th><th>Performance period</th><th>Payout frequency</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    ${editable?`<div style="margin-top:8px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})"><i class="ti ti-plus"></i> Add measure</button></div>`:''}
+    ${editable?`<div style="margin-top:8px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
   </div>`;
 }
 function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
@@ -2698,23 +2677,27 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   const dis=editable?'':'disabled';
   return `<tr>
     <td><select class="form-select" ${dis} onchange="onBuilderMeasureType(${fi},${mi},this.value)">${PLAN_MEASURES.map(pm=>`<option value="${pm.id}" ${pm.id===m.measureId?'selected':''}>${pm.name}</option>`).join('')}</select></td>
-    <td><input class="form-input" value="${m.vct||''}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'vct',this.value)" style="width:70px" placeholder="e.g. 50%"></td>
+    <td><input class="form-input" value="${(m.description||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'description',this.value)" placeholder="Description" style="min-width:140px"></td>
+    <td><input class="form-input" value="${m.vct||''}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'vct',this.value);recalcFlavorVctSum(${fi})" style="width:70px" placeholder="e.g. 50%"></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)">${selectOptionsHtml(PERF_PERIOD_OPTIONS,normalizePerfPeriod(m.perf))}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)">${selectOptionsHtml(PAY_FREQ_OPTIONS,normalizePayFreq(m.pay))}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
   </tr>`;
 }
-function onBuilderFlavorRole(fi,v){if(builderWorkingContent.flavors[fi])builderWorkingContent.flavors[fi].role=v;}
+const MAX_BUILDER_FLAVORS=5;
+function onBuilderFlavorField(fi,field,v){if(builderWorkingContent.flavors[fi])builderWorkingContent.flavors[fi][field]=v;}
+function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-${fi}`);if(!el)return;const sum=flavorVctSum(builderWorkingContent.flavors[fi]);const ok=Math.round(sum)===100;el.textContent=`VCT total ${sum%1===0?sum:sum.toFixed(1)}%`;el.className=`badge ${ok?'badge-approved':'badge-rejected'}`;}
 function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
 function onBuilderMeasureType(fi,mi,v){syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors[fi].measures[mi].measureId=v;renderBuilderPayoutTables();}
-function addBuilderMeasureToFlavor(fi){syncBuilderPayoutTablesFromDOM();const used=builderWorkingContent.flavors[fi].measures.map(m=>m.measureId);const next=(PLAN_MEASURES.find(pm=>!used.includes(pm.id))||PLAN_MEASURES[0]).id;builderWorkingContent.flavors[fi].measures.push({measureId:next,vct:'',perf:'Annual',pay:'Quarterly'});renderBuilderFlavors();renderBuilderPayoutTables();}
+function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}syncBuilderPayoutTablesFromDOM();const used=builderWorkingContent.flavors[fi].measures.map(m=>m.measureId);const next=(PLAN_MEASURES.find(pm=>!used.includes(pm.id))||PLAN_MEASURES[0]).id;builderWorkingContent.flavors[fi].measures.push({measureId:next,description:'',vct:'',perf:'Annual',pay:'Quarterly'});renderBuilderFlavors();renderBuilderPayoutTables();}
 function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();renderBuilderPayoutTables();}
 function addBuilderFlavor(){
   if(!builderMeasuresEditable)return;
+  if(builderWorkingContent.flavors.length>=MAX_BUILDER_FLAVORS){alert(`Maximum ${MAX_BUILDER_FLAVORS} flavors per comp plan.`);return;}
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
   syncBuilderPayoutTablesFromDOM();
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,role:'New Role',measures:[{measureId:PLAN_MEASURES[0].id,vct:'',perf:'Annual',pay:'Quarterly'}]});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'New Role',measures:[{measureId:PLAN_MEASURES[0].id,description:'',vct:'',perf:'Annual',pay:'Quarterly'}]});
   renderBuilderFlavors();renderBuilderPayoutTables();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();renderBuilderPayoutTables();}
@@ -2729,16 +2712,31 @@ function renderBuilderPayoutTables(){
   const editable=builderMeasuresEditable;
   cont.innerHTML=ids.map((mid,i)=>{
     const slot=1000+i;sharedPayoutSlots.add(slot);builderPayoutSlotMeasure[slot]=mid;
-    if(!builderWorkingContent.payoutTables[mid])builderWorkingContent.payoutTables[mid]=defaultPayoutForMeasure(mid);
+    let pt=builderWorkingContent.payoutTables[mid];
+    if(!pt)pt=builderWorkingContent.payoutTables[mid]=normalizePayoutToScheme(defaultPayoutForMeasure(mid),'single');
+    if(!pt.schemeKey)builderWorkingContent.payoutTables[mid]=pt=normalizePayoutToScheme(pt,'single');
     const usedBy=builderWorkingContent.flavors.filter(fl=>fl.measures.some(m=>m.measureId===mid)).map(fl=>'Flavor '+fl.flavorLabel).join(', ');
     const name=getMeasureById(mid)?.name||mid;
+    const schemeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="onPayoutSchemeChange(${slot},this.value)" style="min-width:220px">${QUOTA_BAND_SCHEMES.map(s=>`<option value="${s.key}" ${s.key===pt.schemeKey?'selected':''}>${s.label}</option>`).join('')}</select>`;
     return `<div class="measure-payout-unit" style="margin-bottom:14px">
       <div class="payout-linked-hdr"><span><i class="ti ti-table"></i> ${name} <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· used by ${usedBy}</span></span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin:6px 0"><label style="font-size:11px;color:var(--pa-text-secondary)">Quota band</label>${schemeSel}</div>
       <div class="payout-table-wrap ${editable?'':'payout-readonly'}" id="builder-p${slot}-table"></div>
-      <div class="payout-table-actions" style="display:${editable?'flex':'none'}"><button type="button" class="btn btn-sm" onclick="addPayoutThreshold(${slot})"><i class="ti ti-plus"></i> Add threshold</button></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-top:10px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--pa-text-secondary)"><input type="checkbox" id="builder-p${slot}-prorate" ${pt.prorateVct?'checked':''} ${editable?'':'disabled'}> Prorate VCT</label>
+        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
+        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="number" min="0" value="${pt.threshold!=null?pt.threshold:0}" ${editable?'':'readonly'} title="Minimum attainment required for payout" style="width:80px"></span>
+        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Cap (optional)</label><input class="form-input" id="builder-p${slot}-cap" value="${(pt.globalVctCap||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} placeholder="e.g. 200% of VCT" style="max-width:220px"></span>
+      </div>
     </div>`;
   }).join('');
   ids.forEach((mid,i)=>renderPayoutTableEditor(1000+i,builderWorkingContent.payoutTables[mid]));
+}
+function onPayoutSchemeChange(slot,key){
+  const mid=builderPayoutSlotMeasure[slot];if(!mid)return;
+  const cur=collectPayoutTable(slot);
+  builderWorkingContent.payoutTables[mid]=normalizePayoutToScheme(cur,key);
+  renderBuilderPayoutTables();
 }
 function syncBuilderPayoutTablesFromDOM(){
   if(!builderWorkingContent)return;
@@ -2753,12 +2751,23 @@ function reconcilePlanFlavors(pk,flavors){
   for(let i=planFlavors.length-1;i>=0;i--){const f=planFlavors[i];if(f.planId===planId&&f.fiscalYear===fy&&!ids.includes(f.flavorId))planFlavors.splice(i,1);}
   flavors.forEach(cf=>{
     const f=getPlanFlavor(cf.flavorId,fy);
-    if(f){f.role=cf.role;f.flavorLabel=cf.flavorLabel;}
-    else planFlavors.push({flavorId:cf.flavorId,planId,flavorLabel:cf.flavorLabel,flavorName:cf.role,role:cf.role,fiscalYear:fy,roleGroup:plan?.roleGroup||'',owner:plan?.owner||'Melissa C.',status:'active'});
+    if(f){f.role=cf.role;f.flavorLabel=cf.flavorLabel;f.flavorName=cf.flavorName||cf.role;}
+    else planFlavors.push({flavorId:cf.flavorId,planId,flavorLabel:cf.flavorLabel,flavorName:cf.flavorName||cf.role,role:cf.role,fiscalYear:fy,roleGroup:plan?.roleGroup||'',owner:plan?.owner||'Melissa C.',status:'active'});
     const leg=plans.find(p=>p.id===cf.flavorId&&p.fy===fy);
-    if(leg){leg.role=cf.role;}
-    else plans.push({id:cf.flavorId,name:cf.role,role:cf.role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:plan?.owner||'Melissa C.',approval:'none'});
+    if(leg){leg.role=cf.role;leg.name=cf.flavorName||cf.role;}
+    else plans.push({id:cf.flavorId,name:cf.flavorName||cf.role,role:cf.role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:plan?.owner||'Melissa C.',approval:'none'});
   });
+}
+/* Validate builder content: each flavor's pay measures must total 100% and be ≤4. */
+function validateVersionContent(content){
+  const errs=[];
+  if(!content.planMeta||!content.planMeta.newHireGuarantee)errs.push('New hire guarantee is required (Yes/No).');
+  (content.flavors||[]).forEach(fl=>{
+    const sum=(fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);
+    if(Math.round(sum)!==100)errs.push(`Flavor ${fl.flavorLabel} pay measures total ${sum%1===0?sum:sum.toFixed(1)}% (must be 100%).`);
+    if((fl.measures||[]).length>MAX_BUILDER_MEASURES)errs.push(`Flavor ${fl.flavorLabel} has more than ${MAX_BUILDER_MEASURES} pay measures.`);
+  });
+  return errs;
 }
 function saveBuilderVersion(){
   const v=getVersion(currentVersionId);
@@ -2766,7 +2775,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={headcount:gv('builder-headcount'),payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),tether:gv('builder-tether')};
+  builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta?.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
   syncBuilderPayoutTablesFromDOM();
   const used=new Set();builderWorkingContent.flavors.forEach(fl=>fl.measures.forEach(m=>used.add(m.measureId)));
   Object.keys(builderWorkingContent.payoutTables).forEach(mid=>{if(!used.has(mid))delete builderWorkingContent.payoutTables[mid];});
@@ -2775,7 +2784,8 @@ function saveBuilderVersion(){
   reconcilePlanFlavors(pk,v.content.flavors);
   addAuditEntry(pk,'Version saved',`${v.label} content updated.`,{versionId:v.versionId});
   syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();buildLibrary();
-  alert(`Saved ${v.label}.`);
+  const errs=validateVersionContent(v.content);
+  alert(errs.length?`Saved ${v.label}.\n\nNote — resolve before submitting:\n• ${errs.join('\n• ')}`:`Saved ${v.label}.`);
 }
 
 /* ── Plan catalog (used by library & comparison) ── */
@@ -2860,8 +2870,8 @@ const ROLE_OPTIONS=[
   'Emerging Markets AE',
 ];
 
-const PERF_PERIOD_OPTIONS=['Annual','Quarterly'];
-const PAY_FREQ_OPTIONS=['Monthly','Quarterly','Annual'];
+const PERF_PERIOD_OPTIONS=['Monthly','Quarterly','Annual'];
+const PAY_FREQ_OPTIONS=['Monthly','Quarterly','Annual','Quarterly_YTD'];
 const BONUS_TYPE_OPTIONS=['None','Lead Referral Bonus','Linearity Bonus','M1/M2 Achievement Bonus'];
 
 const PRODUCT_SCOPE_OPTIONS=[
@@ -3461,6 +3471,49 @@ function defaultPayoutForMeasure(measureId){
   return templateKeyToPayoutStructure(m?.payoutKey||'single_quota');
 }
 
+/* ── Quota-band schemes (ways to split quota amount, all in $M) ── */
+const QUOTA_BAND_SCHEMES=[
+  {key:'single',label:'All quota sizes',bands:['All quota sizes']},
+  {key:'threeTier',label:'< $1.5M · $1.5M–$3.5M · > $3.5M',bands:['< $1.5M','$1.5M–$3.5M','> $3.5M']},
+  {key:'twoTier',label:'< $5M · ≥ $5M',bands:['< $5M','≥ $5M']},
+  {key:'fourTier',label:'< $1M · $1M–$3M · $3M–$5M · > $5M',bands:['< $1M','$1M–$3M','$3M–$5M','> $5M']},
+];
+function getQuotaScheme(key){return QUOTA_BAND_SCHEMES.find(s=>s.key===key)||QUOTA_BAND_SCHEMES[0];}
+function defaultBandTiers(){return[
+  {id:payoutUid(),attainmentFrom:0,attainmentTo:100,xPCR:1,mcr:null},
+  {id:payoutUid(),attainmentFrom:100,attainmentTo:150,xPCR:1.25,mcr:null},
+  {id:payoutUid(),attainmentFrom:150,attainmentTo:null,xPCR:1.5,mcr:null},
+];}
+/* Reshape a payout table to a quota-band scheme: one threshold (band) per scheme range. */
+function normalizePayoutToScheme(pt,key){
+  const scheme=getQuotaScheme(key);
+  const old=(pt&&pt.thresholds)||[];
+  const baseTiers=(old[0]&&old[0].tiers&&old[0].tiers.length)?old[0].tiers:defaultBandTiers();
+  return{
+    schemeKey:scheme.key,
+    thresholds:scheme.bands.map((b,i)=>({
+      id:payoutUid(),label:b,
+      tiers:(old[i]&&old[i].tiers&&old[i].tiers.length)?JSON.parse(JSON.stringify(old[i].tiers)):JSON.parse(JSON.stringify(baseTiers)),
+      mcr:(old[i]&&old[i].mcr)||null,
+    })),
+    globalVctCap:(pt&&pt.globalVctCap)||'',
+    prorateVct:!!(pt&&pt.prorateVct),
+    payCurveType:(pt&&pt.payCurveType)||'Linear',
+    threshold:(pt&&pt.threshold!=null)?pt.threshold:0,
+  };
+}
+/* %VCT for a tier = max attainment × xPCR (payout as % of the measure's VCT), capped by the table Cap. */
+function calcTierVctFromAttainment(tier,cap){
+  const to=tier.attainmentTo,from=tier.attainmentFrom;
+  const maxAtt=(to!=null&&to!=='')?Number(to):Number(from);
+  const mult=typeof tier.xPCR==='number'?tier.xPCR:parseXpcrValue(tier.xPCR);
+  if(isNaN(maxAtt))return 0;
+  let vct=maxAtt*mult;
+  const capN=parsePctValue(cap);
+  if(cap!=null&&cap!==''&&!isNaN(capN)&&capN>0)vct=Math.min(vct,capN);
+  return vct;
+}
+
 function payoutStructureSummary(pt){
   if(!pt?.thresholds?.length)return '—';
   return pt.thresholds.map(th=>{
@@ -3696,10 +3749,11 @@ function blankVersionContent(pk){
   const plan=getPlan(planId,fy);
   const defs=getDefaultMeasureConfigs(2);
   const payoutTables={};
-  defs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=pt;}});
+  defs.forEach(c=>{if(!payoutTables[c.measureId])payoutTables[c.measureId]=normalizePayoutToScheme(c.payoutTable,'single');});
+  const f0=getFlavorsForPlan(pk)[0];
   return{
-    planMeta:{headcount:'',payMixBase:70,payMixVar:30,planName:plan?.planName||planId,bonus:'N/A',tether:'N/A'},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',role:(getFlavorsForPlan(pk)[0]?.role)||'New Role',measures:defs.map(c=>({measureId:c.measureId,vct:c.vct,perf:c.perf,pay:c.pay}))}],
+    planMeta:{headcount:'',payMixBase:70,payMixVar:30,planName:plan?.planName||planId,bonus:'N/A',tether:'N/A',newHireGuarantee:''},
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:f0?.role||'New Role',measures:defs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))}],
     payoutTables,
   };
 }
@@ -3713,15 +3767,15 @@ function seedVersionContent(){
     const contentFlavors=flavors.map(f=>{
       const raw=(ver.fy==='FY26'?fy26Baselines[f.flavorId]:fy27CurrentFields[f.flavorId])||fy27CurrentFields[f.flavorId]||fy26Baselines[f.flavorId]||{};
       const cfgs=getMeasureConfigsFromFields(buildMeasureFieldsFromIds(raw,planFieldTemplates[f.flavorId]||{}));
-      cfgs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=pt;}});
-      return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,role:f.role,measures:cfgs.map(c=>({measureId:c.measureId,vct:c.vct,perf:c.perf,pay:c.pay}))};
+      cfgs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=normalizePayoutToScheme(pt,'single');}});
+      return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,flavorName:f.flavorName||f.role,role:f.role,measures:cfgs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))};
     });
     const rep=flavors[0];
     const rawRep=rep?((ver.fy==='FY26'?fy26Baselines[rep.flavorId]:fy27CurrentFields[rep.flavorId])||fy27CurrentFields[rep.flavorId]||{}):{};
     const pm=parsePayMix(payMixMap[rep?.flavorId]||'70 / 30');
     const plan=getPlan(ver.flavorId,ver.fy);
     ver.content={
-      planMeta:{headcount:rawRep.headcount,payMixBase:pm.base,payMixVar:pm.var,planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',tether:rawRep.tether||'N/A'},
+      planMeta:{headcount:rawRep.headcount,payMixBase:pm.base,payMixVar:pm.var,planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',tether:rawRep.tether||'N/A',newHireGuarantee:'No'},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
       payoutTables,
     };
@@ -3904,41 +3958,30 @@ function getBuilderMeasureVct(slot){
   return document.getElementById(`builder-m${slot}-vct`)?.value||'0%';
 }
 
-let sharedPayoutSlots=new Set(); // payout slots that hide the per-flavor Calc VCT% column
+let sharedPayoutSlots=new Set();
+function payoutSlotCap(slot){return document.getElementById(`builder-p${slot}-cap`)?.value||'';}
 function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable){
-  const hideCalc=sharedPayoutSlots.has(slot);
-  const vct=hideCalc?'':calcTierVctPct(getBuilderMeasureVct(slot),tier.xPCR,tier.vctCap);
   const ro=editable?'':'readonly';
   return`<tr data-tier="${tierIdx}">
-    <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentFrom??0}" data-field="from" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:52px"></td>
-    <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="+" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:52px"></td>
+    <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:110px" title="Upper bound of this attainment tier; leave blank on the last tier for 'and above'"></td>
+    <td class="tier-range-cell" data-range style="font-size:11px;color:var(--pa-text-secondary)">—</td>
     <td><input class="form-input" value="${formatXpcrValue(tier.xPCR)}" data-field="xpcr" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:64px"></td>
-    ${hideCalc?'':`<td class="vct-calc-cell" data-calc-vct>${formatPctValue(vct)}</td>`}
-    <td><input class="form-input" value="${tier.mcr??''}" placeholder="—" data-field="mcr" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:56px"></td>
-    <td><input class="form-input" value="${tier.vctCap??''}" placeholder="—" data-field="vctCap" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:56px" title="Optional cap on calculated VCT %"></td>
+    <td class="vct-calc-cell" data-calc-vct>—</td>
     ${editable?`<td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removePayoutTier(${slot},${thIdx},${tierIdx})" title="Remove tier"><i class="ti ti-x"></i></button></td>`:'<td></td>'}
   </tr>`;
 }
 
 function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
-  const hideCalc=sharedPayoutSlots.has(slot);
   const tierRows=threshold.tiers.map((t,i)=>renderPayoutTierRow(slot,thIdx,i,t,editable)).join('');
-  const mcrRow=`<tr class="payout-mcr-row">
-    <td colspan="${hideCalc?3:4}" style="font-weight:600;font-size:11px">Threshold MCR (optional)</td>
-    <td><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 100%" data-th-mcr oninput="onPayoutTierInput(${slot},${thIdx})" ${editable?'':'readonly'} style="width:72px"></td>
-    <td colspan="2"></td>
-  </tr>`;
-  return`<div class="payout-threshold-block" data-th-idx="${thIdx}">
+  return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${(threshold.label||'').replace(/"/g,'&quot;')}">
     <div class="payout-threshold-hdr">
       <i class="ti ti-adjustments" style="color:var(--pa-theme-primary);font-size:14px"></i>
-      <input class="form-input" value="${threshold.label||''}" data-th-label placeholder="Threshold label (e.g. Quota &lt; $10M)" oninput="onPayoutTierInput(${slot},${thIdx})" ${editable?'':'readonly'}>
-      ${editable?`<button type="button" class="btn btn-sm" onclick="removePayoutThreshold(${slot},${thIdx})" title="Remove threshold"><i class="ti ti-trash"></i></button>`:''}
+      <strong style="font-size:12px">${threshold.label||'Quota band'}</strong>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR (optional)</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 100%" data-th-mcr oninput="onPayoutTierInput(${slot},${thIdx})" ${editable?'':'readonly'} style="width:80px"></span>
     </div>
     <table class="payout-tier-table">
-      <thead><tr>
-        <th>From %</th><th>To %</th><th>xPCR</th>${hideCalc?'':'<th>Calc VCT %</th>'}<th>Tier MCR</th><th>VCT cap</th><th></th>
-      </thead>
-      <tbody>${tierRows}${mcrRow}</tbody>
+      <thead><tr><th>Upper bound %</th><th>Range (auto)</th><th>xPCR</th><th>%VCT (auto)</th><th></th></tr></thead>
+      <tbody>${tierRows}</tbody>
     </table>
     ${editable?`<div class="payout-threshold-actions"><button type="button" class="btn btn-sm" onclick="addPayoutTier(${slot},${thIdx})"><i class="ti ti-plus"></i> Add tier</button></div>`:''}
   </div>`;
@@ -3947,20 +3990,25 @@ function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
 function renderPayoutTableEditor(slot,payoutTable){
   const wrap=document.getElementById(`builder-p${slot}-table`);
   if(!wrap)return;
-  const pt=payoutTable?.thresholds?.length?payoutTable:defaultPayoutForMeasure(document.getElementById(`builder-m${slot}-select`)?.value||'GROSS_NEW_ARR');
+  let pt=payoutTable&&payoutTable.thresholds&&payoutTable.thresholds.length?payoutTable:normalizePayoutToScheme(defaultPayoutForMeasure(builderPayoutSlotMeasure[slot]||'GROSS_NEW_ARR'),'single');
   const editable=builderMeasuresEditable;
   wrap.innerHTML=pt.thresholds.map((th,i)=>renderPayoutThresholdBlock(slot,i,th,editable)).join('');
   syncPayoutVctCalcs(slot);
 }
 
 function syncPayoutVctCalcs(slot){
-  const vct=getBuilderMeasureVct(slot);
+  const cap=payoutSlotCap(slot);
   document.querySelectorAll(`#builder-p${slot}-table .payout-threshold-block`).forEach(thEl=>{
+    let prev=0; // cumulative lower bound within this quota band
     thEl.querySelectorAll('tbody tr[data-tier]').forEach(row=>{
-      const xpcr=parseXpcrValue(row.querySelector('[data-field="xpcr"]')?.value);
-      const cap=row.querySelector('[data-field="vctCap"]')?.value;
+      const toRaw=row.querySelector('[data-field="to"]')?.value;
+      const to=(toRaw===''||toRaw==null)?null:Number(toRaw);
+      const tier={attainmentFrom:prev,attainmentTo:to,xPCR:parseXpcrValue(row.querySelector('[data-field="xpcr"]')?.value)};
+      const rangeCell=row.querySelector('[data-range]');
+      if(rangeCell)rangeCell.textContent=(to==null)?`> ${prev}%`:`${prev}% – ${to}%`;
       const cell=row.querySelector('[data-calc-vct]');
-      if(cell)cell.textContent=formatPctValue(calcTierVctPct(vct,xpcr,cap));
+      if(cell)cell.textContent=formatPctValue(calcTierVctFromAttainment(tier,cap));
+      if(to!=null)prev=to;
     });
   });
 }
@@ -3968,46 +4016,33 @@ function syncPayoutVctCalcs(slot){
 function collectPayoutTable(slot){
   const thresholds=[];
   document.querySelectorAll(`#builder-p${slot}-table .payout-threshold-block`).forEach(thEl=>{
-    const tiers=[];
+    const tiers=[];let prev=0;
     thEl.querySelectorAll('tbody tr[data-tier]').forEach(row=>{
-      tiers.push({
-        id:payoutUid(),
-        attainmentFrom:parseInt(row.querySelector('[data-field="from"]')?.value,10)||0,
-        attainmentTo:row.querySelector('[data-field="to"]')?.value===''?null:parseInt(row.querySelector('[data-field="to"]')?.value,10),
-        xPCR:parseXpcrValue(row.querySelector('[data-field="xpcr"]')?.value),
-        mcr:row.querySelector('[data-field="mcr"]')?.value||null,
-        vctCap:row.querySelector('[data-field="vctCap"]')?.value||null,
-      });
+      const toRaw=row.querySelector('[data-field="to"]')?.value;
+      const to=(toRaw===''||toRaw==null)?null:parseInt(toRaw,10);
+      tiers.push({id:payoutUid(),attainmentFrom:prev,attainmentTo:to,xPCR:parseXpcrValue(row.querySelector('[data-field="xpcr"]')?.value),mcr:null});
+      if(to!=null)prev=to;
     });
     thresholds.push({
       id:payoutUid(),
-      label:thEl.querySelector('[data-th-label]')?.value||'Threshold',
-      tiers:tiers.length?tiers:[createEmptyTier()],
+      label:thEl.getAttribute('data-band-label')||'Quota band',
+      tiers:tiers.length?tiers:defaultBandTiers(),
       mcr:thEl.querySelector('[data-th-mcr]')?.value||null,
     });
   });
+  const mid=builderPayoutSlotMeasure[slot];
+  const schemeKey=(builderWorkingContent&&builderWorkingContent.payoutTables[mid]&&builderWorkingContent.payoutTables[mid].schemeKey)||'single';
   return{
-    thresholds:thresholds.length?thresholds:[createEmptyThreshold()],
-    globalVctCap:document.getElementById(`builder-p${slot}-global-cap`)?.value||'',
+    schemeKey,
+    thresholds:thresholds.length?thresholds:normalizePayoutToScheme({},schemeKey).thresholds,
+    globalVctCap:document.getElementById(`builder-p${slot}-cap`)?.value||'',
+    prorateVct:!!document.getElementById(`builder-p${slot}-prorate`)?.checked,
+    payCurveType:document.getElementById(`builder-p${slot}-curve`)?.value||'Linear',
+    threshold:document.getElementById(`builder-p${slot}-threshold`)?.value||'0',
   };
 }
 
 function onPayoutTierInput(slot){syncPayoutVctCalcs(slot);}
-
-function addPayoutThreshold(slot){
-  if(!builderMeasuresEditable)return;
-  const pt=collectPayoutTable(slot);
-  pt.thresholds.push(createEmptyThreshold(`Threshold ${pt.thresholds.length+1}`));
-  renderPayoutTableEditor(slot,pt);
-}
-
-function removePayoutThreshold(slot,thIdx){
-  if(!builderMeasuresEditable)return;
-  const pt=collectPayoutTable(slot);
-  if(pt.thresholds.length<=1)return;
-  pt.thresholds.splice(thIdx,1);
-  renderPayoutTableEditor(slot,pt);
-}
 
 function addPayoutTier(slot,thIdx){
   if(!builderMeasuresEditable)return;
