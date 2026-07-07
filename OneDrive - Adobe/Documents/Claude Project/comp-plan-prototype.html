@@ -236,6 +236,10 @@ tr:hover td{background:var(--pa-surface-hover)}
 .plan-summary-cell:last-child{border-right:none}
 .plan-summary-cell .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
 .plan-summary-cell .val{font-size:13px;font-weight:500}
+.req{color:#C5221F;font-weight:600;margin-left:3px}
+.plan-info-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 28px}
+.plan-info-row .fld .lbl,.flavor-meta .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.flavor-meta{display:flex;flex-wrap:wrap;gap:14px 28px;padding:12px 14px;border-bottom:var(--border)}
 .paymix-dual{display:flex;align-items:center;gap:6px}
 .paymix-dual input{width:44px;text-align:center}
 .paymix-dual .paymix-sep{color:var(--muted);font-size:12px}
@@ -269,15 +273,26 @@ tr:hover td{background:var(--pa-surface-hover)}
 .measure-payout-unit .payout-footnote{padding:0 14px 12px}
 .payout-linked-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--pa-canvas);border-bottom:1px solid var(--pa-border);font-size:11px;font-weight:600;color:var(--pa-text-secondary)}
 .payout-linked-hdr i{margin-right:6px;color:var(--pa-theme-primary)}
-.payout-threshold-block{border:1px solid var(--pa-border);margin:12px 14px;background:var(--pa-surface)}
-.payout-threshold-block:first-of-type{margin-top:14px}
+.payout-options-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;background:var(--pa-canvas);border:var(--border);border-radius:var(--radius);padding:10px 12px;margin:8px 0}
+.payout-options-bar .pf{display:flex;align-items:center;gap:6px;font-size:11px}
+.payout-options-bar .pf>label{font-size:11px;color:var(--pa-text-secondary);white-space:nowrap}
+.payout-options-bar .pf-wide{flex-basis:100%}
+.payout-options-bar .pf-check{color:var(--pa-text-secondary)}
+.payout-threshold-block{border:1px solid var(--pa-border);margin:10px 14px;background:var(--pa-surface)}
+.payout-threshold-block:first-of-type{margin-top:12px}
 .payout-threshold-hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--pa-theme-light);border-bottom:1px solid var(--pa-border)}
 .payout-threshold-hdr input{flex:1;font-weight:600;font-size:12px}
 .payout-tier-table{width:100%;border-collapse:collapse;font-size:11px}
 .payout-tier-table th{padding:6px 8px;background:var(--pa-canvas);border:1px solid var(--pa-border);font-weight:600;text-align:left;white-space:nowrap}
 .payout-tier-table td{padding:4px 6px;border:1px solid var(--pa-border);vertical-align:middle}
 .payout-tier-table input.form-input,.payout-tier-table select.form-select{padding:3px 6px 4px;font-size:11px;min-height:24px}
+.payout-threshold-block .payout-tier-table input.form-input{width:100%}
+.payout-threshold-block .payout-tier-table th:nth-child(1){width:26%}
+.payout-threshold-block .payout-tier-table th:nth-child(2),.payout-threshold-block .payout-tier-table th:nth-child(4){width:24%}
+.payout-threshold-block .payout-tier-table th:nth-child(3){width:20%}
+.payout-threshold-block .payout-tier-table th:nth-child(2),.payout-threshold-block .payout-tier-table .tier-range-cell{text-align:center}
 .payout-tier-table .vct-calc-cell{background:var(--pa-surface-selected);font-weight:600;color:var(--pa-theme-primary);text-align:center;white-space:nowrap}
+.payout-threshold-block .payout-tier-table th:nth-child(4){text-align:center}
 .payout-tier-table .tier-actions{text-align:center;width:32px}
 .payout-mcr-row td{background:var(--pa-warning-bg)}
 .payout-threshold-actions{padding:8px 10px;border-top:1px solid var(--pa-border);display:flex;gap:8px;flex-wrap:wrap}
@@ -636,9 +651,9 @@ tr:hover td{background:var(--pa-surface-hover)}
   <nav class="sidebar" role="navigation" aria-label="Main navigation">
     <div class="sidebar-logo">
       <div class="logo-row">
-        <div class="logo-box">Ac</div>
+        <div class="logo-box">CX</div>
         <div>
-          <div class="logo-text">CompPlan Studio</div>
+          <div class="logo-text">CODEX</div>
           <div class="logo-sub">Adobe Internal · FY27</div>
         </div>
       </div>
@@ -900,18 +915,11 @@ tr:hover td{background:var(--pa-surface-hover)}
               <div class="plan-doc-header-right" id="builder-header-context">Planning cycle · v1.0</div>
             </div>
             <div class="plan-section-hdr">Plan information</div>
-            <div class="plan-summary">
-              <div class="plan-summary-cell"><div class="lbl">Plan ID</div><div class="val"><input class="form-input" id="builder-plan-id" value="A01" readonly style="border:none;padding:0;background:transparent;font-weight:500"></div></div>
-              <div class="plan-summary-cell"><div class="lbl">HC <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· system</span></div><div class="val"><input class="form-input" id="builder-headcount" type="text" value="" readonly title="System-generated for completed plans" style="width:120px"></div></div>
-              <div class="plan-summary-cell"><div class="lbl">Paymix (Base / Variable)</div><div class="val paymix-dual">
-                <input class="form-input" id="builder-paymix-base" type="number" min="0" max="100" value="70">
-                <span class="paymix-sep">/</span>
-                <input class="form-input" id="builder-paymix-var" type="number" min="0" max="100" value="30">
-              </div></div>
-            </div>
             <div class="plan-section-body">
-              <div class="plan-kv-row"><span class="k">Plan Name</span><input class="form-input" id="builder-plan-name" value=""></div>
-              <div class="plan-kv-row"><span class="k">New hire guarantee</span><select class="form-select" id="builder-newhire-guarantee"><option value="">Select…</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+              <div class="plan-info-row">
+                <div class="fld" style="min-width:90px"><div class="lbl">Plan ID</div><input class="form-input" id="builder-plan-id" value="A01" readonly style="border:none;padding:0;background:transparent;font-weight:500"></div>
+                <div class="fld" style="flex:1;min-width:220px"><div class="lbl">Plan Name<span class="req" title="Required">*</span></div><input class="form-input" id="builder-plan-name" value="" style="width:100%"></div>
+              </div>
             </div>
 
             <div class="plan-section-hdr">Performance measures <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
@@ -2191,7 +2199,7 @@ function submitCurrentVersion(){
   const v=getVersion(currentVersionId);
   if(v&&builderWorkingContent&&isVersionEditable(v)){
     const gv=id=>document.getElementById(id)?.value;
-    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether')};
     syncBuilderPayoutTablesFromDOM();
     v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   }
@@ -2624,17 +2632,11 @@ function populateBuilderFromVersion(v){
   const {planId}=parsePlanKey(pk);
   const plan=getPlan(planId,v.fy);
   const setVal=(id,val)=>{const el=document.getElementById(id);if(el&&val!=null)el.value=val;};
-  // HC: system-generated for completed (published) plans; N/A otherwise.
-  const hcEl=document.getElementById('builder-headcount');
-  if(hcEl)hcEl.value=v.status==='published'?(pm.headcount||'—'):'N/A';
-  setVal('builder-paymix-base',pm.payMixBase);
-  setVal('builder-paymix-var',pm.payMixVar);
   setVal('builder-plan-name',pm.planName);
   const bonusSel=document.getElementById('builder-bonus');
   if(bonusSel)bonusSel.innerHTML=selectOptionsHtml(BONUS_TYPE_OPTIONS,normalizeBonusType(pm.bonus||'None'));
   setVal('builder-bonus-desc',pm.bonusDescription);
   setVal('builder-tether',pm.tether);
-  const nhg=document.getElementById('builder-newhire-guarantee');if(nhg)nhg.value=pm.newHireGuarantee||'';
   document.getElementById('builder-plan-id').value=planId;
   // Title: FY · Plan ID · Plan Name · vN · Status
   const titleEl=document.getElementById('builder-title');
@@ -2666,16 +2668,25 @@ function renderBuilderFlavorBlock(fl,fi,editable){
     <div class="measure-payout-unit-hdr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap">
         <span class="badge badge-draft" style="background:#EEF2F7;color:#33475B">${fl.flavorLabel}</span>
-        <input class="form-input" value="${(fl.role||'').replace(/"/g,'&quot;')}" placeholder="Role" oninput="onBuilderFlavorField(${fi},'role',this.value)" ${editable?'':'readonly'} style="max-width:260px" title="Self-defined role">
+        <input class="form-input" value="${(fl.role||'').replace(/"/g,'&quot;')}" placeholder="Role" oninput="onBuilderFlavorField(${fi},'role',this.value)" ${editable?'':'readonly'} style="max-width:260px" title="Role (required)"><span class="req" title="Role is required">*</span>
         ${flavorVctSumBadge(fi)}
       </div>
       ${editable&&builderWorkingContent.flavors.length>1?`<button type="button" class="measure-remove-btn" onclick="removeBuilderFlavor(${fi})"><i class="ti ti-trash" style="font-size:11px"></i> Remove flavor</button>`:''}
     </div>
+    <div class="flavor-meta">
+      <div class="fld"><div class="lbl">HC</div><input class="form-input" type="number" min="0" value="${fl.headcount==null?'':fl.headcount}" placeholder="—" oninput="onBuilderFlavorField(${fi},'headcount',this.value)" ${editable?'':'readonly'} style="width:120px"></div>
+      <div class="fld"><div class="lbl">Paymix (Base / Variable)</div><div class="paymix-dual">
+        <input class="form-input" type="number" min="0" max="100" value="${fl.payMixBase==null?'':fl.payMixBase}" oninput="onBuilderFlavorField(${fi},'payMixBase',this.value)" ${editable?'':'readonly'}>
+        <span class="paymix-sep">/</span>
+        <input class="form-input" type="number" min="0" max="100" value="${fl.payMixVar==null?'':fl.payMixVar}" oninput="onBuilderFlavorField(${fi},'payMixVar',this.value)" ${editable?'':'readonly'}>
+      </div></div>
+      <div class="fld"><div class="lbl">New hire guarantee<span class="req" title="Required">*</span></div><select class="form-select" onchange="onBuilderFlavorField(${fi},'newHireGuarantee',this.value)" ${editable?'':'disabled'}>${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>
+    </div>
     <table class="payout-tier-table builder-measure-table" style="margin-top:8px;width:100%">
-      <thead><tr><th style="min-width:160px">Pay measure</th><th style="min-width:160px">Description</th><th style="width:80px">VCT Wt%</th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
+      <thead><tr><th style="min-width:160px">Pay measure</th><th style="min-width:160px">Description</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    ${editable?`<div style="margin-top:8px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
+    ${editable?`<div style="padding:10px 14px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
   </div>`;
 }
 function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
@@ -2703,7 +2714,7 @@ function addBuilderFlavor(){
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
   syncBuilderPayoutTablesFromDOM();
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'New Role',measures:[{measureId:PLAN_MEASURES[0].id,description:'',vct:'',perf:'Annual',pay:'Quarterly'}]});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'New Role',headcount:'',payMixBase:70,payMixVar:30,newHireGuarantee:'',measures:[{measureId:PLAN_MEASURES[0].id,description:'',vct:'',perf:'Annual',pay:'Quarterly'}]});
   renderBuilderFlavors();renderBuilderPayoutTables();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();renderBuilderPayoutTables();}
@@ -2726,12 +2737,12 @@ function renderBuilderPayoutTables(){
     const schemeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="onPayoutSchemeChange(${slot},this.value)" style="min-width:220px">${QUOTA_BAND_SCHEMES.map(s=>`<option value="${s.key}" ${s.key===pt.schemeKey?'selected':''}>${s.label}</option>`).join('')}</select>`;
     return `<div class="measure-payout-unit" style="margin-bottom:16px">
       <div class="payout-linked-hdr"><span><i class="ti ti-table"></i> ${name} <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· used by ${usedBy}</span></span></div>
-      <div class="payout-options-bar" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--pa-canvas);border:var(--border);border-radius:var(--radius);padding:8px 12px;margin:8px 0">
-        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Quota band</label>${schemeSel}</span>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--pa-text-secondary)"><input type="checkbox" id="builder-p${slot}-prorate" ${pt.prorateVct?'checked':''} ${editable?'':'disabled'}> Prorate VCT</label>
-        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
-        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="number" min="0" value="${pt.threshold!=null?pt.threshold:0}" ${editable?'':'readonly'} title="Minimum attainment required for payout" style="width:72px"></span>
-        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Cap (optional)</label><input class="form-input" id="builder-p${slot}-cap" value="${(pt.globalVctCap||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="syncPayoutVctCalcs(${slot})" placeholder="e.g. 200%" style="max-width:160px"></span>
+      <div class="payout-options-bar">
+        <span class="pf pf-wide"><label>Quota band</label>${schemeSel}</span>
+        <span class="pf"><label>Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
+        <span class="pf"><label>Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="number" min="0" value="${pt.threshold!=null?pt.threshold:0}" ${editable?'':'readonly'} title="Minimum attainment required for payout" style="width:72px"></span>
+        <span class="pf"><label>Cap</label><input class="form-input" id="builder-p${slot}-cap" value="${(pt.globalVctCap||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="syncPayoutVctCalcs(${slot})" placeholder="e.g. 200%" style="width:120px"></span>
+        <label class="pf pf-check"><input type="checkbox" id="builder-p${slot}-prorate" ${pt.prorateVct?'checked':''} ${editable?'':'disabled'}> Prorate VCT</label>
       </div>
       <div class="payout-table-wrap ${editable?'':'payout-readonly'}" id="builder-p${slot}-table"></div>
     </div>`;
@@ -2767,8 +2778,10 @@ function reconcilePlanFlavors(pk,flavors){
 /* Validate builder content: each flavor's pay measures must total 100% and be ≤4. */
 function validateVersionContent(content){
   const errs=[];
-  if(!content.planMeta||!content.planMeta.newHireGuarantee)errs.push('New hire guarantee is required (Yes/No).');
+  if(!content.planMeta||!content.planMeta.planName||!content.planMeta.planName.trim())errs.push('Plan name is required.');
   (content.flavors||[]).forEach(fl=>{
+    if(!fl.role||!fl.role.trim())errs.push(`Flavor ${fl.flavorLabel} — role is required.`);
+    if(!fl.newHireGuarantee)errs.push(`Flavor ${fl.flavorLabel} — new hire guarantee is required (Yes/No).`);
     const sum=(fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);
     if(Math.round(sum)!==100)errs.push(`Flavor ${fl.flavorLabel} pay measures total ${sum%1===0?sum:sum.toFixed(1)}% (must be 100%).`);
     if((fl.measures||[]).length>MAX_BUILDER_MEASURES)errs.push(`Flavor ${fl.flavorLabel} has more than ${MAX_BUILDER_MEASURES} pay measures.`);
@@ -2781,7 +2794,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta?.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
+  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether')};
   syncBuilderPayoutTablesFromDOM();
   const used=new Set();builderWorkingContent.flavors.forEach(fl=>fl.measures.forEach(m=>used.add(m.measureId)));
   Object.keys(builderWorkingContent.payoutTables).forEach(mid=>{if(!used.has(mid))delete builderWorkingContent.payoutTables[mid];});
@@ -2790,8 +2803,7 @@ function saveBuilderVersion(){
   reconcilePlanFlavors(pk,v.content.flavors);
   addAuditEntry(pk,'Version saved',`${v.label} content updated.`,{versionId:v.versionId});
   syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();buildLibrary();
-  const errs=validateVersionContent(v.content);
-  alert(errs.length?`Saved ${v.label}.\n\nNote — resolve before submitting:\n• ${errs.join('\n• ')}`:`Saved ${v.label}.`);
+  alert(`Saved ${v.label}.`);
 }
 
 /* ── Plan catalog (used by library & comparison) ── */
@@ -3787,8 +3799,8 @@ function blankVersionContent(pk){
   defs.forEach(c=>{if(!payoutTables[c.measureId])payoutTables[c.measureId]=normalizePayoutToScheme({},DEFAULT_QUOTA_SCHEME);});
   const f0=getFlavorsForPlan(pk)[0];
   return{
-    planMeta:{headcount:'',payMixBase:70,payMixVar:30,planName:plan?.planName||planId,bonus:'N/A',bonusDescription:'',tether:'',newHireGuarantee:''},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:f0?.role||'New Role',measures:defs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))}],
+    planMeta:{planName:plan?.planName||planId,bonus:'N/A',bonusDescription:'',tether:''},
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:f0?.role||'New Role',headcount:'',payMixBase:70,payMixVar:30,newHireGuarantee:'',measures:defs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))}],
     payoutTables,
   };
 }
@@ -3803,14 +3815,14 @@ function seedVersionContent(){
       const raw=(ver.fy==='FY26'?fy26Baselines[f.flavorId]:fy27CurrentFields[f.flavorId])||fy27CurrentFields[f.flavorId]||fy26Baselines[f.flavorId]||{};
       const cfgs=getMeasureConfigsFromFields(buildMeasureFieldsFromIds(raw,planFieldTemplates[f.flavorId]||{}));
       cfgs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=normalizePayoutToScheme(pt,DEFAULT_QUOTA_SCHEME);}});
-      return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,flavorName:f.flavorName||f.role,role:f.role,measures:cfgs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))};
+      const pmF=parsePayMix(payMixMap[f.flavorId]||'70 / 30');
+      return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,flavorName:f.flavorName||f.role,role:f.role,headcount:raw.headcount,payMixBase:pmF.base,payMixVar:pmF.var,newHireGuarantee:'No',measures:cfgs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))};
     });
     const rep=flavors[0];
     const rawRep=rep?((ver.fy==='FY26'?fy26Baselines[rep.flavorId]:fy27CurrentFields[rep.flavorId])||fy27CurrentFields[rep.flavorId]||{}):{};
-    const pm=parsePayMix(payMixMap[rep?.flavorId]||'70 / 30');
     const plan=getPlan(ver.flavorId,ver.fy);
     ver.content={
-      planMeta:{headcount:rawRep.headcount,payMixBase:pm.base,payMixVar:pm.var,planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',bonusDescription:'',tether:rawRep.tether||'N/A',newHireGuarantee:'No'},
+      planMeta:{planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',bonusDescription:'',tether:rawRep.tether||'N/A'},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
       payoutTables,
     };
@@ -3824,12 +3836,14 @@ function seedVersionContent(){
 /* Build the legacy field-shape (measureNxxx / payoutTableN) that compareFieldMeta/diffField
    consume, from a version's content for a single flavor. */
 function buildFieldsFromContentFlavor(planId,fy,planMeta,flavor,payoutTables){
+  const hasVal=x=>x!=null&&x!=='';
+  const hc=flavor.headcount,pmb=flavor.payMixBase,pmv=flavor.payMixVar;
   const fields={
     planId,
-    headcount:planMeta.headcount,
-    payMixBase:String(planMeta.payMixBase),
-    payMixVar:String(planMeta.payMixVar),
-    payMix:`${planMeta.payMixBase} / ${planMeta.payMixVar}`,
+    headcount:hasVal(hc)?hc:'—',
+    payMixBase:hasVal(pmb)?String(pmb):'—',
+    payMixVar:hasVal(pmv)?String(pmv):'—',
+    payMix:hasVal(pmb)&&hasVal(pmv)?`${pmb} / ${pmv}`:'—',
     planName:planMeta.planName,
     role:flavor.role,
     bonus:planMeta.bonus||'N/A',
@@ -3998,9 +4012,9 @@ function payoutSlotCap(slot){return document.getElementById(`builder-p${slot}-ca
 function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable){
   const ro=editable?'':'readonly';
   return`<tr data-tier="${tierIdx}">
-    <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:110px" title="Upper bound of this attainment tier; leave blank on the last tier for 'and above'"></td>
+    <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} title="Upper bound of this attainment tier; leave blank on the last tier for 'and above'"></td>
     <td class="tier-range-cell" data-range style="font-size:11px;color:var(--pa-text-secondary)">—</td>
-    <td><input class="form-input" value="${(tier.xPCR===''||tier.xPCR==null)?'':formatXpcrValue(tier.xPCR)}" data-field="xpcr" placeholder="e.g. 1.0x" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:64px"></td>
+    <td><input class="form-input" value="${(tier.xPCR===''||tier.xPCR==null)?'':formatXpcrValue(tier.xPCR)}" data-field="xpcr" placeholder="e.g. 1.0x" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro}></td>
     <td class="vct-calc-cell" data-calc-vct>—</td>
     ${editable?`<td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removePayoutTier(${slot},${thIdx},${tierIdx})" title="Remove tier"><i class="ti ti-x"></i></button></td>`:'<td></td>'}
   </tr>`;
@@ -4012,7 +4026,7 @@ function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
     <div class="payout-threshold-hdr">
       <i class="ti ti-adjustments" style="color:var(--pa-theme-primary);font-size:14px"></i>
       <strong style="font-size:12px">${threshold.label||'Quota band'}</strong>
-      <span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR (optional)</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 100%" data-th-mcr oninput="onPayoutTierInput(${slot},${thIdx})" ${editable?'':'readonly'} style="width:80px"></span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 100%" data-th-mcr oninput="onPayoutTierInput(${slot},${thIdx})" ${editable?'':'readonly'} style="width:80px"></span>
     </div>
     <table class="payout-tier-table">
       <thead><tr><th>Upper bound %</th><th>Range (auto)</th><th>xPCR</th><th>%VCT (auto)</th><th></th></tr></thead>
