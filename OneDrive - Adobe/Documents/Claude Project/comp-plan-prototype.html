@@ -876,15 +876,15 @@ tr:hover td{background:var(--pa-surface-hover)}
           <div class="builder-entry-title">Start a new compensation plan</div>
           <div class="builder-entry-sub">A compensation plan (e.g. A01) has a name and one or more flavors (variants for different roles). All flavors are approved together as one plan, and each plan can have multiple working versions per fiscal year. Only one published version is active for downstream systems at a time.</div>
           <div class="builder-entry-grid">
-            <div class="builder-entry-card" onclick="openCreatePlanModal('blank')">
+            <div class="builder-entry-card" onclick="openCreatePlanModal()">
               <div class="builder-entry-icon" style="background:#F1EFE8;color:#444441"><i class="ti ti-file-plus"></i></div>
-              <div class="builder-entry-label">Create new comp plan</div>
-              <div class="builder-entry-desc">Start a new plan with its first flavor and Draft v1 — add more flavors and revise until ready for approval.</div>
+              <div class="builder-entry-label">Create from scratch</div>
+              <div class="builder-entry-desc">Enter a new Comp Plan # for a brand-new plan, or an existing # to add a new version of that plan.</div>
             </div>
-            <div class="builder-entry-card" onclick="openCreatePlanModal('clone')">
+            <div class="builder-entry-card" onclick="openClonePlanModal()">
               <div class="builder-entry-icon" style="background:#EAF3DE;color:#3B6D11"><i class="ti ti-copy"></i></div>
-              <div class="builder-entry-label">Duplicate from existing plan</div>
-              <div class="builder-entry-desc">Copy from a published version or draft into a new flavor or new revision.</div>
+              <div class="builder-entry-label">Clone from existing plan + version</div>
+              <div class="builder-entry-desc">Copy a whole plan version (all flavors, measures, payout tables). The target # decides: same # → new version; new # → new comp plan.</div>
             </div>
           </div>
           <div class="builder-entry-note" id="builder-continue-note" style="display:none"><i class="ti ti-edit" style="font-size:12px;margin-right:4px"></i> You have an open draft. <a href="#" onclick="resumeBuilderDraft();return false" style="color:#185FA5;font-weight:500">Continue editing <span id="builder-continue-id"></span></a></div>
@@ -907,6 +907,7 @@ tr:hover td{background:var(--pa-surface-hover)}
             <button class="btn btn-sm" onclick="duplicateCurrentVersion()"><i class="ti ti-copy"></i> Create Revision</button>
             <button class="btn btn-sm" id="builder-submit-btn" onclick="submitCurrentVersion()"><i class="ti ti-send"></i> Submit for Approval</button>
           </div>
+          <div id="builder-approval-queue-note" style="display:none;align-items:center;gap:4px;font-size:11px;color:#8A6D00;background:#FFF6DB;border:1px solid #F0E0A0;border-radius:4px;padding:4px 8px;margin-top:6px"></div>
         </div>
         <div class="page-header">
           <div><div class="page-title" id="builder-title">Plan Builder — H01.A</div><div class="page-subtitle" id="builder-subtitle">Digital Experience Account Executive · FY27 · Draft</div></div>
@@ -1522,106 +1523,54 @@ BONUS_THRESHOLD=0.75</div></div>
       <button class="modal-close" onclick="closeCreatePlanModal()" aria-label="Close"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <div class="wizard-steps" id="create-wizard-steps">
-        <div class="wizard-step active" data-step="1">1. Method</div>
-        <div class="wizard-step" data-step="2">2. Details</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Enter a Comp Plan #. A <strong>new</strong> # starts a brand-new comp plan; an <strong>existing</strong> # creates a new version of that plan.</p>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Comp Plan # *</label><input class="form-input" id="new-plan-id" placeholder="e.g. A11" oninput="onNewPlanIdInput()"><p style="font-size:10px;color:var(--muted);margin-top:4px" id="new-plan-id-hint">Letter(s) followed by a number, e.g. A11.</p></div>
+        <div class="form-group"><label class="form-label">Fiscal year</label><select class="form-select" id="new-plan-fy" onchange="onNewPlanIdInput()"><option selected>FY27</option><option>FY26</option></select></div>
       </div>
-
-      <!-- Step 1: Choose method -->
-      <div id="create-step-1">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Choose how to start your new plan. All paths create a <strong>new draft</strong> — source plans are never overwritten.</p>
-        <div class="create-option selected" data-method="blank" onclick="selectCreateMethod('blank')">
-          <div class="create-option-icon" style="background:#F1EFE8;color:#444441"><i class="ti ti-file-plus"></i></div>
-          <div>
-            <div class="create-option-title">Create from scratch</div>
-            <div class="create-option-desc">Start with a blank plan. Enter a new Comp Plan ID and Comp Plan Name, then configure all fields in Plan Builder.</div>
-          </div>
-        </div>
-        <div class="create-option" data-method="clone" onclick="selectCreateMethod('clone')">
-          <div class="create-option-icon" style="background:#EAF3DE;color:#3B6D11"><i class="ti ti-copy"></i></div>
-          <div>
-            <div class="create-option-title">Clone from existing plan</div>
-            <div class="create-option-desc">Copy all fields from any plan in the library — draft, in review, approved, rejected, or published — then edit in Plan Builder.</div>
-          </div>
+      <div id="new-plan-newfields">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Comp Plan Name *</label><input class="form-input" id="new-plan-name" placeholder="e.g. Digital Experience AE FY27 Plan"></div>
+          <div class="form-group"><label class="form-label">First flavor role</label><select class="form-select" id="new-plan-role"></select></div>
         </div>
       </div>
-
-      <!-- Step 2: Details / source selection -->
-      <div id="create-step-2" style="display:none">
-        <div id="create-blank-fields">
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Comp Plan ID *</label><input class="form-input" id="new-plan-id" placeholder="e.g. H11.A"><p style="font-size:10px;color:var(--muted);margin-top:4px">Unique within the selected fiscal year. Same ID may exist in FY26 and FY27.</p></div>
-            <div class="form-group"><label class="form-label">Comp Plan Name *</label><input class="form-input" id="new-plan-name" placeholder="e.g. Digital Experience AE FY27 Plan"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Fiscal year</label><select class="form-select" id="new-plan-fy"><option selected>FY27</option><option>FY26</option></select></div>
-            <div class="form-group"><label class="form-label">Role</label><select class="form-select" id="new-plan-role"></select></div>
-          </div>
-        </div>
-        <div id="create-source-fields" style="display:none">
-          <label class="form-label">Select source plan *</label>
-          <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Any plan can be used as a source — approval status does not restrict cloning.</p>
-          <div class="source-picker">
-            <input class="form-input" id="source-plan-search" placeholder="Search by plan ID, name, or role…" oninput="filterSourcePlans()" onfocus="openSourcePicker()" autocomplete="off">
-            <div class="source-picker-list" id="source-plan-list"></div>
-          </div>
-          <div id="selected-source-card" style="display:none;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);border:var(--border);margin-top:8px">
-            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Selected source</div>
-            <div style="font-size:13px;font-weight:500" id="selected-source-title"></div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px" id="selected-source-meta"></div>
-          </div>
-          <div class="form-row" style="margin-top:14px">
-            <div class="form-group"><label class="form-label">New Comp Plan ID *</label><input class="form-input" id="dup-plan-id" placeholder="Must be unique, e.g. H11.A"></div>
-            <div class="form-group"><label class="form-label">New Comp Plan Name *</label><input class="form-input" id="dup-plan-name" placeholder="Enter name for new draft"></div>
-          </div>
-          <div style="padding:8px 12px;background:#E6F1FB;border-radius:var(--radius);font-size:11px;color:#0C447C;margin-top:8px"><i class="ti ti-info-circle" style="font-size:12px"></i> A new draft (v1.0) will be created. Source plan <strong id="source-unchanged-ref">—</strong> remains unchanged.</div>
-        </div>
-      </div>
-
-      <!-- Step 3: Field selection (duplicate only) -->
-      <div id="create-step-3" style="display:none">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Select which fields to carry forward from the source plan. Unchecked fields start empty in the new draft.</p>
-        <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button class="btn btn-sm" onclick="selectAllFields(true)">Select all</button>
-          <button class="btn btn-sm" onclick="selectAllFields(false)">Clear all</button>
-        </div>
-        <div class="field-carry-grid" id="field-carry-grid">
-          <label class="field-carry-item"><input type="checkbox" data-field="planId"> Plan ID <span style="font-size:10px;color:var(--muted)">(not recommended)</span></label>
-          <label class="field-carry-item"><input type="checkbox" checked data-field="planName"> Plan name</label>
-          <label class="field-carry-item"><input type="checkbox" checked data-field="role"> Role</label>
-          <label class="field-carry-item"><input type="checkbox" checked data-field="payMix"> Pay mix</label>
-          <label class="field-carry-item"><input type="checkbox" checked data-field="measures"> Performance measures</label>
-          <label class="field-carry-item"><input type="checkbox" checked data-field="payoutTables"> Payout tables</label>
-          <label class="field-carry-item"><input type="checkbox" checked data-field="bonusTether"> Bonus / tether settings</label>
-          <label class="field-carry-item"><input type="checkbox" checked data-field="notes"> Notes / rationale</label>
-        </div>
-      </div>
-
-      <!-- Step 4: Side-by-side preview -->
-      <div id="create-step-4" style="display:none">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Review the source plan vs. your new draft before confirming. Edit names on the previous step if needed.</p>
-        <div class="dup-preview">
-          <div class="dup-preview-col">
-            <div class="dup-preview-header source"><i class="ti ti-file" style="font-size:11px;margin-right:4px"></i> Source plan (unchanged)</div>
-            <div class="dup-preview-body" id="preview-source"></div>
-          </div>
-          <div class="dup-preview-col">
-            <div class="dup-preview-header draft"><i class="ti ti-file-plus" style="font-size:11px;margin-right:4px"></i> New draft (v1.0)</div>
-            <div class="dup-preview-body" id="preview-draft"></div>
-          </div>
-        </div>
-        <div style="margin-top:12px;padding:10px 12px;background:#EAF3DE;border-radius:var(--radius);font-size:11px;border-left:3px solid #639922">
-          <strong>Audit record:</strong> System will log "Plan cloned from <span id="audit-source-id">—</span>" with timestamp, user, and fields carried forward.
-        </div>
+      <div id="new-plan-versionfields" style="display:none">
+        <div class="form-group"><label class="form-label">Clone from version</label><select class="form-select" id="new-plan-clone-version"></select>
+          <p style="font-size:11px;color:var(--muted);margin-top:6px">The new version starts as a copy of the selected version — all flavors included.</p></div>
       </div>
     </div>
     <div class="modal-footer">
-      <div style="font-size:11px;color:var(--muted)" id="create-footer-hint">Step 1 of 4 · Choose creation method</div>
+      <div style="font-size:11px;color:var(--muted)" id="create-footer-hint"></div>
       <div class="btn-group">
-        <button class="btn btn-sm" id="create-back-btn" style="display:none" onclick="createPlanBack()"><i class="ti ti-arrow-left"></i> Back</button>
         <button class="btn btn-sm" onclick="closeCreatePlanModal()">Cancel</button>
-        <button class="btn btn-primary btn-sm" id="create-next-btn" onclick="createPlanNext()">Continue <i class="ti ti-arrow-right"></i></button>
+        <button class="btn btn-primary btn-sm" id="create-next-btn" onclick="createPlanNext()"><i class="ti ti-check"></i> Create</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- DUPLICATE PLAN MODAL -->
+<div class="modal-overlay" id="duplicate-plan-modal" role="dialog">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="ti ti-copy" style="color:#3B6D11;margin-right:6px"></i> Clone Compensation Plan</div>
+      <button class="modal-close" onclick="closeDuplicatePlanModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Clone from a source <strong>plan + version</strong> (all flavors, measures, and payout tables). The <strong>target #</strong> decides: an existing plan → a new version of it; a new # → a brand-new comp plan.</p>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Source plan</label><select class="form-select" id="dup-source-plan" onchange="onDupSourcePlanChange()"></select></div>
+        <div class="form-group"><label class="form-label">Source version to copy</label><select class="form-select" id="dup-source-version"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Target Comp Plan # *</label><input class="form-input" id="dup-plan-id" placeholder="e.g. A01 (same) or A20 (new)" oninput="onCloneTargetInput()"><p style="font-size:10px;color:var(--muted);margin-top:4px" id="dup-target-hint"></p></div>
+        <div class="form-group"><label class="form-label">Target fiscal year</label><select class="form-select" id="dup-plan-fy" onchange="onCloneTargetInput()"><option>FY27</option><option>FY26</option></select></div>
+      </div>
+      <div class="form-group" id="dup-name-group"><label class="form-label">New Comp Plan Name *</label><input class="form-input" id="dup-plan-name" placeholder="Name for the new plan"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm" onclick="closeDuplicatePlanModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="dup-confirm-btn" onclick="confirmDuplicatePlan()"><i class="ti ti-copy"></i> Clone</button>
     </div>
   </div>
 </div>
@@ -2193,9 +2142,15 @@ function updateBuilderVersionBar(planKey,versionId){
   builderMeasuresEditable=isVersionEditable(v);
   const submitBtn=document.getElementById('builder-submit-btn');
   const headerSubmit=document.getElementById('builder-header-submit');
-  const canSubmit=isVersionEditable(v)&&(v.status==='draft'||v.status==='in_review'||v.status==='rejected');
-  if(submitBtn)submitBtn.style.display=canSubmit?'inline-flex':'none';
-  if(headerSubmit)headerSubmit.style.display=canSubmit?'inline-flex':'none';
+  const otherPending=getPendingApprovalVersions(planKey).filter(x=>x.versionId!==versionId);
+  const canSubmit=isVersionEditable(v)&&(v.status==='draft'||v.status==='in_review'||v.status==='rejected')&&!otherPending.length;
+  if(submitBtn){submitBtn.style.display=canSubmit?'inline-flex':'none';}
+  if(headerSubmit){headerSubmit.style.display=canSubmit?'inline-flex':'none';}
+  const queueNote=document.getElementById('builder-approval-queue-note');
+  if(queueNote){
+    if(otherPending.length&&isVersionEditable(v)){queueNote.style.display='inline-flex';queueNote.textContent=`${otherPending[0].label} is in the approval queue — only one version can be in approval at a time.`;}
+    else queueNote.style.display='none';
+  }
 }
 function updateBuilderProposalBar(planKey,id){updateBuilderVersionBar(planKey,id);}
 
@@ -2212,6 +2167,9 @@ function submitVersionById(versionId){
   const v=getVersion(versionId);
   if(!v||!isVersionEditable(v))return;
   const pk=planKey(v.flavorId,v.fy);
+  // Only one version per comp plan may be in the approval queue at a time.
+  const inQueue=getPendingApprovalVersions(pk).filter(x=>x.versionId!==versionId);
+  if(inQueue.length){alert(`${inQueue[0].label} is already in the approval queue for ${v.flavorId} · ${v.fy}. Only one version can be in approval at a time — publish, reject, or withdraw it first.`);return;}
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   v.status='submitted';v.approvalStage='susan_review';v.submittedAt=now;v.updatedAt=now;
   approvalVersionId=versionId;
@@ -2515,234 +2473,155 @@ function resumeBuilderDraft(){
   openBuilder(currentDraftPlan.id);
 }
 
-/* ── Create Plan Modal ── */
-function openCreatePlanModal(method,sourceId){
-  const skipMethodStep=!!method;
-  createPlanState={method:method||'blank',step:skipMethodStep?2:1,sourceId:sourceId||null,skipMethodStep};
+/* ── Create Plan Modal (new # = new plan · existing # = new version) ── */
+function openCreatePlanModal(){
+  initBuilderDropdowns();
+  document.getElementById('new-plan-id').value='';
+  document.getElementById('new-plan-name').value='';
+  document.getElementById('new-plan-fy').value='FY27';
+  onNewPlanIdInput();
   document.getElementById('create-plan-modal').classList.add('open');
-  selectCreateMethod(createPlanState.method);
-  if(sourceId)selectSourcePlan(sourceId);
-  showCreateStep(createPlanState.step);
-  buildSourcePlanList();
-  if(method)showScreen('builder');
 }
 
 function closeCreatePlanModal(){
   document.getElementById('create-plan-modal').classList.remove('open');
-  document.getElementById('source-plan-list').classList.remove('open');
 }
 
-function selectCreateMethod(method){
-  createPlanState.method=method;
-  document.querySelectorAll('.create-option').forEach(o=>{
-    o.classList.toggle('selected',o.dataset.method===method);
-  });
-  const isBlank=method==='blank';
-  document.getElementById('create-blank-fields').style.display=isBlank?'block':'none';
-  document.getElementById('create-source-fields').style.display=isBlank?'none':'block';
-  document.getElementById('create-wizard-steps').style.display='flex';
-}
-
-function showCreateStep(step){
-  createPlanState.step=step;
-  for(let i=1;i<=4;i++){
-    const el=document.getElementById('create-step-'+i);
-    if(el)el.style.display=i===step?'block':'none';
-  }
-  const skipMethod=createPlanState.skipMethodStep;
-  const wizard=document.getElementById('create-wizard-steps');
-  if(wizard)wizard.style.display=skipMethod?'none':'flex';
-  if(!skipMethod){
-    document.querySelectorAll('.wizard-step').forEach(s=>{
-      const n=parseInt(s.dataset.step);
-      s.classList.remove('active','done');
-      if(n<step)s.classList.add('done');
-      if(n===step)s.classList.add('active');
-    });
-  }
-  const maxStep=skipMethod?1:2;
-  const displayStep=skipMethod?1:step;
-  document.getElementById('create-back-btn').style.display=step>1?'inline-flex':'none';
-  const hints=['Choose creation method',createPlanState.method==='clone'?'Select source plan and new ID':'Enter plan details'];
-  const hintText=skipMethod?hints[1]:hints[step-1]||'';
-  document.getElementById('create-footer-hint').textContent=skipMethod?hintText:`Step ${displayStep} of ${maxStep} · ${hintText}`;
-  const nextBtn=document.getElementById('create-next-btn');
-  if(createPlanState.method==='clone'&&step===2){
-    nextBtn.innerHTML='<i class="ti ti-edit"></i> Clone & open in builder';
-  }else if(step===2||skipMethod){
-    nextBtn.innerHTML='<i class="ti ti-check"></i> Create draft';
+/* Toggle the form between "new plan" and "new version of existing plan". */
+function onNewPlanIdInput(){
+  const id=document.getElementById('new-plan-id').value.trim();
+  const fy=document.getElementById('new-plan-fy').value;
+  const exists=!!(id&&compPlanExists(id,fy));
+  document.getElementById('new-plan-newfields').style.display=exists?'none':'block';
+  document.getElementById('new-plan-versionfields').style.display=exists?'block':'none';
+  const hint=document.getElementById('new-plan-id-hint');
+  const footerHint=document.getElementById('create-footer-hint');
+  const btn=document.getElementById('create-next-btn');
+  if(exists){
+    hint.textContent=`Existing plan — a new version of ${id} · ${fy} will be created.`;
+    if(footerHint)footerHint.textContent=`New version of ${id}`;
+    if(btn)btn.innerHTML='<i class="ti ti-versions"></i> Create version';
+    const sel=document.getElementById('new-plan-clone-version');
+    const pk=planKey(id,fy);
+    const vers=getVersionsForFlavor(pk);
+    const pub=getPublishedVersion(pk);
+    sel.innerHTML=vers.map(v=>`<option value="${v.versionId}">${v.label} · ${VERSION_STATUS_LABELS[v.status]}</option>`).join('');
+    if(pub)sel.value=pub.versionId;else if(vers[0])sel.value=vers[0].versionId;
   }else{
-    nextBtn.innerHTML='Continue <i class="ti ti-arrow-right"></i>';
+    hint.textContent='Letter(s) followed by a number, e.g. A11.';
+    if(footerHint)footerHint.textContent='New comp plan';
+    if(btn)btn.innerHTML='<i class="ti ti-check"></i> Create';
   }
 }
 
 function createPlanNext(){
-  const m=createPlanState.method;
-  const s=createPlanState.step;
-  if(m==='blank'){
-    if(s===1){showCreateStep(2);return;}
-    if(s===2){
-      const name=document.getElementById('new-plan-name').value.trim();
-      const id=document.getElementById('new-plan-id').value.trim();
-      const fy=document.getElementById('new-plan-fy').value;
-      if(!name||!id){alert('Please enter Comp Plan ID and Comp Plan Name.');return;}
-      if(compPlanExists(id,fy)){alert(`Comp plan ${id} already exists for ${fy}.`);return;}
-      const role=document.getElementById('new-plan-role').value;
-      const firstFlavorId=`${id}.A`;
-      compPlans.push({planId:id,planName:name,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active',activePublishedVersionId:null});
-      planFlavors.push({flavorId:firstFlavorId,planId:id,flavorLabel:'A',flavorName:name,role,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active'});
-      plans.push({id:firstFlavorId,name,role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:'Melissa C.',approval:'none'});
-      const pk=planKey(id,fy);
-      const v=createVersionRecord(pk,{description:'Initial design — Draft v1'});
-      addAuditEntry(pk,'Comp plan created',`${id} · ${fy} created with Draft v1 (flavor A).`,{versionId:v.versionId});
-      currentPlanKey=pk;
-      currentVersionId=v.versionId;
-      currentDraftPlan={id,name,role:document.getElementById('new-plan-role').value,fy,clonedFrom:null,versionId:v.versionId,status:'draft',designerNote:''};
-      closeCreatePlanModal();
-      openBuilder(id,true,false,v.versionId);
-      return;
-    }
-  }
-  if(m==='clone'){
-    if(s===1){showCreateStep(2);return;}
-    if(s===2){
-      if(!createPlanState.sourceId){alert('Please select a source plan.');return;}
-      const src=planDetails[createPlanState.sourceId]||getPlanFromList(createPlanState.sourceId);
-      const newId=document.getElementById('dup-plan-id').value.trim()||nextPlanId();
-      const newName=document.getElementById('dup-plan-name').value.trim()||src.name+' (Copy)';
-      currentDraftPlan={...src,id:newId,name:newName,designerNote:src.notes||src.designerNote||'',clonedFrom:createPlanState.sourceId,version:'1.0',status:'draft',carriedFields:['planName','planId','role','payMix','measures','payoutTables','bonusTether','notes']};
-      closeCreatePlanModal();
-      openBuilder(newId,true,true);
-      return;
-    }
-  }
-  if(m==='duplicate'){
-    if(s===1){showCreateStep(2);return;}
-    if(s===2){
-      if(!createPlanState.sourceId){alert('Please select a source plan.');return;}
-      const newId=document.getElementById('dup-plan-id').value.trim();
-      const newName=document.getElementById('dup-plan-name').value.trim();
-      if(!newId||!newName){alert('Please enter new Comp Plan ID and Comp Plan Name.');return;}
-      showCreateStep(3);return;
-    }
-    if(s===3){showCreateStep(4);return;}
-    if(s===4){
-      finalizeDuplicatePlan();
-      return;
-    }
-  }
-}
-
-function createPlanBack(){
-  if(createPlanState.step<=1)return;
-  if(createPlanState.step===2&&createPlanState.skipMethodStep){
+  const id=document.getElementById('new-plan-id').value.trim();
+  const fy=document.getElementById('new-plan-fy').value;
+  if(!id){alert('Please enter a Comp Plan #.');return;}
+  if(compPlanExists(id,fy)){
+    // Existing # → new version of that plan, cloned from the chosen version.
+    const srcVid=document.getElementById('new-plan-clone-version').value;
+    const pk=planKey(id,fy);
+    const v=createVersionRecord(pk,{sourceVersionId:srcVid||null,description:'New version'});
+    addAuditEntry(pk,'Version created',`${v.label} created from ${getVersion(srcVid)?.label||'blank'}.`,{versionId:v.versionId});
     closeCreatePlanModal();
+    openVersionInBuilder(v.versionId);
     return;
   }
-  showCreateStep(createPlanState.step-1);
-}
-
-function getPlanFromList(id){
-  const p=plans.find(x=>x.id===id);
-  return p?{id:p.id,name:p.name+' FY27 Plan',role:p.role,payMix:'70 / 30',measures:'—',payoutTables:'—',bonusTether:'—',notes:'—'}:null;
-}
-
-function nextPlanId(){
-  const nums=plans.map(p=>parseInt(p.id.replace(/\D/g,''))||0);
-  const max=Math.max(...nums,10);
-  return 'H'+String(max+1).padStart(2,'0')+'.A';
-}
-
-function buildSourcePlanList(){
-  const list=document.getElementById('source-plan-list');
-  if(!list)return;
-  list.innerHTML=plans.map(p=>`<div class="source-picker-item" onclick="selectSourcePlan('${p.id}')"><strong>${p.id}</strong> — ${p.name} <span style="color:var(--muted)">· ${p.role} · v${p.ver}</span><span class="source-status">${badgeHtml(p.status)}</span></div>`).join('');
-}
-
-function filterSourcePlans(){
-  const q=document.getElementById('source-plan-search').value.toLowerCase();
-  document.querySelectorAll('.source-picker-item').forEach(item=>{
-    item.style.display=item.textContent.toLowerCase().includes(q)?'block':'none';
-  });
-  document.getElementById('source-plan-list').classList.add('open');
-}
-
-function openSourcePicker(){
-  document.getElementById('source-plan-list').classList.add('open');
-}
-
-function selectSourcePlan(id){
-  createPlanState.sourceId=id;
-  const p=plans.find(x=>x.id===id);
-  const det=planDetails[id]||getPlanFromList(id);
-  document.getElementById('source-plan-search').value=`${id} — ${p?.name||det?.name||''}`;
-  document.getElementById('source-plan-list').classList.remove('open');
-  document.getElementById('selected-source-card').style.display='block';
-  document.getElementById('selected-source-title').textContent=`${id} — ${det?.name||p?.name||''}`;
-  document.getElementById('selected-source-meta').innerHTML=`${det?.role||p?.role||''} · ${p?.fy||'FY27'} · v${p?.ver||'1.0'} · ${badgeHtml(p?.status||'draft')}`;
-  document.getElementById('source-unchanged-ref').textContent=id;
-  document.getElementById('audit-source-id').textContent=id;
-  if(!document.getElementById('dup-plan-name').value)document.getElementById('dup-plan-name').value=(det?.name||p?.name||'')+' (Copy)';
-  if(!document.getElementById('dup-plan-id').value)document.getElementById('dup-plan-id').value=nextPlanId();
-}
-
-function selectAllFields(checked){
-  document.querySelectorAll('#field-carry-grid input[type=checkbox]').forEach(cb=>{cb.checked=checked;});
-}
-
-function getCarriedFields(){
-  const fields={};
-  document.querySelectorAll('#field-carry-grid input[type=checkbox]').forEach(cb=>{
-    fields[cb.dataset.field]=cb.checked;
-  });
-  return fields;
-}
-
-function buildDuplicationPreview(){
-  const src=planDetails[createPlanState.sourceId]||getPlanFromList(createPlanState.sourceId);
-  if(!src)return;
-  const fields=getCarriedFields();
-  const newName=document.getElementById('dup-plan-name').value;
-  const newId=document.getElementById('dup-plan-id').value;
-  const rows=[
-    {key:'planId',label:'Plan ID',src:src.id,draft:fields.planId?src.id:newId},
-    {key:'planName',label:'Plan name',src:src.name,draft:fields.planName?newName:'(empty)'},
-    {key:'role',label:'Role',src:src.role,draft:fields.role?src.role:'(empty)'},
-    {key:'payMix',label:'Pay mix',src:src.payMix,draft:fields.payMix?src.payMix:'(empty)'},
-    {key:'measures',label:'Performance measures',src:src.measures,draft:fields.measures?src.measures:'(empty)'},
-    {key:'payoutTables',label:'Payout tables',src:src.payoutTables,draft:fields.payoutTables?src.payoutTables:'(empty)'},
-    {key:'bonusTether',label:'Bonus / tether',src:src.bonusTether,draft:fields.bonusTether?src.bonusTether:'(empty)'},
-    {key:'notes',label:'Notes / rationale',src:src.notes?.substring(0,60)+'…',draft:fields.notes?src.notes?.substring(0,60)+'…':'(empty)'},
-  ];
-  document.getElementById('preview-source').innerHTML=rows.map(r=>`<div class="dup-preview-row"><span class="lbl">${r.label}</span><span class="val">${r.src}</span></div>`).join('');
-  document.getElementById('preview-draft').innerHTML=rows.map(r=>{
-    const carried=fields[r.key];
-    return `<div class="dup-preview-row ${carried?'carried':'skipped'}"><span class="lbl">${r.label}</span><span class="val">${r.draft}</span></div>`;
-  }).join('');
-}
-
-function finalizeDuplicatePlan(){
-  const src=planDetails[createPlanState.sourceId]||getPlanFromList(createPlanState.sourceId);
-  const fields=getCarriedFields();
-  const newId=document.getElementById('dup-plan-id').value.trim();
-  const newName=document.getElementById('dup-plan-name').value.trim();
-  currentDraftPlan={
-    id:newId,
-    name:fields.planName?newName:'' ,
-    role:fields.role?src.role:'',
-    payMix:fields.payMix?src.payMix:'',
-    fy:'FY27',
-    clonedFrom:createPlanState.sourceId,
-    version:'1.0',
-    status:'draft',
-    carriedFields:Object.keys(fields).filter(k=>fields[k]),
-    measures:fields.measures?src.measures:'',
-    payoutTables:fields.payoutTables?src.payoutTables:'',
-    bonusTether:fields.bonusTether?src.bonusTether:'',
-    notes:fields.notes?src.notes:''
-  };
+  // New # → brand-new comp plan.
+  if(!/^[A-Za-z]+\d+$/.test(id)){alert('Comp Plan # must be letter(s) followed by a number (e.g. A11) — no flavor suffix like ".A".');return;}
+  const name=document.getElementById('new-plan-name').value.trim();
+  if(!name){alert('Please enter a Comp Plan Name.');return;}
+  const role=document.getElementById('new-plan-role').value;
+  const firstFlavorId=`${id}.A`;
+  compPlans.push({planId:id,planName:name,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active',activePublishedVersionId:null});
+  planFlavors.push({flavorId:firstFlavorId,planId:id,flavorLabel:'A',flavorName:name,role,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active'});
+  plans.push({id:firstFlavorId,name,role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:'Melissa C.',approval:'none'});
+  const pk=planKey(id,fy);
+  const v=createVersionRecord(pk,{description:'Initial design — Draft v1'});
+  addAuditEntry(pk,'Comp plan created',`${id} · ${fy} created with Draft v1 (flavor A).`,{versionId:v.versionId});
   closeCreatePlanModal();
-  openBuilder(newId,true,true);
+  openVersionInBuilder(v.versionId);
+}
+
+/* ── Clone from a source plan+version → target # decides new-version vs new-plan ── */
+function openDuplicatePlanModal(pk){
+  const sel=document.getElementById('dup-source-plan');
+  const seen=new Set();
+  sel.innerHTML=compPlans.filter(p=>{const k=`${p.planId}|${p.fiscalYear}`;if(seen.has(k))return false;seen.add(k);return true;})
+    .map(p=>`<option value="${p.planId}|${p.fiscalYear}">${p.planId} · ${p.planName} · ${p.fiscalYear}</option>`).join('');
+  if(pk)sel.value=pk;
+  onDupSourcePlanChange();
+  const {planId,fy}=parsePlanKey(sel.value);
+  const src=getPlan(planId,fy);
+  document.getElementById('dup-plan-id').value=planId; // default: new version of same plan
+  document.getElementById('dup-plan-fy').value=fy;
+  document.getElementById('dup-plan-name').value=(src?.planName||'')+' (Copy)';
+  onCloneTargetInput();
+  document.getElementById('duplicate-plan-modal').classList.add('open');
+}
+const openClonePlanModal=openDuplicatePlanModal;
+function closeDuplicatePlanModal(){document.getElementById('duplicate-plan-modal').classList.remove('open');}
+function onDupSourcePlanChange(){
+  const pk=document.getElementById('dup-source-plan').value;
+  const sel=document.getElementById('dup-source-version');
+  const vers=getVersionsForFlavor(pk);
+  const pub=getPublishedVersion(pk);
+  sel.innerHTML=vers.map(v=>`<option value="${v.versionId}">${v.label} · ${VERSION_STATUS_LABELS[v.status]}</option>`).join('');
+  if(pub)sel.value=pub.versionId;else if(vers[0])sel.value=vers[0].versionId;
+}
+/* Live hint: does the target # + FY already exist (→ new version) or not (→ new plan)? */
+function onCloneTargetInput(){
+  const id=document.getElementById('dup-plan-id').value.trim();
+  const fy=document.getElementById('dup-plan-fy').value;
+  const exists=!!(id&&compPlanExists(id,fy));
+  document.getElementById('dup-name-group').style.display=exists?'none':'block';
+  const hint=document.getElementById('dup-target-hint');
+  const btn=document.getElementById('dup-confirm-btn');
+  if(exists){hint.textContent=`Existing plan — creates a new version of ${id} · ${fy}.`;if(btn)btn.innerHTML='<i class="ti ti-versions"></i> Clone as new version';}
+  else{hint.textContent='New # — creates a brand-new comp plan.';if(btn)btn.innerHTML='<i class="ti ti-copy"></i> Clone as new plan';}
+}
+function confirmDuplicatePlan(){
+  const srcVid=document.getElementById('dup-source-version').value;
+  const targetId=document.getElementById('dup-plan-id').value.trim();
+  const targetFy=document.getElementById('dup-plan-fy').value;
+  const targetName=document.getElementById('dup-plan-name').value.trim();
+  const src=getVersion(srcVid);
+  if(!src){alert('Please select a source version.');return;}
+  if(!targetId){alert('Please enter a target Comp Plan #.');return;}
+  if(!/^[A-Za-z]+\d+$/.test(targetId)){alert('Comp Plan # must be letter(s) followed by a number (e.g. A20).');return;}
+  if(!compPlanExists(targetId,targetFy)&&!targetName){alert('Please enter a name for the new comp plan.');return;}
+  cloneToTarget(srcVid,targetId,targetFy,targetName);
+}
+function cloneToTarget(sourceVersionId,targetId,targetFy,targetName){
+  const src=getVersion(sourceVersionId);
+  if(!src||!src.content){alert('Source version has no content to copy.');return;}
+  const srcPlan=getPlan(src.flavorId,src.fy);
+  const exists=compPlanExists(targetId,targetFy);
+  const targetPlan=exists?getPlan(targetId,targetFy):null;
+  const content=JSON.parse(JSON.stringify(src.content));
+  content.flavors.forEach(f=>{f.flavorId=`${targetId}.${f.flavorLabel}`;});
+  content.planMeta.planName=exists?(targetPlan.planName):targetName;
+  const owner=(exists?targetPlan.owner:srcPlan?.owner)||'Melissa C.';
+  const roleGroup=(exists?targetPlan.roleGroup:srcPlan?.roleGroup)||'';
+  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const pk=planKey(targetId,targetFy);
+  if(!exists){
+    compPlans.push({planId:targetId,planName:targetName,fiscalYear:targetFy,roleGroup,owner,status:'active',activePublishedVersionId:null});
+  }
+  // Reconcile the target plan's flavor rows to match the cloned flavor set (in place — planFlavors is const).
+  for(let i=planFlavors.length-1;i>=0;i--){if(planFlavors[i].planId===targetId&&planFlavors[i].fiscalYear===targetFy)planFlavors.splice(i,1);}
+  content.flavors.forEach(f=>{
+    planFlavors.push({flavorId:f.flavorId,planId:targetId,flavorLabel:f.flavorLabel,flavorName:f.role,role:f.role,fiscalYear:targetFy,roleGroup,owner,status:'active'});
+    if(!plans.find(p=>p.id===f.flavorId&&p.fy===targetFy))plans.push({id:f.flavorId,name:content.planMeta.planName,role:f.role,fy:targetFy,status:'draft',ver:'1.0',updated:now,owner,approval:'none'});
+  });
+  const v=createVersionRecord(pk,{description:`Cloned from ${src.flavorId} · ${src.fy} · ${src.label}`});
+  v.content=content; // overwrite the blank/cloned content with the re-based source clone
+  v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  addAuditEntry(pk,exists?'Version cloned':'Comp plan cloned',`${targetId} · ${targetFy} ${exists?'new version':'created'} — cloned from ${src.flavorId} · ${src.fy} (${src.label}).`,{versionId:v.versionId});
+  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildLibrary();buildProposalTracker();
+  closeDuplicatePlanModal();
+  openVersionInBuilder(v.versionId);
 }
 
 function openBuilder(planId,isNew,fromClone,versionId){
@@ -4916,6 +4795,7 @@ function buildLibrary(){
       <td><div style="display:flex;gap:4px">
         <button class="btn btn-sm" onclick="openPlanDetail('${pk}')" title="Open plan"><i class="ti ti-versions"></i></button>
         <button class="btn btn-sm" onclick="openComparePlatform('standalone','${pk}')" title="Compare"><i class="ti ti-columns"></i></button>
+        <button class="btn btn-sm" onclick="openClonePlanModal('${pk}')" title="Clone plan / version"><i class="ti ti-copy"></i></button>
         <button class="btn btn-sm" onclick="currentPlanKey='${pk}';openCreateRevisionModal()" title="Create Revision"><i class="ti ti-plus"></i></button>
       </div></td>
     </tr>`;
