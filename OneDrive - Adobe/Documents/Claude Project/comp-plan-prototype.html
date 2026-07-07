@@ -294,6 +294,8 @@ tr:hover td{background:var(--pa-surface-hover)}
 .payout-tier-table .vct-calc-cell{background:var(--pa-surface-selected);font-weight:600;color:var(--pa-theme-primary);text-align:center;white-space:nowrap}
 .payout-threshold-block .payout-tier-table th:nth-child(4){text-align:center}
 .payout-tier-table .tier-actions{text-align:center;width:32px}
+.xpcr-cell{display:flex;align-items:center;gap:3px}
+.xpcr-suffix{color:var(--pa-text-secondary);font-size:11px}
 .payout-mcr-row td{background:var(--pa-warning-bg)}
 .payout-threshold-actions{padding:8px 10px;border-top:1px solid var(--pa-border);display:flex;gap:8px;flex-wrap:wrap}
 .payout-table-actions{padding:0 14px 12px;display:flex;gap:8px;flex-wrap:wrap}
@@ -938,12 +940,17 @@ tr:hover td{background:var(--pa-surface-hover)}
             <div class="plan-section-hdr">Bonus</div>
             <div class="plan-section-body">
               <div class="plan-kv-row"><span class="k">Bonus type</span><select class="form-select" id="builder-bonus"></select></div>
-              <div class="plan-kv-row"><span class="k">Bonus description</span><input class="form-input" id="builder-bonus-desc" placeholder="Describe the bonus"></div>
+              <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Bonus description</span><textarea class="form-textarea" id="builder-bonus-desc" placeholder="Describe the bonus" style="width:100%;min-height:60px;resize:vertical"></textarea></div>
             </div>
 
             <div class="plan-section-hdr">Tether</div>
             <div class="plan-section-body">
-              <div class="plan-kv-row"><span class="k">Description</span><input class="form-input" id="builder-tether" placeholder="Tether description (free text)"></div>
+              <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" id="builder-tether" placeholder="Tether description (free text)" style="width:100%;min-height:60px;resize:vertical"></textarea></div>
+            </div>
+
+            <div class="plan-section-hdr">Key Policies</div>
+            <div class="plan-section-body">
+              <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Key policies</span><textarea class="form-textarea" id="builder-key-policies" placeholder="Key policies (free text)" style="width:100%;min-height:60px;resize:vertical"></textarea></div>
             </div>
 
             <div class="plan-section-hdr">Plan notes</div>
@@ -2199,7 +2206,7 @@ function submitCurrentVersion(){
   const v=getVersion(currentVersionId);
   if(v&&builderWorkingContent&&isVersionEditable(v)){
     const gv=id=>document.getElementById(id)?.value;
-    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether')};
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
     syncBuilderPayoutTablesFromDOM();
     v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   }
@@ -2637,6 +2644,7 @@ function populateBuilderFromVersion(v){
   if(bonusSel)bonusSel.innerHTML=selectOptionsHtml(BONUS_TYPE_OPTIONS,normalizeBonusType(pm.bonus||'None'));
   setVal('builder-bonus-desc',pm.bonusDescription);
   setVal('builder-tether',pm.tether);
+  setVal('builder-key-policies',pm.keyPolicies);
   document.getElementById('builder-plan-id').value=planId;
   // Title: FY · Plan ID · Plan Name · vN · Status
   const titleEl=document.getElementById('builder-title');
@@ -2683,7 +2691,7 @@ function renderBuilderFlavorBlock(fl,fi,editable){
       <div class="fld"><div class="lbl">New hire guarantee<span class="req" title="Required">*</span></div><select class="form-select" onchange="onBuilderFlavorField(${fi},'newHireGuarantee',this.value)" ${editable?'':'disabled'}>${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>
     </div>
     <table class="payout-tier-table builder-measure-table" style="margin-top:8px;width:100%">
-      <thead><tr><th style="min-width:160px">Pay measure</th><th style="min-width:160px">Description</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
+      <thead><tr><th style="width:120px">Pay measure</th><th style="min-width:280px">Description</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     ${editable?`<div style="padding:10px 14px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
@@ -2693,11 +2701,11 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   const canRemove=editable&&builderWorkingContent.flavors[fi].measures.length>1;
   const dis=editable?'':'disabled';
   return `<tr>
-    <td><select class="form-select" ${dis} onchange="onBuilderMeasureType(${fi},${mi},this.value)">${PLAN_MEASURES.map(pm=>`<option value="${pm.id}" ${pm.id===m.measureId?'selected':''}>${pm.name}</option>`).join('')}</select></td>
+    <td><select class="form-select" ${dis} onchange="onBuilderMeasureType(${fi},${mi},this.value)"><option value="" ${!m.measureId?'selected':''}>Select measure…</option>${PLAN_MEASURES.map(pm=>`<option value="${pm.id}" ${pm.id===m.measureId?'selected':''}>${pm.name}</option>`).join('')}</select></td>
     <td><input class="form-input" value="${(m.description||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'description',this.value)" placeholder="Description" style="min-width:140px"></td>
     <td><input class="form-input" value="${m.vct||''}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'vct',this.value);recalcFlavorVctSum(${fi})" style="width:70px" placeholder="e.g. 50%"></td>
-    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)">${selectOptionsHtml(PERF_PERIOD_OPTIONS,normalizePerfPeriod(m.perf))}</select></td>
-    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)">${selectOptionsHtml(PAY_FREQ_OPTIONS,normalizePayFreq(m.pay))}</select></td>
+    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
   </tr>`;
 }
@@ -2706,7 +2714,7 @@ function onBuilderFlavorField(fi,field,v){if(builderWorkingContent.flavors[fi])b
 function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-${fi}`);if(!el)return;const sum=flavorVctSum(builderWorkingContent.flavors[fi]);const ok=Math.round(sum)===100;el.textContent=`VCT total ${sum%1===0?sum:sum.toFixed(1)}%`;el.className=`badge ${ok?'badge-approved':'badge-rejected'}`;}
 function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
 function onBuilderMeasureType(fi,mi,v){syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors[fi].measures[mi].measureId=v;renderBuilderPayoutTables();}
-function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}syncBuilderPayoutTablesFromDOM();const used=builderWorkingContent.flavors[fi].measures.map(m=>m.measureId);const next=(PLAN_MEASURES.find(pm=>!used.includes(pm.id))||PLAN_MEASURES[0]).id;builderWorkingContent.flavors[fi].measures.push({measureId:next,description:'',vct:'',perf:'Annual',pay:'Quarterly'});renderBuilderFlavors();renderBuilderPayoutTables();}
+function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors[fi].measures.push({measureId:'',description:'',vct:'',perf:'',pay:''});renderBuilderFlavors();renderBuilderPayoutTables();}
 function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();renderBuilderPayoutTables();}
 function addBuilderFlavor(){
   if(!builderMeasuresEditable)return;
@@ -2714,7 +2722,7 @@ function addBuilderFlavor(){
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
   syncBuilderPayoutTablesFromDOM();
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'New Role',headcount:'',payMixBase:70,payMixVar:30,newHireGuarantee:'',measures:[{measureId:PLAN_MEASURES[0].id,description:'',vct:'',perf:'Annual',pay:'Quarterly'}]});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{measureId:'',description:'',vct:'',perf:'',pay:''}]});
   renderBuilderFlavors();renderBuilderPayoutTables();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();renderBuilderPayoutTables();}
@@ -2730,11 +2738,10 @@ function renderBuilderPayoutTables(){
   cont.innerHTML=ids.map((mid,i)=>{
     const slot=1000+i;sharedPayoutSlots.add(slot);builderPayoutSlotMeasure[slot]=mid;
     let pt=builderWorkingContent.payoutTables[mid];
-    if(!pt)pt=builderWorkingContent.payoutTables[mid]=normalizePayoutToScheme(defaultPayoutForMeasure(mid),DEFAULT_QUOTA_SCHEME);
-    if(!pt.schemeKey)builderWorkingContent.payoutTables[mid]=pt=normalizePayoutToScheme(pt,DEFAULT_QUOTA_SCHEME);
+    if(!pt)pt=builderWorkingContent.payoutTables[mid]=blankPayoutTable();
     const usedBy=builderWorkingContent.flavors.filter(fl=>fl.measures.some(m=>m.measureId===mid)).map(fl=>'Flavor '+fl.flavorLabel).join(', ');
     const name=getMeasureById(mid)?.name||mid;
-    const schemeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="onPayoutSchemeChange(${slot},this.value)" style="min-width:220px">${QUOTA_BAND_SCHEMES.map(s=>`<option value="${s.key}" ${s.key===pt.schemeKey?'selected':''}>${s.label}</option>`).join('')}</select>`;
+    const schemeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="onPayoutSchemeChange(${slot},this.value)" style="min-width:220px"><option value="" ${!pt.schemeKey?'selected':''}>Select quota band…</option>${QUOTA_BAND_SCHEMES.map(s=>`<option value="${s.key}" ${s.key===pt.schemeKey?'selected':''}>${s.label}</option>`).join('')}</select>`;
     return `<div class="measure-payout-unit" style="margin-bottom:16px">
       <div class="payout-linked-hdr"><span><i class="ti ti-table"></i> ${name} <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· used by ${usedBy}</span></span></div>
       <div class="payout-options-bar">
@@ -2794,7 +2801,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether')};
+  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
   syncBuilderPayoutTablesFromDOM();
   const used=new Set();builderWorkingContent.flavors.forEach(fl=>fl.measures.forEach(m=>used.add(m.measureId)));
   Object.keys(builderWorkingContent.payoutTables).forEach(mid=>{if(!used.has(mid))delete builderWorkingContent.payoutTables[mid];});
@@ -3529,7 +3536,9 @@ const QUOTA_BAND_SCHEMES=[
   {bands:["<$50","≥$50–<$200","≥$200"]},
 ].map((s,i)=>({key:'opt'+(i+1),bands:s.bands,label:s.bands.join(', ')}));
 const DEFAULT_QUOTA_SCHEME='opt2';
-function getQuotaScheme(key){return QUOTA_BAND_SCHEMES.find(s=>s.key===key)||QUOTA_BAND_SCHEMES[0];}
+const BLANK_SCHEME={key:'',bands:[],label:'Select quota band…'};
+function getQuotaScheme(key){if(!key)return BLANK_SCHEME;return QUOTA_BAND_SCHEMES.find(s=>s.key===key)||QUOTA_BAND_SCHEMES[0];}
+function blankPayoutTable(){return{schemeKey:'',thresholds:[],globalVctCap:'',prorateVct:false,payCurveType:'Linear',threshold:''};}
 function defaultBandTiers(){return[{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',mcr:null}];}
 /* Reshape a payout table to a quota-band scheme: one threshold (band) per scheme range. */
 function normalizePayoutToScheme(pt,key){
@@ -3794,14 +3803,11 @@ const compareQuickPresets=[
 function blankVersionContent(pk){
   const {planId,fy}=parsePlanKey(pk);
   const plan=getPlan(planId,fy);
-  const defs=getDefaultMeasureConfigs(2);
-  const payoutTables={};
-  defs.forEach(c=>{if(!payoutTables[c.measureId])payoutTables[c.measureId]=normalizePayoutToScheme({},DEFAULT_QUOTA_SCHEME);});
   const f0=getFlavorsForPlan(pk)[0];
   return{
-    planMeta:{planName:plan?.planName||planId,bonus:'N/A',bonusDescription:'',tether:''},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:f0?.role||'New Role',headcount:'',payMixBase:70,payMixVar:30,newHireGuarantee:'',measures:defs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))}],
-    payoutTables,
+    planMeta:{planName:plan?.planName||planId,bonus:'N/A',bonusDescription:'',tether:'',keyPolicies:''},
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{measureId:'',description:'',vct:'',perf:'',pay:''}]}],
+    payoutTables:{},
   };
 }
 /* Seed each existing version's content once from the static field maps. */
@@ -3822,7 +3828,7 @@ function seedVersionContent(){
     const rawRep=rep?((ver.fy==='FY26'?fy26Baselines[rep.flavorId]:fy27CurrentFields[rep.flavorId])||fy27CurrentFields[rep.flavorId]||{}):{};
     const plan=getPlan(ver.flavorId,ver.fy);
     ver.content={
-      planMeta:{planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',bonusDescription:'',tether:rawRep.tether||'N/A'},
+      planMeta:{planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',bonusDescription:'',tether:rawRep.tether||'N/A',keyPolicies:''},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
       payoutTables,
     };
@@ -4014,7 +4020,7 @@ function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable){
   return`<tr data-tier="${tierIdx}">
     <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} title="Upper bound of this attainment tier; leave blank on the last tier for 'and above'"></td>
     <td class="tier-range-cell" data-range style="font-size:11px;color:var(--pa-text-secondary)">—</td>
-    <td><input class="form-input" value="${(tier.xPCR===''||tier.xPCR==null)?'':formatXpcrValue(tier.xPCR)}" data-field="xpcr" placeholder="e.g. 1.0x" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro}></td>
+    <td><div class="xpcr-cell"><input class="form-input" type="number" min="0" step="0.01" value="${(tier.xPCR===''||tier.xPCR==null)?'':tier.xPCR}" data-field="xpcr" placeholder="e.g. 1.5" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro}><span class="xpcr-suffix">x</span></div></td>
     <td class="vct-calc-cell" data-calc-vct>—</td>
     ${editable?`<td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removePayoutTier(${slot},${thIdx},${tierIdx})" title="Remove tier"><i class="ti ti-x"></i></button></td>`:'<td></td>'}
   </tr>`;
@@ -4039,7 +4045,8 @@ function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
 function renderPayoutTableEditor(slot,payoutTable){
   const wrap=document.getElementById(`builder-p${slot}-table`);
   if(!wrap)return;
-  let pt=payoutTable&&payoutTable.thresholds&&payoutTable.thresholds.length?payoutTable:normalizePayoutToScheme(defaultPayoutForMeasure(builderPayoutSlotMeasure[slot]||'GROSS_NEW_ARR'),DEFAULT_QUOTA_SCHEME);
+  const pt=payoutTable||{};
+  if(!pt.thresholds||!pt.thresholds.length){wrap.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary);padding:10px 14px">Select a quota band above to configure payout tiers.</p>';return;}
   const editable=builderMeasuresEditable;
   wrap.innerHTML=pt.thresholds.map((th,i)=>renderPayoutThresholdBlock(slot,i,th,editable)).join('');
   syncPayoutVctCalcs(slot);
@@ -4085,7 +4092,8 @@ function collectPayoutTable(slot){
     });
   });
   const mid=builderPayoutSlotMeasure[slot];
-  const schemeKey=(builderWorkingContent&&builderWorkingContent.payoutTables[mid]&&builderWorkingContent.payoutTables[mid].schemeKey)||DEFAULT_QUOTA_SCHEME;
+  const storedPt=builderWorkingContent&&builderWorkingContent.payoutTables[mid];
+  const schemeKey=storedPt?(storedPt.schemeKey||''):DEFAULT_QUOTA_SCHEME;
   return{
     schemeKey,
     thresholds:thresholds.length?thresholds:normalizePayoutToScheme({},schemeKey).thresholds,
