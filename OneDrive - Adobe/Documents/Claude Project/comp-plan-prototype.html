@@ -911,7 +911,7 @@ tr:hover td{background:var(--pa-surface-hover)}
             </div>
             <div class="plan-section-body">
               <div class="plan-kv-row"><span class="k">Plan Name</span><input class="form-input" id="builder-plan-name" value=""></div>
-              <div class="plan-kv-row"><span class="k">New hire guarantee *</span><select class="form-select" id="builder-newhire-guarantee"><option value="">Select…</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
+              <div class="plan-kv-row"><span class="k">New hire guarantee</span><select class="form-select" id="builder-newhire-guarantee"><option value="">Select…</option><option value="Yes">Yes</option><option value="No">No</option></select></div>
             </div>
 
             <div class="plan-section-hdr">Performance measures <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
@@ -927,10 +927,15 @@ tr:hover td{background:var(--pa-surface-hover)}
               <div id="builder-payout-tables-container"></div>
             </div>
 
-            <div class="plan-section-hdr">Bonus &amp; tether</div>
+            <div class="plan-section-hdr">Bonus</div>
             <div class="plan-section-body">
               <div class="plan-kv-row"><span class="k">Bonus type</span><select class="form-select" id="builder-bonus"></select></div>
-              <div class="plan-kv-row"><span class="k">Tether</span><input class="form-input" id="builder-tether" value="Renewal tether 80%"></div>
+              <div class="plan-kv-row"><span class="k">Bonus description</span><input class="form-input" id="builder-bonus-desc" placeholder="Describe the bonus"></div>
+            </div>
+
+            <div class="plan-section-hdr">Tether</div>
+            <div class="plan-section-body">
+              <div class="plan-kv-row"><span class="k">Description</span><input class="form-input" id="builder-tether" placeholder="Tether description (free text)"></div>
             </div>
 
             <div class="plan-section-hdr">Plan notes</div>
@@ -2186,7 +2191,7 @@ function submitCurrentVersion(){
   const v=getVersion(currentVersionId);
   if(v&&builderWorkingContent&&isVersionEditable(v)){
     const gv=id=>document.getElementById(id)?.value;
-    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
     syncBuilderPayoutTablesFromDOM();
     v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   }
@@ -2627,6 +2632,7 @@ function populateBuilderFromVersion(v){
   setVal('builder-plan-name',pm.planName);
   const bonusSel=document.getElementById('builder-bonus');
   if(bonusSel)bonusSel.innerHTML=selectOptionsHtml(BONUS_TYPE_OPTIONS,normalizeBonusType(pm.bonus||'None'));
+  setVal('builder-bonus-desc',pm.bonusDescription);
   setVal('builder-tether',pm.tether);
   const nhg=document.getElementById('builder-newhire-guarantee');if(nhg)nhg.value=pm.newHireGuarantee||'';
   document.getElementById('builder-plan-id').value=planId;
@@ -2665,8 +2671,8 @@ function renderBuilderFlavorBlock(fl,fi,editable){
       </div>
       ${editable&&builderWorkingContent.flavors.length>1?`<button type="button" class="measure-remove-btn" onclick="removeBuilderFlavor(${fi})"><i class="ti ti-trash" style="font-size:11px"></i> Remove flavor</button>`:''}
     </div>
-    <table class="payout-tier-table" style="margin-top:8px">
-      <thead><tr><th>Pay measure</th><th>Description</th><th>VCT Wt%</th><th>Performance period</th><th>Payout frequency</th><th></th></tr></thead>
+    <table class="payout-tier-table builder-measure-table" style="margin-top:8px;width:100%">
+      <thead><tr><th style="min-width:160px">Pay measure</th><th style="min-width:160px">Description</th><th style="width:80px">VCT Wt%</th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     ${editable?`<div style="margin-top:8px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
@@ -2713,21 +2719,21 @@ function renderBuilderPayoutTables(){
   cont.innerHTML=ids.map((mid,i)=>{
     const slot=1000+i;sharedPayoutSlots.add(slot);builderPayoutSlotMeasure[slot]=mid;
     let pt=builderWorkingContent.payoutTables[mid];
-    if(!pt)pt=builderWorkingContent.payoutTables[mid]=normalizePayoutToScheme(defaultPayoutForMeasure(mid),'single');
-    if(!pt.schemeKey)builderWorkingContent.payoutTables[mid]=pt=normalizePayoutToScheme(pt,'single');
+    if(!pt)pt=builderWorkingContent.payoutTables[mid]=normalizePayoutToScheme(defaultPayoutForMeasure(mid),DEFAULT_QUOTA_SCHEME);
+    if(!pt.schemeKey)builderWorkingContent.payoutTables[mid]=pt=normalizePayoutToScheme(pt,DEFAULT_QUOTA_SCHEME);
     const usedBy=builderWorkingContent.flavors.filter(fl=>fl.measures.some(m=>m.measureId===mid)).map(fl=>'Flavor '+fl.flavorLabel).join(', ');
     const name=getMeasureById(mid)?.name||mid;
     const schemeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="onPayoutSchemeChange(${slot},this.value)" style="min-width:220px">${QUOTA_BAND_SCHEMES.map(s=>`<option value="${s.key}" ${s.key===pt.schemeKey?'selected':''}>${s.label}</option>`).join('')}</select>`;
-    return `<div class="measure-payout-unit" style="margin-bottom:14px">
+    return `<div class="measure-payout-unit" style="margin-bottom:16px">
       <div class="payout-linked-hdr"><span><i class="ti ti-table"></i> ${name} <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· used by ${usedBy}</span></span></div>
-      <div style="display:flex;align-items:center;gap:8px;margin:6px 0"><label style="font-size:11px;color:var(--pa-text-secondary)">Quota band</label>${schemeSel}</div>
-      <div class="payout-table-wrap ${editable?'':'payout-readonly'}" id="builder-p${slot}-table"></div>
-      <div style="display:flex;align-items:center;gap:16px;margin-top:10px;flex-wrap:wrap">
+      <div class="payout-options-bar" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--pa-canvas);border:var(--border);border-radius:var(--radius);padding:8px 12px;margin:8px 0">
+        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Quota band</label>${schemeSel}</span>
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--pa-text-secondary)"><input type="checkbox" id="builder-p${slot}-prorate" ${pt.prorateVct?'checked':''} ${editable?'':'disabled'}> Prorate VCT</label>
         <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
-        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="number" min="0" value="${pt.threshold!=null?pt.threshold:0}" ${editable?'':'readonly'} title="Minimum attainment required for payout" style="width:80px"></span>
-        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Cap (optional)</label><input class="form-input" id="builder-p${slot}-cap" value="${(pt.globalVctCap||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} placeholder="e.g. 200% of VCT" style="max-width:220px"></span>
+        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="number" min="0" value="${pt.threshold!=null?pt.threshold:0}" ${editable?'':'readonly'} title="Minimum attainment required for payout" style="width:72px"></span>
+        <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Cap (optional)</label><input class="form-input" id="builder-p${slot}-cap" value="${(pt.globalVctCap||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="syncPayoutVctCalcs(${slot})" placeholder="e.g. 200%" style="max-width:160px"></span>
       </div>
+      <div class="payout-table-wrap ${editable?'':'payout-readonly'}" id="builder-p${slot}-table"></div>
     </div>`;
   }).join('');
   ids.forEach((mid,i)=>renderPayoutTableEditor(1000+i,builderWorkingContent.payoutTables[mid]));
@@ -2775,7 +2781,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta?.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
+  builderWorkingContent.planMeta={headcount:builderWorkingContent.planMeta?.headcount,payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),newHireGuarantee:gv('builder-newhire-guarantee')};
   syncBuilderPayoutTablesFromDOM();
   const used=new Set();builderWorkingContent.flavors.forEach(fl=>fl.measures.forEach(m=>used.add(m.measureId)));
   Object.keys(builderWorkingContent.payoutTables).forEach(mid=>{if(!used.has(mid))delete builderWorkingContent.payoutTables[mid];});
@@ -3471,19 +3477,48 @@ function defaultPayoutForMeasure(measureId){
   return templateKeyToPayoutStructure(m?.payoutKey||'single_quota');
 }
 
-/* ── Quota-band schemes (ways to split quota amount, all in $M) ── */
+/* ── Quota-band schemes (ways to split the quota amount; values as supplied) ── */
 const QUOTA_BAND_SCHEMES=[
-  {key:'single',label:'All quota sizes',bands:['All quota sizes']},
-  {key:'threeTier',label:'< $1.5M · $1.5M–$3.5M · > $3.5M',bands:['< $1.5M','$1.5M–$3.5M','> $3.5M']},
-  {key:'twoTier',label:'< $5M · ≥ $5M',bands:['< $5M','≥ $5M']},
-  {key:'fourTier',label:'< $1M · $1M–$3M · $3M–$5M · > $5M',bands:['< $1M','$1M–$3M','$3M–$5M','> $5M']},
-];
+  {bands:["$0","$100,000"]},
+  {bands:["<$1.5","≥$1.5–<$3.5","≥$3.5"]},
+  {bands:["<$1.5","≥$1.5"]},
+  {bands:["<$10","≥$10–<$20","≥$20"]},
+  {bands:["<$0.75","≥$0.75–<$1.5","≥$1.5"]},
+  {bands:["<$20","≥$20"]},
+  {bands:["<$25","≥$25–<$65","≥$65–<$100","≥$100"]},
+  {bands:["<$80","≥$80–<$85","≥$85–<$90","≥$90–<$95","≥$95"]},
+  {bands:["<$5","≥$5"]},
+  {bands:["<$75","≥$75–<$100","≥$100–<$105.3","≥$105.3"]},
+  {bands:["<$75","≥$75–<$80","≥$80–<$85","≥$85–<$90","≥$90–<$92","≥$92–<$95","≥$95"]},
+  {bands:["<$1","≥$1–<$3","≥$3"]},
+  {bands:["<$75","≥$75–<$80","≥$80–<$85","≥$85–<$88","≥$88–<$90","≥$90–<$92","≥$92–<$95","≥$95"]},
+  {bands:["<$80","≥$80–<$85","≥$85–<$90","≥$90"]},
+  {bands:["<$80","≥$80–<$90","≥$90"]},
+  {bands:["<$85","≥$85–<$90","≥$90"]},
+  {bands:["<$0.75","≥$0.75–<$1.5","≥$1.5"]},
+  {bands:["<$5","≥$5–<$10","≥$10"]},
+  {bands:["<$1.5","≥$1.5–<$3","≥$3"]},
+  {bands:["<$75,000","≥$75,000–<$150,000","≥$150,000"]},
+  {bands:["<$2.5","≥$2.5"]},
+  {bands:["<$1","≥$1–<$3.5","≥$3.5"]},
+  {bands:["<$3","≥$3–<$5","≥$5"]},
+  {bands:["<$10","≥$10–<$30","≥$30"]},
+  {bands:["<$10","≥$10–≤$30",">$30"]},
+  {bands:["<$0.75","≥$0.75–<$2","≥$2"]},
+  {bands:["<$0.5","≥$0.5"]},
+  {bands:["<$0.5","≥$0.5–<$1.5","≥$1.5"]},
+  {bands:["<$75","≥$75–<$80","≥$80–<$82","≥$82–<$85","≥$85–<$88","≥$88–<$90","≥$90–<$92","≥$92–<$95","≥$95"]},
+  {bands:["≤$60",">$60"]},
+  {bands:["<$60","≥$60"]},
+  {bands:["<$0.25","≥$0.25–<$0.75","≥$0.75"]},
+  {bands:["<$82","≥$82–<$87","≥$87"]},
+  {bands:["<$70","≥$70–<$75","≥$75–<$80","≥$80–<$82","≥$82–<$85","≥$85–<$88","≥$88–<$90","≥$90–<$92","≥$92"]},
+  {bands:["<$75","≥$75–<$80","≥$80–<$82","≥$82–<$85","≥$85–<$88","≥$88–<$90","≥$90–<$92","≥$92"]},
+  {bands:["<$50","≥$50–<$200","≥$200"]},
+].map((s,i)=>({key:'opt'+(i+1),bands:s.bands,label:s.bands.join(', ')}));
+const DEFAULT_QUOTA_SCHEME='opt2';
 function getQuotaScheme(key){return QUOTA_BAND_SCHEMES.find(s=>s.key===key)||QUOTA_BAND_SCHEMES[0];}
-function defaultBandTiers(){return[
-  {id:payoutUid(),attainmentFrom:0,attainmentTo:100,xPCR:1,mcr:null},
-  {id:payoutUid(),attainmentFrom:100,attainmentTo:150,xPCR:1.25,mcr:null},
-  {id:payoutUid(),attainmentFrom:150,attainmentTo:null,xPCR:1.5,mcr:null},
-];}
+function defaultBandTiers(){return[{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',mcr:null}];}
 /* Reshape a payout table to a quota-band scheme: one threshold (band) per scheme range. */
 function normalizePayoutToScheme(pt,key){
   const scheme=getQuotaScheme(key);
@@ -3532,7 +3567,7 @@ function clonePayoutStructure(pt){
 }
 
 function createEmptyTier(){
-  return{id:payoutUid(),attainmentFrom:0,attainmentTo:100,xPCR:1,mcr:null,vctCap:null};
+  return{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',mcr:null};
 }
 
 function createEmptyThreshold(label){
@@ -3749,10 +3784,10 @@ function blankVersionContent(pk){
   const plan=getPlan(planId,fy);
   const defs=getDefaultMeasureConfigs(2);
   const payoutTables={};
-  defs.forEach(c=>{if(!payoutTables[c.measureId])payoutTables[c.measureId]=normalizePayoutToScheme(c.payoutTable,'single');});
+  defs.forEach(c=>{if(!payoutTables[c.measureId])payoutTables[c.measureId]=normalizePayoutToScheme({},DEFAULT_QUOTA_SCHEME);});
   const f0=getFlavorsForPlan(pk)[0];
   return{
-    planMeta:{headcount:'',payMixBase:70,payMixVar:30,planName:plan?.planName||planId,bonus:'N/A',tether:'N/A',newHireGuarantee:''},
+    planMeta:{headcount:'',payMixBase:70,payMixVar:30,planName:plan?.planName||planId,bonus:'N/A',bonusDescription:'',tether:'',newHireGuarantee:''},
     flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:f0?.role||'New Role',measures:defs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))}],
     payoutTables,
   };
@@ -3767,7 +3802,7 @@ function seedVersionContent(){
     const contentFlavors=flavors.map(f=>{
       const raw=(ver.fy==='FY26'?fy26Baselines[f.flavorId]:fy27CurrentFields[f.flavorId])||fy27CurrentFields[f.flavorId]||fy26Baselines[f.flavorId]||{};
       const cfgs=getMeasureConfigsFromFields(buildMeasureFieldsFromIds(raw,planFieldTemplates[f.flavorId]||{}));
-      cfgs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=normalizePayoutToScheme(pt,'single');}});
+      cfgs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=normalizePayoutToScheme(pt,DEFAULT_QUOTA_SCHEME);}});
       return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,flavorName:f.flavorName||f.role,role:f.role,measures:cfgs.map(c=>({measureId:c.measureId,description:'',vct:c.vct,perf:c.perf,pay:c.pay}))};
     });
     const rep=flavors[0];
@@ -3775,7 +3810,7 @@ function seedVersionContent(){
     const pm=parsePayMix(payMixMap[rep?.flavorId]||'70 / 30');
     const plan=getPlan(ver.flavorId,ver.fy);
     ver.content={
-      planMeta:{headcount:rawRep.headcount,payMixBase:pm.base,payMixVar:pm.var,planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',tether:rawRep.tether||'N/A',newHireGuarantee:'No'},
+      planMeta:{headcount:rawRep.headcount,payMixBase:pm.base,payMixVar:pm.var,planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',bonusDescription:'',tether:rawRep.tether||'N/A',newHireGuarantee:'No'},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
       payoutTables,
     };
@@ -3965,7 +4000,7 @@ function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable){
   return`<tr data-tier="${tierIdx}">
     <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:110px" title="Upper bound of this attainment tier; leave blank on the last tier for 'and above'"></td>
     <td class="tier-range-cell" data-range style="font-size:11px;color:var(--pa-text-secondary)">—</td>
-    <td><input class="form-input" value="${formatXpcrValue(tier.xPCR)}" data-field="xpcr" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:64px"></td>
+    <td><input class="form-input" value="${(tier.xPCR===''||tier.xPCR==null)?'':formatXpcrValue(tier.xPCR)}" data-field="xpcr" placeholder="e.g. 1.0x" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:64px"></td>
     <td class="vct-calc-cell" data-calc-vct>—</td>
     ${editable?`<td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removePayoutTier(${slot},${thIdx},${tierIdx})" title="Remove tier"><i class="ti ti-x"></i></button></td>`:'<td></td>'}
   </tr>`;
@@ -3990,7 +4025,7 @@ function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
 function renderPayoutTableEditor(slot,payoutTable){
   const wrap=document.getElementById(`builder-p${slot}-table`);
   if(!wrap)return;
-  let pt=payoutTable&&payoutTable.thresholds&&payoutTable.thresholds.length?payoutTable:normalizePayoutToScheme(defaultPayoutForMeasure(builderPayoutSlotMeasure[slot]||'GROSS_NEW_ARR'),'single');
+  let pt=payoutTable&&payoutTable.thresholds&&payoutTable.thresholds.length?payoutTable:normalizePayoutToScheme(defaultPayoutForMeasure(builderPayoutSlotMeasure[slot]||'GROSS_NEW_ARR'),DEFAULT_QUOTA_SCHEME);
   const editable=builderMeasuresEditable;
   wrap.innerHTML=pt.thresholds.map((th,i)=>renderPayoutThresholdBlock(slot,i,th,editable)).join('');
   syncPayoutVctCalcs(slot);
@@ -3998,17 +4033,22 @@ function renderPayoutTableEditor(slot,payoutTable){
 
 function syncPayoutVctCalcs(slot){
   const cap=payoutSlotCap(slot);
+  const capN=parsePctValue(cap);
+  const hasCap=cap!=null&&cap!==''&&!isNaN(capN)&&capN>0;
   document.querySelectorAll(`#builder-p${slot}-table .payout-threshold-block`).forEach(thEl=>{
-    let prev=0; // cumulative lower bound within this quota band
+    let prev=0,cum=0; // stepped (marginal) accumulation within this quota band
     thEl.querySelectorAll('tbody tr[data-tier]').forEach(row=>{
-      const toRaw=row.querySelector('[data-field="to"]')?.value;
-      const to=(toRaw===''||toRaw==null)?null:Number(toRaw);
-      const tier={attainmentFrom:prev,attainmentTo:to,xPCR:parseXpcrValue(row.querySelector('[data-field="xpcr"]')?.value)};
+      const toRaw=(row.querySelector('[data-field="to"]')?.value||'').trim();
+      const to=toRaw===''?null:Number(toRaw);
+      const xpcrRaw=(row.querySelector('[data-field="xpcr"]')?.value||'').trim();
       const rangeCell=row.querySelector('[data-range]');
       if(rangeCell)rangeCell.textContent=(to==null)?`> ${prev}%`:`${prev}% – ${to}%`;
       const cell=row.querySelector('[data-calc-vct]');
-      if(cell)cell.textContent=formatPctValue(calcTierVctFromAttainment(tier,cap));
-      if(to!=null)prev=to;
+      if(to==null||xpcrRaw===''){ if(cell)cell.textContent='—'; if(to!=null)prev=to; return; }
+      cum+=(to-prev)*parseXpcrValue(xpcrRaw); // marginal contribution of this bracket
+      let v=cum; if(hasCap)v=Math.min(v,capN);
+      if(cell)cell.textContent=formatPctValue(v);
+      prev=to;
     });
   });
 }
@@ -4031,7 +4071,7 @@ function collectPayoutTable(slot){
     });
   });
   const mid=builderPayoutSlotMeasure[slot];
-  const schemeKey=(builderWorkingContent&&builderWorkingContent.payoutTables[mid]&&builderWorkingContent.payoutTables[mid].schemeKey)||'single';
+  const schemeKey=(builderWorkingContent&&builderWorkingContent.payoutTables[mid]&&builderWorkingContent.payoutTables[mid].schemeKey)||DEFAULT_QUOTA_SCHEME;
   return{
     schemeKey,
     thresholds:thresholds.length?thresholds:normalizePayoutToScheme({},schemeKey).thresholds,
