@@ -827,12 +827,22 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="pa-form-card pa-plan-content-card">
           <div class="pa-pivot" id="plan-detail-tabs" role="tablist">
             <button type="button" class="pa-pivot-tab plan-tab active" data-tab="versions" onclick="switchPlanTab('versions')" role="tab">Versions</button>
+            <button type="button" class="pa-pivot-tab plan-tab" data-tab="compare" onclick="switchPlanTab('compare')" role="tab">Compare versions</button>
             <button type="button" class="pa-pivot-tab plan-tab" data-tab="approval" onclick="switchPlanTab('approval')" role="tab">Approval history</button>
             <button type="button" class="pa-pivot-tab plan-tab" data-tab="documents" onclick="switchPlanTab('documents')" role="tab">Documents</button>
           </div>
           <div class="pa-pivot-content">
             <div id="plan-tab-versions" class="pa-pivot-panel plan-tab-panel active" role="tabpanel">
               <div id="plan-versions-list"></div>
+            </div>
+            <div id="plan-tab-compare" class="pa-pivot-panel plan-tab-panel" role="tabpanel">
+              <div class="pa-section-header">Compare versions &amp; flavors <span class="pa-section-count">Pick two version · flavor snapshots of this plan</span></div>
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
+                <div><label class="form-label" style="font-size:11px">Baseline</label><select class="form-select" id="plan-compare-left" style="min-width:280px" onchange="runPlanFlavorCompare()"></select></div>
+                <button class="btn btn-sm" onclick="swapPlanFlavorCompare()" title="Swap"><i class="ti ti-arrows-left-right"></i></button>
+                <div><label class="form-label" style="font-size:11px">Compare</label><select class="form-select" id="plan-compare-right" style="min-width:280px" onchange="runPlanFlavorCompare()"></select></div>
+              </div>
+              <div id="plan-compare-results"></div>
             </div>
             <div id="plan-tab-approval" class="pa-pivot-panel plan-tab-panel" role="tabpanel">
               <div class="pa-split">
@@ -901,7 +911,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="page-header">
           <div><div class="page-title" id="builder-title">Plan Builder — H01.A</div><div class="page-subtitle" id="builder-subtitle">Digital Experience Account Executive · FY27 · Draft</div></div>
           <div class="btn-group">
-            <button class="btn btn-sm"><i class="ti ti-device-floppy"></i> Save draft</button>
+            <button class="btn btn-sm" onclick="saveBuilderVersion()"><i class="ti ti-device-floppy"></i> Save draft</button>
             <button class="btn btn-sm" onclick="openComparePlatform('builder')"><i class="ti ti-columns"></i> Compare</button>
             <button class="btn btn-sm" onclick="enterPlanBuilder()"><i class="ti ti-plus"></i> New plan</button>
             <button class="btn btn-primary btn-sm" id="builder-header-submit" onclick="submitCurrentVersion()"><i class="ti ti-send"></i> Submit for Approval</button>
@@ -917,7 +927,7 @@ tr:hover td{background:var(--pa-surface-hover)}
               <div class="plan-doc-header-right" id="builder-header-context">Planning cycle · v1.0</div>
             </div>
             <div class="plan-summary">
-              <div class="plan-summary-cell"><div class="lbl">Plan #</div><div class="val"><input class="form-input" id="builder-plan-id" value="H01.A" style="border:none;padding:0;background:transparent;font-weight:500"></div></div>
+              <div class="plan-summary-cell"><div class="lbl">Plan #</div><div class="val"><input class="form-input" id="builder-plan-id" value="A01" readonly style="border:none;padding:0;background:transparent;font-weight:500"></div></div>
               <div class="plan-summary-cell"><div class="lbl">HC</div><div class="val"><input class="form-input" id="builder-headcount" type="number" value="284" style="width:80px"></div></div>
               <div class="plan-summary-cell"><div class="lbl">Paymix (Base / Variable)</div><div class="val paymix-dual">
                 <input class="form-input" id="builder-paymix-base" type="number" min="0" max="100" value="70">
@@ -928,24 +938,20 @@ tr:hover td{background:var(--pa-surface-hover)}
 
             <div class="plan-section-hdr">Plan information</div>
             <div class="plan-section-body">
-              <div class="plan-kv-row"><span class="k">Plan Name</span><input class="form-input" id="builder-plan-name" value="Digital Experience AE FY27 Plan"></div>
-              <div class="plan-kv-row"><span class="k">Role</span><select class="form-select" id="builder-role"></select></div>
+              <div class="plan-kv-row"><span class="k">Plan Name</span><input class="form-input" id="builder-plan-name" value=""></div>
             </div>
 
-            <div class="plan-section-hdr">Flavors</div>
+            <div class="plan-section-hdr">Flavors &amp; pay measures <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
             <div class="plan-section-body">
-              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:8px">This comp plan has one or more flavors (variants for different roles). All flavors are approved together as one plan. Select a flavor to edit its pay measures. Payout detail tables are shared across flavors per pay measure.</p>
-              <div id="builder-flavor-tabs" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">This version's flavors (variants for different roles). For each flavor, set its pay measures (measure, VCT weight, performance period, payout period). All flavors are approved together as one plan; a new version starts from a copy of this one.</p>
+              <div id="builder-flavors-container"></div>
+              <div class="measure-actions"><button class="btn btn-sm" type="button" id="builder-add-flavor-btn" onclick="addBuilderFlavor()"><i class="ti ti-plus"></i> Add flavor</button></div>
             </div>
 
-            <div class="plan-section-hdr">Per-flavor pay measures <span id="builder-active-flavor-label" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
+            <div class="plan-section-hdr">Payout tables <span style="font-weight:400;color:var(--pa-text-secondary);font-size:12px">— one per pay measure type, shared across this version's flavors</span></div>
             <div class="plan-section-body">
-              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">For the selected flavor, choose its pay measures and set VCT weight, performance period, and payout period per measure. The linked payout detail table below each measure is <strong>shared at the plan level</strong> — the same measure uses the same table across every flavor.</p>
-              <div id="builder-measures-container"></div>
-              <div class="measure-actions" id="builder-measure-actions" style="display:none">
-                <button class="btn btn-sm" type="button" id="builder-add-measure-btn" onclick="addBuilderMeasure()"><i class="ti ti-plus"></i> Add measure</button>
-                <span class="measure-actions-hint" id="builder-measure-hint">Minimum 1 · maximum 4 pay measures</span>
-              </div>
+              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">One payout detail table per distinct pay measure used across all flavors in this version. Editing a table applies to every flavor that uses that measure.</p>
+              <div id="builder-payout-tables-container"></div>
             </div>
 
             <div class="plan-section-hdr">Bonus &amp; tether</div>
@@ -1890,12 +1896,13 @@ function openPlanDetail(planKey){
 }
 
 function switchPlanTab(tab){
-  const validTabs=['versions','approval','documents'];
+  const validTabs=['versions','compare','approval','documents'];
   if(!validTabs.includes(tab))tab='versions';
   currentPlanTab=tab;
   document.querySelectorAll('.plan-tab,.pa-pivot-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   document.querySelectorAll('.plan-tab-panel,.pa-pivot-panel').forEach(p=>p.classList.toggle('active',p.id==='plan-tab-'+tab));
   if(tab==='documents')renderPlanOutputTabs(currentPlanKey);
+  if(tab==='compare')populatePlanCompareSelects();
 }
 
 function buildVersionRowActions(v,planKey){
@@ -2061,13 +2068,17 @@ function populatePlanCompareSelects(){
   const leftSel=document.getElementById('plan-compare-left');
   const rightSel=document.getElementById('plan-compare-right');
   if(!leftSel||!rightSel)return;
-  const opts=vers.map(v=>`<option value="version|${v.versionId}">${v.label} · ${VERSION_STATUS_LABELS[v.status]}</option>`).join('');
+  // One option per (version, flavor) of this plan.
+  const opts=[];
+  vers.forEach(v=>{(v.content?.flavors||[]).forEach(fl=>{opts.push({key:`version|${v.versionId}|${fl.flavorId}`,label:`${v.label} · Flavor ${fl.flavorLabel} · ${VERSION_STATUS_LABELS[v.status]}`});});});
+  const html=opts.map(o=>`<option value="${o.key}">${o.label}</option>`).join('');
+  leftSel.innerHTML=html;rightSel.innerHTML=html;
+  if(!opts.length){document.getElementById('plan-compare-results').innerHTML='<div class="pa-empty-state">No versions to compare yet</div>';return;}
   const pub=getPublishedVersion(currentPlanKey);
-  leftSel.innerHTML=opts;
-  rightSel.innerHTML=opts;
-  if(pub)leftSel.value=`version|${pub.versionId}`;
-  const draft=vers.find(v=>EDITABLE_STATUSES.includes(v.status));
-  if(draft&&draft.versionId!==pub?.versionId)rightSel.value=`version|${draft.versionId}`;
+  const leftDefault=(pub&&opts.find(o=>o.key.includes(`|${pub.versionId}|`)))||opts[0];
+  leftSel.value=leftDefault.key;
+  const rightDefault=opts.find(o=>o.key!==leftDefault.key)||opts[opts.length-1];
+  rightSel.value=rightDefault.key;
   runPlanFlavorCompare();
 }
 
@@ -2132,6 +2143,9 @@ function createVersionRecord(planKey,opts={}){
     submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,
     comments:'',description:opts.description||`Revision v${num}`,approvalStage:'in_progress',isActivePublished:false,
   };
+  // Version-scoped content: clone from the source version, else start blank.
+  const src=opts.sourceVersionId?getVersion(opts.sourceVersionId):null;
+  v.content=src&&src.content?JSON.parse(JSON.stringify(src.content)):blankVersionContent(planKey);
   planVersions.push(v);
   addApprovalEvent(id,'created',opts.description||`Draft v${num} created.`);
   addAuditEntry(planKey,'Revision created',`${v.label} created.`,{versionId:id});
@@ -2155,7 +2169,7 @@ function confirmCreateProposal(){confirmCreateRevision();}
 function openVersionInBuilder(versionId){
   const v=getVersion(versionId);
   if(!v)return;
-  if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to make changes.');return;}
+  // Locked versions open read-only (builderMeasuresEditable=false) rather than being blocked.
   currentPlanKey=planKey(v.flavorId,v.fy);
   currentVersionId=versionId;
   currentDraftPlan={id:v.flavorId,name:getPlan(v.flavorId,v.fy)?.planName,versionId,fy:v.fy,status:v.status,designerNote:''};
@@ -2221,7 +2235,7 @@ function approveVersionSusan(versionId){
   if(note)v.comments=note;
   addApprovalEvent(versionId,'approved',note||'Susan approved — awaiting SEO review.','Susan L.');
   addAuditEntry(pk,'Susan approved',`${v.label} approved by Susan L.`,{versionId});
-  syncLegacyFromVersions();buildPlanSnapshots();buildProposalTracker();renderApprovalScreen();
+  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();renderApprovalScreen();
   if(currentPlanKey===pk)renderPlanDetail(pk);
 }
 function rejectVersionSusan(versionId){
@@ -2233,7 +2247,7 @@ function rejectVersionSusan(versionId){
   v.status='rejected';v.approvalStage='susan_rejected';v.updatedAt=now;v.comments=note;
   addApprovalEvent(versionId,'rejected',note,'Susan L.');
   addAuditEntry(pk,'Rejected',`${v.label} rejected by Susan L.`,{versionId});
-  syncLegacyFromVersions();buildPlanSnapshots();buildProposalTracker();renderApprovalScreen();
+  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();renderApprovalScreen();
   if(currentPlanKey===pk)renderPlanDetail(pk);
 }
 function approveVersionSEO(versionId){
@@ -2262,6 +2276,14 @@ function publishVersionById(versionId){
   v.status='published';v.approvalStage='published';v.isActivePublished=true;
   v.publishedAt=now;v.publishedBy='Susan L.';v.label=`Published v${v.versionNumber}`;v.updatedAt=now;
   if(plan)plan.activePublishedVersionId=versionId;
+  // Publishing the chosen version archives the other competing drafts of this plan.
+  planVersions.forEach(x=>{
+    if(x.flavorId===v.flavorId&&x.fy===v.fy&&x.versionId!==versionId&&EDITABLE_STATUSES.includes(x.status)){
+      x.status='archived';x.updatedAt=now;
+      addApprovalEvent(x.versionId,'archived',`Archived when ${v.label} was published.`,'Susan L.');
+      addAuditEntry(pk,'Draft archived',`${x.label} archived — ${v.label} chosen.`,{versionId:x.versionId});
+    }
+  });
   // Publishing the plan version publishes every flavor together — update each flavor's legacy row.
   getFlavorsForPlan(pk).forEach(f=>{const leg=plans.find(p=>p.id===f.flavorId&&p.fy===f.fiscalYear);if(leg){leg.status='published';leg.ver=String(v.versionNumber)+'.0';}});
   addApprovalEvent(versionId,'published',`Published v${v.versionNumber} is now the active downstream version.`,'Susan L.');
@@ -2754,69 +2776,153 @@ function openBuilder(planId,isNew,fromClone,versionId){
     const fyChip=document.getElementById('builder-fy-chip');
     if(fyChip)fyChip.textContent=fy;
   }
-  builderMeasuresEditable=true;
-  if(versionId){
-    const snap=planSnapshots.find(s=>s.key===`version|${versionId}`)||planSnapshots.find(s=>s.key===`proposal|${versionId}`);
-    if(snap){
-      populateBuilderFromSnapshot(snap);
-      updateBuilderVersionBar(pk,versionId);
-    }
-  }else if(isNew&&currentDraftPlan){
-    populateBuilderFromDraft();
-  }else{
-    const activeVersion=getVersionsForFlavor(pk).find(v=>EDITABLE_STATUSES.includes(v.status));
-    if(activeVersion){
-      currentVersionId=activeVersion.versionId;
-      const snap=planSnapshots.find(s=>s.key===`version|${activeVersion.versionId}`);
-      if(snap){populateBuilderFromSnapshot(snap);updateBuilderVersionBar(pk,activeVersion.versionId);}
-    }else{
-      const {planId:pid,fy}=parsePlanKey(pk);
-      const pub=getPublishedVersion(pk);
-      const snap=pub?planSnapshots.find(s=>s.key===`version|${pub.versionId}`):planSnapshots.find(s=>s.id===pid&&s.fy===fy);
-      if(snap){populateBuilderFromSnapshot(snap);if(currentVersionId)updateBuilderVersionBar(pk,currentVersionId);}
-      else{renderBuilderMeasures(getDefaultMeasureConfigs(2));loadBuilderPlanNote(pid);}
-    }
+  // Resolve the version to edit and drive the builder from its stored content.
+  let v=versionId?getVersion(versionId):null;
+  if(!v)v=getVersionsForFlavor(pk).find(x=>EDITABLE_STATUSES.includes(x.status))||getPublishedVersion(pk)||getVersionsForFlavor(pk)[0];
+  currentVersionId=v?v.versionId:null;
+  builderMeasuresEditable=v?isVersionEditable(v):true;
+  if(v){
+    if(!v.content)v.content=blankVersionContent(pk);
+    populateBuilderFromVersion(v);
+    updateBuilderVersionBar(pk,v.versionId);
   }
-  // Flavor switcher — load the first flavor's measures (per-flavor measures; shared payout tables).
-  renderBuilderFlavorTabs(pk);
-  const firstFlavor=getFlavorsForPlan(pk)[0];
-  if(firstFlavor)selectBuilderFlavor(firstFlavor.flavorId);
+  document.getElementById('builder-plan-id').value=parsePlanKey(pk).planId;
   showScreen('builder');
 }
 
-let currentBuilderFlavorId=null;
-function renderBuilderFlavorTabs(pk){
-  const cont=document.getElementById('builder-flavor-tabs');
-  if(!cont)return;
-  const flavors=getFlavorsForPlan(pk);
-  if(!currentBuilderFlavorId||!flavors.find(f=>f.flavorId===currentBuilderFlavorId))currentBuilderFlavorId=flavors[0]?.flavorId||null;
-  cont.innerHTML=flavors.map(f=>`<button type="button" class="btn btn-sm ${f.flavorId===currentBuilderFlavorId?'btn-primary':''}" onclick="selectBuilderFlavor('${f.flavorId}')">Flavor ${f.flavorLabel} · ${f.role}</button>`).join('')
-    +`<button type="button" class="btn btn-sm" onclick="addBuilderFlavor()" title="Add a flavor to this plan"><i class="ti ti-plus"></i> Add flavor</button>`;
+/* ── Builder driven by version.content (all flavors on one page + shared payout tables) ── */
+let builderWorkingContent=null;      // in-memory editing copy of the open version's content
+let builderPayoutSlotMeasure={};     // payout slot -> measureId (for the shared tables)
+
+function populateBuilderFromVersion(v){
+  if(!v)return;
+  initBuilderDropdowns();
+  const pk=planKey(v.flavorId,v.fy);
+  builderWorkingContent=JSON.parse(JSON.stringify(v.content||blankVersionContent(pk)));
+  const pm=builderWorkingContent.planMeta||{};
+  const setVal=(id,val)=>{const el=document.getElementById(id);if(el&&val!=null)el.value=val;};
+  setVal('builder-headcount',pm.headcount);
+  setVal('builder-paymix-base',pm.payMixBase);
+  setVal('builder-paymix-var',pm.payMixVar);
+  setVal('builder-plan-name',pm.planName);
+  const bonusSel=document.getElementById('builder-bonus');
+  if(bonusSel)bonusSel.innerHTML=selectOptionsHtml(BONUS_TYPE_OPTIONS,normalizeBonusType(pm.bonus||'None'));
+  setVal('builder-tether',pm.tether);
+  const fyChip=document.getElementById('builder-fy-chip');if(fyChip)fyChip.textContent=v.fy;
+  const statusBadge=document.getElementById('builder-status-badge');if(statusBadge)statusBadge.textContent=VERSION_STATUS_LABELS[v.status]||v.status;
+  const hint=document.getElementById('builder-version-hint');if(hint)hint.textContent=`— ${v.label} · ${VERSION_STATUS_LABELS[v.status]}${builderMeasuresEditable?'':' · locked'}`;
+  renderBuilderFlavors();
+  renderBuilderPayoutTables();
+  loadBuilderPlanNote(v.flavorId);
 }
-function selectBuilderFlavor(flavorId){
-  currentBuilderFlavorId=flavorId;
-  const {fy}=parsePlanKey(currentPlanKey);
-  const f=getPlanFlavor(flavorId,fy)||getPlanFlavor(flavorId);
-  const raw=(fy==='FY26'?fy26Baselines[flavorId]:fy27CurrentFields[flavorId])||fy27CurrentFields[flavorId]||fy26Baselines[flavorId]||{};
-  const fields=buildMeasureFieldsFromIds(raw,planFieldTemplates[flavorId]||{});
-  renderBuilderMeasures(getMeasureConfigsFromFields(fields));
-  const lbl=document.getElementById('builder-active-flavor-label');
-  if(lbl&&f)lbl.textContent=`— Flavor ${f.flavorLabel} · ${f.role}`;
-  const roleSel=document.getElementById('builder-role');
-  if(roleSel&&f&&[...roleSel.options].some(o=>o.value===f.role))roleSel.value=f.role;
-  renderBuilderFlavorTabs(currentPlanKey);
+
+function renderBuilderFlavors(){
+  const cont=document.getElementById('builder-flavors-container');
+  if(!cont||!builderWorkingContent)return;
+  const editable=builderMeasuresEditable;
+  cont.innerHTML=builderWorkingContent.flavors.map((fl,fi)=>renderBuilderFlavorBlock(fl,fi,editable)).join('');
+  const addBtn=document.getElementById('builder-add-flavor-btn');if(addBtn)addBtn.style.display=editable?'inline-flex':'none';
 }
+function renderBuilderFlavorBlock(fl,fi,editable){
+  const rows=fl.measures.map((m,mi)=>renderBuilderFlavorMeasureRow(fi,mi,m,editable)).join('');
+  return `<div class="measure-payout-unit" style="margin-bottom:14px">
+    <div class="measure-payout-unit-hdr" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px;flex:1">
+        <span class="badge badge-draft" style="background:#EEF2F7;color:#33475B">Flavor ${fl.flavorLabel}</span>
+        <input class="form-input" value="${(fl.role||'').replace(/"/g,'&quot;')}" placeholder="Self-defined role" oninput="onBuilderFlavorRole(${fi},this.value)" ${editable?'':'readonly'} style="max-width:280px" title="Self-defined role for this flavor">
+      </div>
+      ${editable&&builderWorkingContent.flavors.length>1?`<button type="button" class="measure-remove-btn" onclick="removeBuilderFlavor(${fi})"><i class="ti ti-trash" style="font-size:11px"></i> Remove flavor</button>`:''}
+    </div>
+    <table class="payout-tier-table" style="margin-top:8px">
+      <thead><tr><th>Pay measure</th><th>VCT Wt%</th><th>Performance period</th><th>Payout period</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${editable?`<div style="margin-top:8px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})"><i class="ti ti-plus"></i> Add measure</button></div>`:''}
+  </div>`;
+}
+function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
+  const canRemove=editable&&builderWorkingContent.flavors[fi].measures.length>1;
+  const dis=editable?'':'disabled';
+  return `<tr>
+    <td><select class="form-select" ${dis} onchange="onBuilderMeasureType(${fi},${mi},this.value)">${PLAN_MEASURES.map(pm=>`<option value="${pm.id}" ${pm.id===m.measureId?'selected':''}>${pm.name}</option>`).join('')}</select></td>
+    <td><input class="form-input" value="${m.vct||''}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'vct',this.value)" style="width:70px" placeholder="e.g. 50%"></td>
+    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)">${selectOptionsHtml(PERF_PERIOD_OPTIONS,normalizePerfPeriod(m.perf))}</select></td>
+    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)">${selectOptionsHtml(PAY_FREQ_OPTIONS,normalizePayFreq(m.pay))}</select></td>
+    <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
+  </tr>`;
+}
+function onBuilderFlavorRole(fi,v){if(builderWorkingContent.flavors[fi])builderWorkingContent.flavors[fi].role=v;}
+function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
+function onBuilderMeasureType(fi,mi,v){syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors[fi].measures[mi].measureId=v;renderBuilderPayoutTables();}
+function addBuilderMeasureToFlavor(fi){syncBuilderPayoutTablesFromDOM();const used=builderWorkingContent.flavors[fi].measures.map(m=>m.measureId);const next=(PLAN_MEASURES.find(pm=>!used.includes(pm.id))||PLAN_MEASURES[0]).id;builderWorkingContent.flavors[fi].measures.push({measureId:next,vct:'',perf:'Annual',pay:'Quarterly'});renderBuilderFlavors();renderBuilderPayoutTables();}
+function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();renderBuilderPayoutTables();}
 function addBuilderFlavor(){
-  const {planId,fy}=parsePlanKey(currentPlanKey);
-  const existing=getFlavorsForPlan(currentPlanKey);
-  const nextLabel=String.fromCharCode(65+existing.length);
-  const role=prompt(`Self-defined role for new flavor ${nextLabel}:`,'New Role');
-  if(role===null)return;
-  const newFlavorId=`${planId}.${nextLabel}`;
+  if(!builderMeasuresEditable)return;
+  const {planId}=parsePlanKey(currentPlanKey);
+  const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
+  syncBuilderPayoutTablesFromDOM();
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,role:'New Role',measures:[{measureId:PLAN_MEASURES[0].id,vct:'',perf:'Annual',pay:'Quarterly'}]});
+  renderBuilderFlavors();renderBuilderPayoutTables();
+}
+function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;syncBuilderPayoutTablesFromDOM();builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();renderBuilderPayoutTables();}
+
+function distinctBuilderMeasureIds(){const ids=[];builderWorkingContent.flavors.forEach(fl=>fl.measures.forEach(m=>{if(m.measureId&&!ids.includes(m.measureId))ids.push(m.measureId);}));return ids;}
+function renderBuilderPayoutTables(){
+  const cont=document.getElementById('builder-payout-tables-container');
+  if(!cont||!builderWorkingContent)return;
+  const ids=distinctBuilderMeasureIds();
+  sharedPayoutSlots=new Set();builderPayoutSlotMeasure={};
+  if(!ids.length){cont.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary)">Add a pay measure to a flavor to configure its payout table.</p>';return;}
+  const editable=builderMeasuresEditable;
+  cont.innerHTML=ids.map((mid,i)=>{
+    const slot=1000+i;sharedPayoutSlots.add(slot);builderPayoutSlotMeasure[slot]=mid;
+    if(!builderWorkingContent.payoutTables[mid])builderWorkingContent.payoutTables[mid]=defaultPayoutForMeasure(mid);
+    const usedBy=builderWorkingContent.flavors.filter(fl=>fl.measures.some(m=>m.measureId===mid)).map(fl=>'Flavor '+fl.flavorLabel).join(', ');
+    const name=getMeasureById(mid)?.name||mid;
+    return `<div class="measure-payout-unit" style="margin-bottom:14px">
+      <div class="payout-linked-hdr"><span><i class="ti ti-table"></i> ${name} <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· used by ${usedBy}</span></span></div>
+      <div class="payout-table-wrap ${editable?'':'payout-readonly'}" id="builder-p${slot}-table"></div>
+      <div class="payout-table-actions" style="display:${editable?'flex':'none'}"><button type="button" class="btn btn-sm" onclick="addPayoutThreshold(${slot})"><i class="ti ti-plus"></i> Add threshold</button></div>
+    </div>`;
+  }).join('');
+  ids.forEach((mid,i)=>renderPayoutTableEditor(1000+i,builderWorkingContent.payoutTables[mid]));
+}
+function syncBuilderPayoutTablesFromDOM(){
+  if(!builderWorkingContent)return;
+  Object.keys(builderPayoutSlotMeasure).forEach(slot=>{
+    if(document.getElementById(`builder-p${slot}-table`))builderWorkingContent.payoutTables[builderPayoutSlotMeasure[slot]]=collectPayoutTable(parseInt(slot,10));
+  });
+}
+function reconcilePlanFlavors(pk,flavors){
+  const {planId,fy}=parsePlanKey(pk);
   const plan=getPlan(planId,fy);
-  planFlavors.push({flavorId:newFlavorId,planId,flavorLabel:nextLabel,flavorName:role,role,fiscalYear:fy,roleGroup:plan?.roleGroup||'',owner:plan?.owner||'Melissa C.',status:'active'});
-  plans.push({id:newFlavorId,name:role,role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:plan?.owner||'Melissa C.',approval:'none'});
-  selectBuilderFlavor(newFlavorId);
+  const ids=flavors.map(f=>f.flavorId);
+  for(let i=planFlavors.length-1;i>=0;i--){const f=planFlavors[i];if(f.planId===planId&&f.fiscalYear===fy&&!ids.includes(f.flavorId))planFlavors.splice(i,1);}
+  flavors.forEach(cf=>{
+    const f=getPlanFlavor(cf.flavorId,fy);
+    if(f){f.role=cf.role;f.flavorLabel=cf.flavorLabel;}
+    else planFlavors.push({flavorId:cf.flavorId,planId,flavorLabel:cf.flavorLabel,flavorName:cf.role,role:cf.role,fiscalYear:fy,roleGroup:plan?.roleGroup||'',owner:plan?.owner||'Melissa C.',status:'active'});
+    const leg=plans.find(p=>p.id===cf.flavorId&&p.fy===fy);
+    if(leg){leg.role=cf.role;}
+    else plans.push({id:cf.flavorId,name:cf.role,role:cf.role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:plan?.owner||'Melissa C.',approval:'none'});
+  });
+}
+function saveBuilderVersion(){
+  const v=getVersion(currentVersionId);
+  if(!v||!builderWorkingContent){alert('No version open.');return;}
+  if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
+  const pk=planKey(v.flavorId,v.fy);
+  const gv=id=>document.getElementById(id)?.value;
+  builderWorkingContent.planMeta={headcount:gv('builder-headcount'),payMixBase:gv('builder-paymix-base'),payMixVar:gv('builder-paymix-var'),planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),tether:gv('builder-tether')};
+  syncBuilderPayoutTablesFromDOM();
+  const used=new Set();builderWorkingContent.flavors.forEach(fl=>fl.measures.forEach(m=>used.add(m.measureId)));
+  Object.keys(builderWorkingContent.payoutTables).forEach(mid=>{if(!used.has(mid))delete builderWorkingContent.payoutTables[mid];});
+  v.content=JSON.parse(JSON.stringify(builderWorkingContent));
+  v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  reconcilePlanFlavors(pk,v.content.flavors);
+  addAuditEntry(pk,'Version saved',`${v.label} content updated.`,{versionId:v.versionId});
+  syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildProposalTracker();buildLibrary();
+  alert(`Saved ${v.label}.`);
 }
 
 /* ── Plan catalog (used by library & comparison) ── */
@@ -3731,42 +3837,120 @@ const compareQuickPresets=[
   {label:'S08 · FY26 vs FY27',left:'version|ver-S08-FY26-1',right:'version|ver-S08-FY27-1'},
 ];
 
+/* ── Version-scoped content (source of truth for a version's flavors & payout tables) ── */
+function blankVersionContent(pk){
+  const {planId,fy}=parsePlanKey(pk);
+  const plan=getPlan(planId,fy);
+  const defs=getDefaultMeasureConfigs(2);
+  const payoutTables={};
+  defs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=pt;}});
+  return{
+    planMeta:{headcount:'',payMixBase:70,payMixVar:30,planName:plan?.planName||planId,bonus:'N/A',tether:'N/A'},
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',role:(getFlavorsForPlan(pk)[0]?.role)||'New Role',measures:defs.map(c=>({measureId:c.measureId,vct:c.vct,perf:c.perf,pay:c.pay}))}],
+    payoutTables,
+  };
+}
+/* Seed each existing version's content once from the static field maps. */
+function seedVersionContent(){
+  planVersions.forEach(ver=>{
+    if(ver.content)return;
+    const pk=planKey(ver.flavorId,ver.fy);
+    const flavors=getFlavorsForPlan(pk);
+    const payoutTables={};
+    const contentFlavors=flavors.map(f=>{
+      const raw=(ver.fy==='FY26'?fy26Baselines[f.flavorId]:fy27CurrentFields[f.flavorId])||fy27CurrentFields[f.flavorId]||fy26Baselines[f.flavorId]||{};
+      const cfgs=getMeasureConfigsFromFields(buildMeasureFieldsFromIds(raw,planFieldTemplates[f.flavorId]||{}));
+      cfgs.forEach(c=>{if(!payoutTables[c.measureId]){const pt=clonePayoutStructure(c.payoutTable);if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;payoutTables[c.measureId]=pt;}});
+      return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,role:f.role,measures:cfgs.map(c=>({measureId:c.measureId,vct:c.vct,perf:c.perf,pay:c.pay}))};
+    });
+    const rep=flavors[0];
+    const rawRep=rep?((ver.fy==='FY26'?fy26Baselines[rep.flavorId]:fy27CurrentFields[rep.flavorId])||fy27CurrentFields[rep.flavorId]||{}):{};
+    const pm=parsePayMix(payMixMap[rep?.flavorId]||'70 / 30');
+    const plan=getPlan(ver.flavorId,ver.fy);
+    ver.content={
+      planMeta:{headcount:rawRep.headcount,payMixBase:pm.base,payMixVar:pm.var,planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',tether:rawRep.tether||'N/A'},
+      flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
+      payoutTables,
+    };
+  });
+  // Demo differentiation so version-to-version comparison shows real diffs.
+  const v2=getVersion('ver-A01-FY27-2');
+  if(v2&&v2.content?.flavors?.[0]?.measures?.[0]){v2.content.flavors[0].measures[0].vct='55%';v2.content.planMeta.tether='Renewal tether 85%';}
+  const v3=getVersion('ver-A01-FY27-3');
+  if(v3&&v3.content?.flavors?.[0]?.measures?.[0]){v3.content.flavors[0].measures[0].vct='60%';v3.content.planMeta.tether='Renewal tether 90%';}
+}
+/* Build the legacy field-shape (measureNxxx / payoutTableN) that compareFieldMeta/diffField
+   consume, from a version's content for a single flavor. */
+function buildFieldsFromContentFlavor(planId,fy,planMeta,flavor,payoutTables){
+  const fields={
+    planId,
+    headcount:planMeta.headcount,
+    payMixBase:String(planMeta.payMixBase),
+    payMixVar:String(planMeta.payMixVar),
+    payMix:`${planMeta.payMixBase} / ${planMeta.payMixVar}`,
+    planName:planMeta.planName,
+    role:flavor.role,
+    bonus:planMeta.bonus||'N/A',
+    tether:planMeta.tether||'N/A',
+  };
+  let cap='—';
+  (flavor.measures||[]).forEach((m,i)=>{
+    const n=i+1;
+    if(n>MAX_BUILDER_MEASURES)return;
+    const def=getMeasureById(m.measureId);
+    const pt=payoutTables[m.measureId]||defaultPayoutForMeasure(m.measureId);
+    fields[`measure${n}Id`]=m.measureId;
+    fields[`measure${n}Name`]=def?.name||m.measureId;
+    fields[`measure${n}Vct`]=m.vct||'—';
+    fields[`measure${n}PerfPd`]=m.perf||'Annual';
+    fields[`measure${n}PayFreq`]=m.pay||'Quarterly';
+    fields[`payoutTable${n}`]=payoutStructureSummary(pt);
+    fields[`payoutTable${n}Data`]=JSON.stringify(pt);
+    if(n===1&&pt.globalVctCap)cap=pt.globalVctCap;
+  });
+  for(let n=(flavor.measures||[]).length+1;n<=MAX_BUILDER_MEASURES;n++){
+    fields[`measure${n}Id`]='—';fields[`measure${n}Name`]='—';fields[`measure${n}Vct`]='—';
+    fields[`measure${n}PerfPd`]='—';fields[`measure${n}PayFreq`]='—';fields[`payoutTable${n}`]='—';
+  }
+  fields.payoutTable1Cap=cap;
+  return fields;
+}
+
 function buildPlanSnapshots(){
   planSnapshots=[];
-  plans.forEach(p=>{
-    const base=fy26Baselines[p.id]||{};
-    planSnapshots.push(makeSnapshot(p,'FY26','1.0','approved',base,{entityType:'legacy'}));
-  });
+  const statusMap={draft:'draft',in_review:'review',submitted:'review',approved:'approved',rejected:'rejected',rescinded:'rescinded',published:'published',archived:'draft'};
   planVersions.forEach(ver=>{
-    // ver.flavorId is the plan id; use flavor A as the representative for field/payout data.
     const plan=getPlan(ver.flavorId,ver.fy);
-    const repFlavor=getFlavorsForPlan(planKey(ver.flavorId,ver.fy))[0];
-    const repId=repFlavor?repFlavor.flavorId:ver.flavorId;
-    const p=plans.find(x=>x.id===repId&&x.fy===ver.fy)||plans.find(x=>x.id===repId)||{id:repId,name:plan?.planName||ver.flavorId,role:repFlavor?.role||'',fy:ver.fy,status:ver.status,ver:ver.versionNumber+'.0'};
-    const statusMap={draft:'draft',in_review:'review',submitted:'review',approved:'approved',rejected:'rejected',rescinded:'rescinded',published:'published',archived:'draft'};
-    const raw=fy27CurrentFields[repId]||fy26Baselines[repId]||{};
-    const snap=makeSnapshot(p,ver.fy,String(ver.versionNumber),statusMap[ver.status]||'draft',raw,{
-      entityType:ver.status==='published'||ver.status==='rescinded'?'revision':'proposal',
-      revisionId:ver.status==='published'||ver.status==='rescinded'?ver.versionId:null,
-      proposalId:ver.versionId,
-      proposalName:ver.label,
-      draftLabel:ver.description,
-      isCurrentPlan:ver.isActivePublished&&ver.status==='published',
-      revisionNumber:ver.versionNumber,
-      sourceProposalId:ver.sourceVersionId,
+    const planId=ver.flavorId;
+    const content=ver.content||blankVersionContent(planKey(planId,ver.fy));
+    (content.flavors||[]).forEach(flavor=>{
+      const p={id:planId,name:plan?.planName||planId,role:flavor.role,fy:ver.fy,status:ver.status,ver:ver.versionNumber+'.0'};
+      const fields=buildFieldsFromContentFlavor(planId,ver.fy,content.planMeta||{},flavor,content.payoutTables||{});
+      const snap=makeSnapshot(p,ver.fy,String(ver.versionNumber),statusMap[ver.status]||'draft',{},{
+        key:`version|${ver.versionId}|${flavor.flavorId}`,
+        fields,
+        entityType:ver.status==='published'||ver.status==='rescinded'?'revision':'proposal',
+        revisionId:ver.status==='published'||ver.status==='rescinded'?ver.versionId:null,
+        proposalId:ver.versionId,
+        proposalName:ver.label,
+        isCurrentPlan:ver.isActivePublished&&ver.status==='published',
+        revisionNumber:ver.versionNumber,
+        sourceProposalId:ver.sourceVersionId,
+        flavorId:flavor.flavorId,
+        flavorLabel:flavor.flavorLabel,
+      });
+      snap.label=`${plan?.planName||planId} · ${ver.fy} — ${ver.label} · Flavor ${flavor.flavorLabel} · ${VERSION_STATUS_LABELS[ver.status]}`;
+      snap.statusLabel=ver.isActivePublished?'Published Version':VERSION_STATUS_LABELS[ver.status];
+      snap.name=`${ver.label} · Flavor ${flavor.flavorLabel}`+(ver.description?' · '+ver.description:'');
+      planSnapshots.push(snap);
     });
-    snap.key=`version|${ver.versionId}`;
-    snap.label=`${plan?.planName||ver.flavorId} · ${ver.fy} — ${ver.label} · ${VERSION_STATUS_LABELS[ver.status]}`;
-    snap.statusLabel=ver.isActivePublished?'Published Version':VERSION_STATUS_LABELS[ver.status];
-    snap.name=ver.label+(ver.description?' · '+ver.description:'');
-    planSnapshots.push(snap);
   });
 }
 
 function makeSnapshot(p,fy,ver,status,raw,meta={}){
   const statusLabel={draft:'Draft',review:'In review',approved:'Approved',rejected:'Rejected',published:'Published',rescinded:'Rescinded'}[status]||status;
-  const key=meta.revisionId?`revision|${meta.revisionId}`:meta.proposalId?`proposal|${meta.proposalId}`:`${p.id}|${fy}|${ver}|${status}`;
-  const built=buildPlanFieldData(p,fy,raw||{});
+  const key=meta.key||(meta.revisionId?`revision|${meta.revisionId}`:meta.proposalId?`proposal|${meta.proposalId}`:`${p.id}|${fy}|${ver}|${status}`);
+  const built=meta.fields||buildPlanFieldData(p,fy,raw||{});
   const data={
     ...built,
     designerNote:getSnapshotNote(key,p,fy),
@@ -3780,7 +3964,7 @@ function makeSnapshot(p,fy,ver,status,raw,meta={}){
     status,
     statusLabel,
     label:`${p.id} — ${p.name} · ${fy} · v${ver} · ${statusLabel}`,
-    searchText:`${p.id} ${p.name} ${p.role} ${fy} v${ver} ${statusLabel}`.toLowerCase(),
+    searchText:`${p.id} ${p.name} ${p.role} ${fy} v${ver} ${statusLabel} ${meta.flavorLabel||''}`.toLowerCase(),
     fields:data,
     entityType:meta.entityType||'legacy',
     revisionId:meta.revisionId||null,
@@ -3788,6 +3972,8 @@ function makeSnapshot(p,fy,ver,status,raw,meta={}){
     isCurrentPlan:!!meta.isCurrentPlan,
     revisionNumber:meta.revisionNumber||null,
     proposalName:meta.proposalName||null,
+    flavorId:meta.flavorId||null,
+    flavorLabel:meta.flavorLabel||null,
   };
 }
 
@@ -3865,14 +4051,16 @@ function getBuilderMeasureVct(slot){
   return document.getElementById(`builder-m${slot}-vct`)?.value||'0%';
 }
 
+let sharedPayoutSlots=new Set(); // payout slots that hide the per-flavor Calc VCT% column
 function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable){
-  const vct=calcTierVctPct(getBuilderMeasureVct(slot),tier.xPCR,tier.vctCap);
+  const hideCalc=sharedPayoutSlots.has(slot);
+  const vct=hideCalc?'':calcTierVctPct(getBuilderMeasureVct(slot),tier.xPCR,tier.vctCap);
   const ro=editable?'':'readonly';
   return`<tr data-tier="${tierIdx}">
     <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentFrom??0}" data-field="from" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:52px"></td>
     <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="+" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:52px"></td>
     <td><input class="form-input" value="${formatXpcrValue(tier.xPCR)}" data-field="xpcr" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:64px"></td>
-    <td class="vct-calc-cell" data-calc-vct>${formatPctValue(vct)}</td>
+    ${hideCalc?'':`<td class="vct-calc-cell" data-calc-vct>${formatPctValue(vct)}</td>`}
     <td><input class="form-input" value="${tier.mcr??''}" placeholder="—" data-field="mcr" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:56px"></td>
     <td><input class="form-input" value="${tier.vctCap??''}" placeholder="—" data-field="vctCap" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} style="width:56px" title="Optional cap on calculated VCT %"></td>
     ${editable?`<td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removePayoutTier(${slot},${thIdx},${tierIdx})" title="Remove tier"><i class="ti ti-x"></i></button></td>`:'<td></td>'}
@@ -3880,9 +4068,10 @@ function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable){
 }
 
 function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
+  const hideCalc=sharedPayoutSlots.has(slot);
   const tierRows=threshold.tiers.map((t,i)=>renderPayoutTierRow(slot,thIdx,i,t,editable)).join('');
   const mcrRow=`<tr class="payout-mcr-row">
-    <td colspan="4" style="font-weight:600;font-size:11px">Threshold MCR (optional)</td>
+    <td colspan="${hideCalc?3:4}" style="font-weight:600;font-size:11px">Threshold MCR (optional)</td>
     <td><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 100%" data-th-mcr oninput="onPayoutTierInput(${slot},${thIdx})" ${editable?'':'readonly'} style="width:72px"></td>
     <td colspan="2"></td>
   </tr>`;
@@ -3894,7 +4083,7 @@ function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
     </div>
     <table class="payout-tier-table">
       <thead><tr>
-        <th>From %</th><th>To %</th><th>xPCR</th><th>Calc VCT %</th><th>Tier MCR</th><th>VCT cap</th><th></th>
+        <th>From %</th><th>To %</th><th>xPCR</th>${hideCalc?'':'<th>Calc VCT %</th>'}<th>Tier MCR</th><th>VCT cap</th><th></th>
       </thead>
       <tbody>${tierRows}${mcrRow}</tbody>
     </table>
@@ -4850,6 +5039,7 @@ function buildCharts(){
 syncFlavorsFromLegacy();
 seedMetricCatalog();
 syncPlanMeasuresFromCatalog();
+seedVersionContent();
 buildPlanSnapshots();
 initBuilderDropdowns();
 renderBuilderMeasures(getDefaultMeasureConfigs(2));
