@@ -3,7 +3,22 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — decouple measures from payout tables (uncommitted)
+## Latest change — bonus becomes a list of up to 5 (uncommitted)
+Bonus is no longer a single `planMeta.bonus`/`bonusDescription` pair. Now `planMeta.bonuses` is a
+**version-level array of up to 5** (`MAX_BUILDER_BONUSES`), each `{type, payoutDetails, maxPayout}`:
+- Bonus Type dropdown = Lead Referral Bonus / Linearity Bonus / M1 & M2 Achievement Bonus (+ a
+  "Select bonus type…" placeholder); Payout Details + Maximum payout are free text.
+- **No bonus by default** (empty list) for new AND seeded plans (old free-text bonus strings dropped).
+- Builder: "Bonus" section is now `#builder-bonus-container` rendered by `renderBuilderBonuses`, with
+  Add bonus / Remove per row (`addBuilderBonus`/`removeBuilderBonus`/`setBuilderBonusField`); fields
+  bind directly to the model (no DOM-sync). Save/submit preserve `planMeta.bonuses`.
+- Compare: bonuses shown as positional `Bonus N` sections (Type / Payout details / Maximum payout);
+  `buildCompareFieldMeta(payoutCount,bonusCount)`; new field keys `bonusNType/Details/Max` +
+  `bonusCount`; the old single "Bonus" row is gone, `tether` moved to its own "Tether" section.
+- Verified on webui2 (no console errors): empty default, add/cap-at-5, save/reopen persistence, seed
+  shape, Compare (incl. unequal counts), read-only view. `CLAUDE.md` updated. **Not yet committed.**
+
+## Earlier change — decouple measures from payout tables (committed b0666fd)
 Performance measures and payout tables are now **independent — no mapping**:
 - Measures lost `measureId` and the "Measure Type Value" dropdown; the free-text
   "Performance Measure(s)" (`description`) is a measure's only name.

@@ -937,8 +937,7 @@ tr:hover td{background:var(--pa-surface-hover)}
 
             <div class="plan-section-hdr">Bonus</div>
             <div class="plan-section-body">
-              <div class="plan-kv-row"><span class="k">Bonus type</span><select class="form-select" id="builder-bonus"></select></div>
-              <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Bonus description</span><textarea class="form-textarea" id="builder-bonus-desc" placeholder="Describe the bonus" style="width:100%;min-height:60px;resize:vertical"></textarea></div>
+              <div id="builder-bonus-container"></div>
             </div>
 
             <div class="plan-section-hdr">Tether</div>
@@ -2191,7 +2190,7 @@ function runPlanFlavorCompare(){
   const rightSnap=getSnapshot(rightKey)||getSnapshot(rightKey.replace('version|','proposal|'));
   if(!leftSnap||!rightSnap){container.innerHTML='';return;}
   const diffs=[];const changes=[];
-  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0));
+  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0),Math.max(Number(leftSnap.fields?.bonusCount)||0,Number(rightSnap.fields?.bonusCount)||0));
   compareFieldMeta.forEach(meta=>{
     const d=diffField(leftSnap.fields[meta.key],rightSnap.fields[meta.key]);
     diffs.push({...meta,left:d.left,right:d.right,type:d.type});
@@ -2335,7 +2334,7 @@ function submitCurrentVersion(){
   const v=getVersion(currentVersionId);
   if(v&&builderWorkingContent&&isVersionEditable(v)){
     const gv=id=>document.getElementById(id)?.value;
-    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:builderWorkingContent.planMeta.bonuses||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
     syncBuilderPayoutTablesFromDOM();
     v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   }
@@ -2791,9 +2790,6 @@ function populateBuilderFromVersion(v){
   const plan=getPlan(planId,v.fy);
   const setVal=(id,val)=>{const el=document.getElementById(id);if(el&&val!=null)el.value=val;};
   setVal('builder-plan-name',pm.planName);
-  const bonusSel=document.getElementById('builder-bonus');
-  if(bonusSel)bonusSel.innerHTML=selectOptionsHtml(BONUS_TYPE_OPTIONS,normalizeBonusType(pm.bonus||'None'));
-  setVal('builder-bonus-desc',pm.bonusDescription);
   setVal('builder-tether',pm.tether);
   setVal('builder-key-policies',pm.keyPolicies);
   document.getElementById('builder-plan-id').value=planId;
@@ -2805,6 +2801,7 @@ function populateBuilderFromVersion(v){
   const hint=document.getElementById('builder-version-hint');if(hint)hint.textContent=builderMeasuresEditable?'':'— locked (create a revision to edit)';
   renderBuilderFlavors();
   renderBuilderPayoutTables();
+  renderBuilderBonuses();
   loadBuilderPlanNote(v.flavorId);
 }
 
@@ -2980,6 +2977,41 @@ function removeBuilderPayoutTable(idx){
   renderBuilderPayoutTables();
 }
 function setBuilderPayoutTitle(idx,val){const pt=builderWorkingContent.payoutTables[idx];if(pt)pt.title=val;}
+const MAX_BUILDER_BONUSES=5;
+function renderBuilderBonuses(){
+  const cont=document.getElementById('builder-bonus-container');
+  if(!cont||!builderWorkingContent)return;
+  const pm=builderWorkingContent.planMeta||(builderWorkingContent.planMeta={});
+  if(!Array.isArray(pm.bonuses))pm.bonuses=[];
+  const editable=builderMeasuresEditable;
+  const addBtn=editable&&pm.bonuses.length<MAX_BUILDER_BONUSES?`<div class="measure-actions"><button class="btn btn-sm" type="button" onclick="addBuilderBonus()"><i class="ti ti-plus"></i> Add bonus</button></div>`:'';
+  if(!pm.bonuses.length){cont.innerHTML=`<p style="font-size:11px;color:var(--pa-text-secondary)">No bonus.</p>${addBtn}`;return;}
+  cont.innerHTML=pm.bonuses.map((b,i)=>{
+    const typeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="setBuilderBonusField(${i},'type',this.value)"><option value="" ${!b.type?'selected':''}>Select bonus type…</option>${BONUS_TYPE_OPTIONS.map(o=>`<option value="${escHtml(o)}" ${o===b.type?'selected':''}>${escHtml(o)}</option>`).join('')}</select>`;
+    return `<div class="measure-payout-unit" style="margin-bottom:12px">
+      <div class="payout-linked-hdr" style="justify-content:space-between;gap:8px"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-gift"></i> Bonus ${i+1}</span>${editable?`<button type="button" class="measure-remove-btn" onclick="removeBuilderBonus(${i})"><i class="ti ti-trash" style="font-size:11px"></i> Remove</button>`:''}</div>
+      <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
+        <div class="plan-kv-row"><span class="k">Bonus type</span>${typeSel}</div>
+        <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Payout details</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="setBuilderBonusField(${i},'payoutDetails',this.value)" placeholder="Payout details (free text)" style="width:100%;min-height:48px;resize:vertical">${(b.payoutDetails||'').replace(/</g,'&lt;')}</textarea></div>
+        <div class="plan-kv-row"><span class="k">Maximum payout</span><input class="form-input" value="${(b.maxPayout||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderBonusField(${i},'maxPayout',this.value)" placeholder="e.g. 200% of OTC"></div>
+      </div>
+    </div>`;
+  }).join('')+addBtn;
+}
+function addBuilderBonus(){
+  if(!builderMeasuresEditable)return;
+  const pm=builderWorkingContent.planMeta||(builderWorkingContent.planMeta={});
+  if(!Array.isArray(pm.bonuses))pm.bonuses=[];
+  if(pm.bonuses.length>=MAX_BUILDER_BONUSES){alert(`Maximum ${MAX_BUILDER_BONUSES} bonuses.`);return;}
+  pm.bonuses.push({type:'',payoutDetails:'',maxPayout:''});
+  renderBuilderBonuses();
+}
+function removeBuilderBonus(i){
+  if(!builderMeasuresEditable)return;
+  builderWorkingContent.planMeta.bonuses.splice(i,1);
+  renderBuilderBonuses();
+}
+function setBuilderBonusField(i,field,val){const b=builderWorkingContent.planMeta.bonuses?.[i];if(b)b[field]=val;}
 function syncBuilderPayoutTablesFromDOM(){
   if(!builderWorkingContent||!Array.isArray(builderWorkingContent.payoutTables))return;
   Object.keys(builderPayoutSlotIndex).forEach(slot=>{
@@ -3023,7 +3055,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonus:gv('builder-bonus'),bonusDescription:gv('builder-bonus-desc'),tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
+  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.bonuses)||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
   syncBuilderPayoutTablesFromDOM();
   v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -3061,14 +3093,14 @@ const COMPARE_BASE_META=[
   {key:'newHireGuarantee',label:'New hire guarantee',section:'Summary'},
   {key:'planName',label:'Plan Name',section:'Plan information'},
   {key:'role',label:'Role',section:'Plan information'},
-  {key:'bonus',label:'Bonus',section:'Bonus & tether'},
-  {key:'tether',label:'Tether',section:'Bonus & tether'},
+  {key:'tether',label:'Tether',section:'Tether'},
 ];
 
-function buildCompareFieldMeta(payoutCount){
+function buildCompareFieldMeta(payoutCount,bonusCount){
   const n=Math.max(0,payoutCount==null?0:payoutCount|0);
+  const bn=Math.max(0,bonusCount==null?0:bonusCount|0);
   const meta=[...COMPARE_BASE_META];
-  const insertAt=meta.findIndex(m=>m.key==='bonus');
+  const insertAt=meta.findIndex(m=>m.key==='tether');
   const extra=[];
   for(let i=1;i<=MAX_BUILDER_MEASURES;i++){
     extra.push(
@@ -3085,11 +3117,18 @@ function buildCompareFieldMeta(payoutCount){
       {key:`payoutTable${i}Cap`,label:'Cap note',section:`Payout table ${i}`},
     );
   }
+  for(let i=1;i<=bn;i++){
+    extra.push(
+      {key:`bonus${i}Type`,label:'Type',section:`Bonus ${i}`},
+      {key:`bonus${i}Details`,label:'Payout details',section:`Bonus ${i}`},
+      {key:`bonus${i}Max`,label:'Maximum payout',section:`Bonus ${i}`},
+    );
+  }
   meta.splice(insertAt,0,...extra);
   return meta;
 }
 
-let compareFieldMeta=buildCompareFieldMeta(0);
+let compareFieldMeta=buildCompareFieldMeta(0,0);
 
 const planFieldTemplates={
   'H01.A':{
@@ -3123,7 +3162,7 @@ const ROLE_OPTIONS=[
 
 const PERF_PERIOD_OPTIONS=['Monthly','Quarterly','Annual'];
 const PAY_FREQ_OPTIONS=['Monthly','Quarterly','Annual','Quarterly_YTD'];
-const BONUS_TYPE_OPTIONS=['None','Lead Referral Bonus','Linearity Bonus','M1/M2 Achievement Bonus'];
+const BONUS_TYPE_OPTIONS=['Lead Referral Bonus','Linearity Bonus','M1 & M2 Achievement Bonus'];
 
 const PRODUCT_SCOPE_OPTIONS=[
   {value:'ASSIGNED_DX',label:'Assigned DX products'},
@@ -3984,7 +4023,7 @@ function blankVersionContent(pk){
   const plan=getPlan(planId,fy);
   const f0=getFlavorsForPlan(pk)[0];
   return{
-    planMeta:{planName:plan?.planName||planId,bonus:'N/A',bonusDescription:'',tether:'',keyPolicies:''},
+    planMeta:{planName:plan?.planName||planId,bonuses:[],tether:'',keyPolicies:''},
     flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:''}]}],
     payoutTables:[],
   };
@@ -4017,7 +4056,7 @@ function seedVersionContent(){
     const rawRep=rep?((ver.fy==='FY26'?fy26Baselines[rep.flavorId]:fy27CurrentFields[rep.flavorId])||fy27CurrentFields[rep.flavorId]||{}):{};
     const plan=getPlan(ver.flavorId,ver.fy);
     ver.content={
-      planMeta:{planName:plan?.planName||ver.flavorId,bonus:rawRep.bonus||'N/A',bonusDescription:'',tether:rawRep.tether||'N/A',keyPolicies:''},
+      planMeta:{planName:plan?.planName||ver.flavorId,bonuses:[],tether:rawRep.tether||'N/A',keyPolicies:''},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
       payoutTables,
     };
@@ -4042,7 +4081,6 @@ function buildFieldsFromContentFlavor(planId,fy,planMeta,flavor,payoutTables){
     planName:planMeta.planName,
     role:flavor.role,
     newHireGuarantee:flavor.newHireGuarantee||'—',
-    bonus:planMeta.bonus||'N/A',
     tether:planMeta.tether||'N/A',
   };
   // Measures — positional; name is now the free-text description.
@@ -4068,6 +4106,15 @@ function buildFieldsFromContentFlavor(planId,fy,planMeta,flavor,payoutTables){
     fields[`payoutTable${n}Cap`]=hasVal(pt.globalVctCap)?pt.globalVctCap:'—';
   });
   fields.payoutTableCount=pts.length;
+  // Bonuses — version-level list, positional.
+  const bonuses=Array.isArray(planMeta.bonuses)?planMeta.bonuses:[];
+  bonuses.forEach((b,i)=>{
+    const n=i+1;
+    fields[`bonus${n}Type`]=hasVal(b.type)?b.type:'—';
+    fields[`bonus${n}Details`]=hasVal(b.payoutDetails)?b.payoutDetails:'—';
+    fields[`bonus${n}Max`]=hasVal(b.maxPayout)?b.maxPayout:'—';
+  });
+  fields.bonusCount=bonuses.length;
   return fields;
 }
 
@@ -4971,7 +5018,7 @@ function runComparison(){
 
   const diffs=[];
   const changes=[];
-  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0));
+  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0),Math.max(Number(leftSnap.fields?.bonusCount)||0,Number(rightSnap.fields?.bonusCount)||0));
   compareFieldMeta.forEach(meta=>{
     const leftVal=leftSnap.fields[meta.key];
     const rightVal=rightSnap.fields[meta.key];

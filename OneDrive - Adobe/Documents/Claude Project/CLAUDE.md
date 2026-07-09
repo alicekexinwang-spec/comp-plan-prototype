@@ -85,7 +85,7 @@ include only the minimum user-facing information needed to understand and use th
   PLAN id** (historical naming). Each: `versionId` (`ver-A01-FY27-2`), `status`, `approvalStage`,
   timestamps, `isActivePublished`, and `content`.
 - `version.content` (the real per-version store the builder reads/writes) =
-  `{ planMeta{planName,bonus,bonusDescription,tether,keyPolicies},
+  `{ planMeta{planName,bonuses[{type,payoutDetails,maxPayout}],tether,keyPolicies},
   flavors[{flavorId,flavorLabel,role,flavorName,headcount,payMixBase,payMixVar,newHireGuarantee,
   measures[{description,vct,perf,pay}]}],
   payoutTables[{id,title,type,bandSetId,thresholds[{label,description,tierSetId,mcr,
@@ -94,6 +94,10 @@ include only the minimum user-facing information needed to understand and use th
   `measureId`; the free-text "Performance Measure(s)" (`description`) is the measure's only name.
   `payoutTables` is a **version-level array** (shared across the version's flavors) added manually via
   an **"Add payout table"** button; each has its own `id` (`payoutUid()`) + free-text `title`.
+  `planMeta.bonuses` is a **version-level list of up to 5** (`MAX_BUILDER_BONUSES`), each
+  `{type,payoutDetails,maxPayout}` — **no bonus by default** (empty); Bonus Type is a dropdown
+  (`BONUS_TYPE_OPTIONS`: Lead Referral / Linearity / M1 & M2 Achievement), the other two are free text
+  (handlers `addBuilderBonus`/`removeBuilderBonus`/`setBuilderBonusField`, render `renderBuilderBonuses`).
   **HC / Paymix / new-hire-guarantee are per-flavor** (not planMeta). HC/Paymix are optional; plan
   name + per-flavor role are required.
 - Keys: `planKey(planId,fy)` = `"planId|fy"`; `parsePlanKey` splits it.
@@ -137,8 +141,9 @@ include only the minimum user-facing information needed to understand and use th
   as separate sections** — payout tables listed positionally (`Payout table N`) each with its title +
   a **merged table** (`renderComparePayoutTable`). Snapshots (`buildPlanSnapshots`) are derived per
   (version, flavor) and emit positional field keys (measures: `measureNName`(=description)/`measureNVct`/…;
-  payout: `payoutTableNTitle`/`payoutTableN`/`payoutTableNData`/`payoutTableNCap` + `payoutTableCount`).
-  `buildCompareFieldMeta(payoutCount)` is rebuilt per comparison from `max(both counts)`.
+  payout: `payoutTableNTitle`/`payoutTableN`/`payoutTableNData`/`payoutTableNCap` + `payoutTableCount`;
+  bonuses: positional `Bonus N` sections `bonusNType`/`bonusNDetails`/`bonusNMax` + `bonusCount`).
+  `buildCompareFieldMeta(payoutCount,bonusCount)` is rebuilt per comparison from `max(both counts)`.
 - Legacy `plans[]` array + `syncLegacyFromVersions` shims still back parts of some screens; keep
   them in sync on writes (`reconcilePlanFlavors`, publish/clone paths do this).
 - There is `renderBuilderMeasureBlock`/`renderBuilderMeasures` legacy dead code (pre-`version.content`);
