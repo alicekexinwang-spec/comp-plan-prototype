@@ -174,8 +174,8 @@ tr:hover td{background:var(--pa-surface-hover)}
 .pa-toggle input{accent-color:var(--pa-theme-primary);width:14px;height:14px}
 .pa-datatable{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
 .pa-datatable thead th{position:sticky;top:0;z-index:2;background:var(--pa-canvas);color:var(--pa-text);font-weight:600;font-size:11px;padding:9px 12px;border:1px solid var(--pa-border);text-align:left}
-.pa-datatable thead th.col-field{width:22%}
-.pa-datatable thead th.col-baseline,.pa-datatable thead th.col-compare{width:32%}
+.pa-datatable thead th.col-field{width:24%}
+.pa-datatable thead th.col-baseline,.pa-datatable thead th.col-compare{width:38%}
 .pa-datatable thead th.col-status{width:14%;text-align:center}
 .pa-datatable tbody td{padding:8px 12px;border:1px solid var(--pa-border);vertical-align:top;line-height:1.4;word-break:break-word}
 .pa-datatable tbody tr:hover td{background:var(--pa-surface-hover)}
@@ -287,6 +287,10 @@ tr:hover td{background:var(--pa-surface-hover)}
 .payout-threshold-block:first-of-type{margin-top:12px}
 .payout-threshold-hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--pa-theme-light);border-bottom:1px solid var(--pa-border)}
 .payout-threshold-hdr input{flex:1;font-weight:600;font-size:12px}
+.compare-payout-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:2px}
+.compare-payout-table th{background:var(--pa-canvas);border:1px solid var(--pa-border);padding:4px 6px;text-align:left;font-weight:600}
+.compare-payout-table td{border:1px solid var(--pa-border);padding:3px 6px}
+.compare-payout-table td.diff{background:var(--pa-warning-bg);font-weight:600}
 .payout-tier-table{width:100%;border-collapse:collapse;font-size:11px}
 .payout-tier-table th{padding:6px 8px;background:var(--pa-canvas);border:1px solid var(--pa-border);font-weight:600;text-align:left;white-space:nowrap}
 .payout-tier-table td{padding:4px 6px;border:1px solid var(--pa-border);vertical-align:middle}
@@ -442,15 +446,11 @@ tr:hover td{background:var(--pa-surface-hover)}
 .compare-vs{font-size:13px;color:var(--muted);padding-bottom:8px;font-weight:500}
 
 .compare-setup-card{margin-bottom:14px;padding:16px}
-.compare-steps{display:flex;align-items:center;gap:0;margin-bottom:16px}
-.compare-step{display:flex;align-items:center;gap:8px;flex:1;font-size:11px;color:var(--pa-text-muted)}
-.compare-step-num{width:22px;height:22px;border-radius:50%;border:1px solid var(--pa-border-strong);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;background:var(--pa-surface)}
-.compare-step.active{color:var(--pa-text);font-weight:600}
-.compare-step.active .compare-step-num{border-color:var(--pa-theme-primary);background:var(--pa-theme-light);color:var(--pa-theme-primary)}
-.compare-step.done{color:var(--pa-success)}
-.compare-step.done .compare-step-num{border-color:var(--pa-success);background:var(--pa-success-bg);color:var(--pa-success)}
-.compare-step-line{flex:0 0 24px;height:1px;background:var(--pa-border);margin:0 4px}
-.compare-slots{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start}
+.compare-slots{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.compare-notes-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.compare-notes-card{border:1px solid var(--pa-border);border-radius:var(--pa-radius);padding:12px;background:var(--pa-surface)}
+.compare-notes-label{font-size:11px;font-weight:600;color:var(--pa-text-secondary);margin-bottom:6px}
+.compare-notes-card textarea{width:100%;min-height:72px;font-size:12px}
 .compare-slot{border:1px solid var(--pa-border);border-radius:var(--pa-radius);padding:12px;background:var(--pa-surface);min-height:110px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--pa-shadow)}
 .compare-slot.filled{border-color:var(--pa-theme-primary);background:var(--pa-surface)}
 .compare-slot-label{font-size:11px;font-weight:600;color:var(--pa-text-secondary)}
@@ -467,12 +467,6 @@ tr:hover td{background:var(--pa-surface-hover)}
 .compare-slot-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
 .compare-slot-clear{font-size:10px;color:var(--muted);cursor:pointer;margin-left:auto;padding:2px 0}
 .compare-slot-clear:hover{color:var(--adobe-red)}
-.compare-swap-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding-top:28px}
-.compare-swap-center .btn{padding:8px 10px}
-.compare-quick-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;padding-top:14px;border-top:var(--border);align-items:center}
-.compare-quick-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-right:4px}
-.compare-quick-chip{padding:4px 10px;border-radius:2px;border:1px solid var(--pa-border);background:var(--pa-surface);font-size:11px;cursor:pointer;transition:all .1s;color:var(--pa-text)}
-.compare-quick-chip:hover{border-color:var(--pa-theme-primary);background:var(--pa-theme-light);color:var(--pa-theme-primary)}
 .compare-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 .compare-metric{background:var(--pa-surface);border:1px solid var(--pa-border);border-radius:var(--pa-radius);padding:10px 12px;text-align:center;box-shadow:var(--pa-shadow)}
 .compare-metric-val{font-size:20px;font-weight:600;line-height:1.2;color:var(--pa-text)}
@@ -489,16 +483,7 @@ tr:hover td{background:var(--pa-surface-hover)}
 .comp-row.has-change .comp-cell.changed-mod{background:#FAEEDA}
 .comp-row.has-change .comp-cell.changed-add{background:#EAF3DE}
 .comp-row.has-change .comp-cell.changed-rem{background:#FCEBEB}
-.compare-notes-row{margin-top:14px;margin-bottom:0;display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .compare-slot-meta .plan-fy-chip{font-size:10px;padding:2px 8px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-weight:600;border:var(--border)}
-.compare-notes-card{border:1px solid var(--pa-border);border-radius:var(--pa-radius);padding:14px;background:var(--pa-surface);box-shadow:var(--pa-shadow)}
-.compare-notes-card.differs{border-left:3px solid var(--pa-theme-primary);background:var(--pa-theme-light)}
-.compare-notes-label{font-size:11px;font-weight:600;color:var(--pa-text-secondary);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.compare-notes-label.baseline{color:var(--pa-text-secondary)}
-.compare-notes-label.comparison{color:var(--pa-theme-primary)}
-.compare-notes-card textarea{min-height:88px;font-size:12px}
-.compare-notes-saved{font-size:10px;color:#3B6D11;opacity:0;transition:opacity .3s}
-.compare-notes-saved.show{opacity:1}
 .compare-results{display:none}
 .compare-results.visible{display:block}
 .compare-identical{padding:20px;text-align:center;background:var(--pa-success-bg);border-radius:var(--pa-radius);border:1px solid #B7EB8F;margin-bottom:14px}
@@ -977,13 +962,12 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="page-header">
           <div>
             <div class="page-title">Compare Plans</div>
-            <div class="page-subtitle" id="compare-subtitle">Pick two plans side by side — any status, any fiscal year</div>
+            <div class="page-subtitle" id="compare-subtitle">Pick any two plan flavors to compare — any plan, version, or fiscal year</div>
           </div>
           <div class="btn-group">
             <button class="btn btn-sm" id="compare-clear-btn" onclick="clearCompareSelection()" style="display:none"><i class="ti ti-refresh"></i> Start over</button>
             <button class="btn btn-sm" id="compare-export-btn" style="display:none"><i class="ti ti-download"></i> Export diff</button>
             <button class="btn btn-sm" id="compare-back-btn" style="display:none" onclick="compareGoBack()"><i class="ti ti-arrow-left"></i> Back</button>
-            <button class="btn btn-primary btn-sm" id="compare-action-btn" onclick="showScreen('approval')"><i class="ti ti-send"></i> Submit for approval</button>
           </div>
         </div>
         <div class="compare-context-bar" id="compare-context-bar" style="display:none">
@@ -993,43 +977,29 @@ tr:hover td{background:var(--pa-surface-hover)}
         </div>
 
         <div class="card compare-setup-card">
-          <div class="compare-steps" id="compare-steps">
-            <div class="compare-step active" id="compare-step-1"><span class="compare-step-num">1</span> Choose baseline</div>
-            <div class="compare-step-line"></div>
-            <div class="compare-step" id="compare-step-2"><span class="compare-step-num">2</span> Choose version</div>
-            <div class="compare-step-line"></div>
-            <div class="compare-step" id="compare-step-3"><span class="compare-step-num">3</span> Review differences</div>
-          </div>
           <div class="compare-slots">
             <div class="compare-slot" id="compare-slot-left">
               <div style="display:flex;align-items:center;justify-content:space-between">
-                <div class="compare-slot-label baseline"><i class="ti ti-arrow-left" style="font-size:10px"></i> Baseline version</div>
+                <div class="compare-slot-label baseline"><i class="ti ti-file" style="font-size:10px"></i> Plan 1</div>
                 <span class="compare-slot-clear" id="compare-clear-left" style="display:none" onclick="clearCompareSide('left')"><i class="ti ti-x" style="font-size:10px"></i> Clear</span>
               </div>
               <select class="form-select" id="compare-left-select" onchange="selectComparePlanFromSelect('left',this.value)">
-                <option value="">Select baseline plan…</option>
+                <option value="">Select a plan flavor…</option>
               </select>
-              <div class="compare-slot-empty" id="compare-empty-left"><i class="ti ti-file"></i><span>Choose the reference plan</span></div>
+              <div class="compare-slot-empty" id="compare-empty-left"><i class="ti ti-file"></i><span>Choose a plan flavor</span></div>
               <div class="compare-slot-summary" id="compare-summary-left"></div>
-            </div>
-            <div class="compare-swap-center">
-              <button class="btn btn-sm" onclick="swapComparePlans()" title="Swap plans"><i class="ti ti-arrows-exchange"></i></button>
-              <span style="font-size:10px;color:var(--muted)">Swap</span>
             </div>
             <div class="compare-slot" id="compare-slot-right">
               <div style="display:flex;align-items:center;justify-content:space-between">
-                <div class="compare-slot-label comparison"><i class="ti ti-arrow-right" style="font-size:10px"></i> Compare version</div>
+                <div class="compare-slot-label comparison"><i class="ti ti-file" style="font-size:10px"></i> Plan 2</div>
                 <span class="compare-slot-clear" id="compare-clear-right" style="display:none" onclick="clearCompareSide('right')"><i class="ti ti-x" style="font-size:10px"></i> Clear</span>
               </div>
               <select class="form-select" id="compare-right-select" onchange="selectComparePlanFromSelect('right',this.value)">
-                <option value="">Select comparison plan…</option>
+                <option value="">Select a plan flavor…</option>
               </select>
-              <div class="compare-slot-empty" id="compare-empty-right"><i class="ti ti-file-diff"></i><span>Choose the plan to compare against baseline</span></div>
+              <div class="compare-slot-empty" id="compare-empty-right"><i class="ti ti-file"></i><span>Choose a plan flavor</span></div>
               <div class="compare-slot-summary" id="compare-summary-right"></div>
             </div>
-          </div>
-          <div class="compare-quick-row" id="compare-quick-row">
-            <span class="compare-quick-label">Quick compare:</span>
           </div>
         </div>
 
@@ -1044,18 +1014,14 @@ tr:hover td{background:var(--pa-surface-hover)}
               <div class="pa-compare-shell" id="compare-grid-shell">
                 <div class="pa-compare-toolbar">
                   <div class="pa-compare-toolbar-title"><i class="ti ti-table" style="margin-right:6px;color:var(--pa-theme-primary)"></i>Field comparison</div>
-                  <div class="pa-compare-toolbar-actions">
-                    <label class="pa-toggle"><input type="checkbox" id="compare-diffs-only" checked onchange="toggleCompareDiffsOnly(this.checked)"> Show differences only</label>
-                  </div>
                 </div>
                 <div class="pa-datatable-scroll">
                   <table class="pa-datatable" id="compare-grid-table">
                     <thead>
                       <tr>
                         <th class="col-field">Field</th>
-                        <th class="col-baseline" id="compare-left-label"><i class="ti ti-arrow-left" style="font-size:10px"></i> Baseline</th>
-                        <th class="col-compare" id="compare-right-label"><i class="ti ti-arrow-right" style="font-size:10px"></i> Compare</th>
-                        <th class="col-status">Status</th>
+                        <th class="col-baseline" id="compare-left-label">Plan 1</th>
+                        <th class="col-compare" id="compare-right-label">Plan 2</th>
                       </tr>
                     </thead>
                     <tbody id="compare-grid-body"></tbody>
@@ -1069,38 +1035,13 @@ tr:hover td{background:var(--pa-surface-hover)}
                 <div class="card-header"><div class="card-title"><i class="ti ti-git-diff" style="color:#BA7517;margin-right:6px"></i>Change summary</div><span class="badge badge-warning" id="compare-change-count">0 changes</span></div>
                 <div style="display:flex;flex-direction:column;gap:6px" id="compare-change-list"></div>
               </div>
-              <div class="card" id="compare-rationale-card">
-                <div class="card-header"><div class="card-title"><i class="ti ti-message" style="color:var(--adobe-red);margin-right:6px"></i>Design rationale</div></div>
-                <textarea class="form-textarea" style="width:100%" id="compare-rationale-text">FY27 DX AE plan shifts from a new business-heavy structure to a more balanced portfolio approach. The monthly→quarterly payout change addresses rep feedback that monthly measurement created short-term deal manipulation. Adding the renewal tether ensures reps maintain existing book while hunting new logos.</textarea>
-              </div>
-              <div class="card" id="compare-readiness-card">
-                <div class="card-header"><div class="card-title"><i class="ti ti-list-check" style="color:var(--adobe-red);margin-right:6px"></i>Approval readiness</div><span style="font-size:11px;color:#3B6D11;font-weight:500" id="compare-readiness">4/5 complete</span></div>
-                <div style="display:flex;flex-direction:column;gap:6px" id="compare-readiness-list">
-                  <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> Business rationale documented</div>
-                  <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> YoY changes categorized</div>
-                  <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> Pay mix validated (70/30)</div>
-                  <div style="display:flex;align-items:center;gap:8px;font-size:12px"><i class="ti ti-circle-check" style="color:#639922;font-size:15px"></i> Payout table complete</div>
-                  <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#BA7517"><i class="ti ti-alert-circle" style="color:#BA7517;font-size:15px"></i> Finance modeling sign-off pending</div>
-                </div>
-                <button class="btn btn-primary" style="width:100%;margin-top:12px;justify-content:center" id="compare-readiness-btn" onclick="showScreen('approval')"><i class="ti ti-send"></i> Submit for approval</button>
-              </div>
-              <div class="card" id="compare-approval-card" style="display:none">
-                <div class="card-header"><div class="card-title"><i class="ti ti-circle-check" style="color:var(--adobe-red);margin-right:6px"></i>Approver view</div></div>
-                <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Submitted version vs. approved baseline.</div>
-                <div style="display:flex;flex-direction:column;gap:6px;font-size:12px" id="compare-approval-details"></div>
-              </div>
             </div>
           </div>
-          <div class="grid-2 compare-notes-row" id="compare-notes-row">
-            <div class="compare-section-hdr" style="grid-column:1/-1;margin:0;border-top:none">Plan notes</div>
-            <div class="compare-notes-card" id="compare-notes-left-card">
-              <div class="compare-notes-label baseline"><span><i class="ti ti-arrow-left" style="font-size:10px"></i> Baseline plan notes</span><span class="compare-notes-saved" id="compare-note-left-saved">Saved</span></div>
-              <textarea class="form-textarea" id="compare-note-left" placeholder="Add notes for the baseline plan…" oninput="updateComparePlanNote('left',this.value)"></textarea>
-            </div>
-            <div class="compare-notes-card" id="compare-notes-right-card">
-              <div class="compare-notes-label comparison"><span><i class="ti ti-arrow-right" style="font-size:10px"></i> Comparison plan notes</span><span class="compare-notes-saved" id="compare-note-right-saved">Saved</span></div>
-              <textarea class="form-textarea" id="compare-note-right" placeholder="Add notes for the comparison plan…" oninput="updateComparePlanNote('right',this.value)"></textarea>
-            </div>
+          <div class="compare-notes-row" id="compare-notes-row">
+            <div class="compare-notes-card"><div class="compare-notes-label" id="compare-note-left-title">Plan 1 notes</div>
+              <textarea class="form-textarea" id="compare-note-left" placeholder="Notes for this plan…" oninput="updateComparePlanNote('left',this.value)"></textarea></div>
+            <div class="compare-notes-card"><div class="compare-notes-label" id="compare-note-right-title">Plan 2 notes</div>
+              <textarea class="form-textarea" id="compare-note-right" placeholder="Notes for this plan…" oninput="updateComparePlanNote('right',this.value)"></textarea></div>
           </div>
         </div>
       </div>
@@ -2231,6 +2172,10 @@ function advanceVersionStage(versionId){
   const pk=planKey(v.flavorId,v.fy);
   const idx=stageIndex(v.approvalStage);
   if(idx>=APPROVAL_STAGES.length-1)return; // already Completed
+  if(v.approvalStage==='release_validation'){
+    const missing=(v.content?.flavors||[]).filter(fl=>!fl.newHireGuarantee);
+    if(missing.length){alert('Enter the new hire guarantee for all flavors before completing Release Validation (missing: '+missing.map(f=>'Flavor '+f.flavorLabel).join(', ')+').');return;}
+  }
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const note=document.getElementById('approval-comment-input')?.value||'';
   const nextStage=APPROVAL_STAGES[idx+1];
@@ -2253,6 +2198,15 @@ function advanceVersionStage(versionId){
     addAuditEntry(pk,'Advanced stage',`${v.flavorId} v${v.versionNumber} → ${APPROVAL_STAGE_LABELS[nextStage]}.`,{versionId});
   }
   refreshAfterVersionChange(pk);
+}
+/* Release-validation gate: capture per-flavor new hire guarantee at that stage. */
+function setReleaseValidationGuarantee(versionId,fi,value){
+  const v=getVersion(versionId);
+  if(!v||!v.content||!v.content.flavors||!v.content.flavors[fi])return;
+  v.content.flavors[fi].newHireGuarantee=value;
+  v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  buildPlanSnapshots();buildCompareSelects();
+  renderApprovalScreen();
 }
 /* Withdraw — pull a version out of the approval queue (editable again). */
 function withdrawVersion(versionId){
@@ -2356,7 +2310,14 @@ function renderApprovalScreen(){
   }else{
     actions=`<div style="font-size:12px;color:var(--muted)">No actions — ${VERSION_STATUS_LABELS[v.status]||v.status}.</div>`;
   }
-  document.getElementById('approval-actions-panel').innerHTML=actions;
+  let rvHtml='';
+  if(v.approvalStage==='release_validation'){
+    rvHtml=`<div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">New hire guarantee <span style="font-weight:400;color:var(--muted)">— required to complete Release Validation</span></div>
+      ${(v.content?.flavors||[]).map((fl,fi)=>`<div class="plan-kv-row"><span class="k">Flavor ${fl.flavorLabel}${fl.role?' · '+escapeCompareHtml(fl.role):''}</span><select class="form-select" onchange="setReleaseValidationGuarantee('${v.versionId}',${fi},this.value)">${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>`).join('')}
+    </div>`;
+  }
+  document.getElementById('approval-actions-panel').innerHTML=rvHtml+actions;
 
   const events=getApprovalEventsForVersion(v.versionId);
   document.getElementById('approval-comment-history').innerHTML=events.filter(e=>e.note).map(e=>`
@@ -2698,10 +2659,9 @@ function renderBuilderFlavorBlock(fl,fi,editable){
         <span class="paymix-sep">/</span>
         <input class="form-input" type="number" min="0" max="100" value="${fl.payMixVar==null?'':fl.payMixVar}" oninput="onBuilderFlavorField(${fi},'payMixVar',this.value)" ${editable?'':'readonly'}>
       </div></div>
-      <div class="fld"><div class="lbl">New hire guarantee<span class="req" title="Required">*</span></div><select class="form-select" onchange="onBuilderFlavorField(${fi},'newHireGuarantee',this.value)" ${editable?'':'disabled'}>${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>
     </div>
     <table class="payout-tier-table builder-measure-table" style="margin-top:8px;width:100%">
-      <thead><tr><th style="width:120px">Pay measure</th><th style="min-width:280px">Description</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
+      <thead><tr><th style="min-width:280px">Performance Measure(s)</th><th style="width:120px">Measure Type Value</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     ${editable?`<div style="padding:10px 14px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
@@ -2711,8 +2671,8 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   const canRemove=editable&&builderWorkingContent.flavors[fi].measures.length>1;
   const dis=editable?'':'disabled';
   return `<tr>
+    <td><input class="form-input" value="${(m.description||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'description',this.value)" placeholder="Performance measure(s)" style="min-width:140px"></td>
     <td><select class="form-select" ${dis} onchange="onBuilderMeasureType(${fi},${mi},this.value)"><option value="" ${!m.measureId?'selected':''}>Select measure…</option>${PLAN_MEASURES.map(pm=>`<option value="${pm.id}" ${pm.id===m.measureId?'selected':''}>${pm.name}</option>`).join('')}</select></td>
-    <td><input class="form-input" value="${(m.description||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'description',this.value)" placeholder="Description" style="min-width:140px"></td>
     <td><input class="form-input" value="${m.vct||''}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'vct',this.value);recalcFlavorVctSum(${fi})" style="width:70px" placeholder="e.g. 50%"></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
@@ -2751,25 +2711,53 @@ function renderBuilderPayoutTables(){
     if(!pt)pt=builderWorkingContent.payoutTables[mid]=blankPayoutTable();
     const usedBy=builderWorkingContent.flavors.filter(fl=>fl.measures.some(m=>m.measureId===mid)).map(fl=>'Flavor '+fl.flavorLabel).join(', ');
     const name=getMeasureById(mid)?.name||mid;
-    const schemeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="onPayoutSchemeChange(${slot},this.value)" style="min-width:220px"><option value="" ${!pt.schemeKey?'selected':''}>Select quota band…</option>${QUOTA_BAND_SCHEMES.map(s=>`<option value="${s.key}" ${s.key===pt.schemeKey?'selected':''}>${s.label}</option>`).join('')}</select>`;
+    const PAYOUT_TYPE_OPTIONS=[['quota_band','Quota band + attainment tier'],['target_pct','Target % based'],['attainment_only','Attainment tier only']];
+    const typeSel=`<select class="form-select" id="builder-p${slot}-type" ${editable?'':'disabled'} onchange="onPayoutTypeChange(${slot},this.value)" style="min-width:220px"><option value="" ${!pt.type?'selected':''}>Select type…</option>${PAYOUT_TYPE_OPTIONS.map(([v,l])=>`<option value="${v}" ${v===pt.type?'selected':''}>${l}</option>`).join('')}</select>`;
+    const mcrField=pt.type==='attainment_only'?`<span class="pf"><label>MCR</label><input class="form-input" id="builder-p${slot}-mcr" value="${(pt.mcr||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} placeholder="e.g. 100%" style="width:100px"></span>`:'';
     return `<div class="measure-payout-unit" style="margin-bottom:16px">
       <div class="payout-linked-hdr"><span><i class="ti ti-table"></i> ${name} <span style="font-weight:400;color:var(--pa-text-secondary);font-size:10px">· used by ${usedBy}</span></span></div>
       <div class="payout-options-bar">
-        <span class="pf pf-wide"><label>Quota band</label>${schemeSel}</span>
+        <span class="pf pf-wide"><label>Payout type</label>${typeSel}</span>
         <span class="pf"><label>Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
         <span class="pf"><label>Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="number" min="0" value="${pt.threshold!=null?pt.threshold:0}" ${editable?'':'readonly'} title="Minimum attainment required for payout" style="width:72px"></span>
         <span class="pf"><label>Cap</label><input class="form-input" id="builder-p${slot}-cap" value="${(pt.globalVctCap||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="syncPayoutVctCalcs(${slot})" placeholder="e.g. 200%" style="width:120px"></span>
         <label class="pf pf-check"><input type="checkbox" id="builder-p${slot}-prorate" ${pt.prorateVct?'checked':''} ${editable?'':'disabled'}> Prorate VCT</label>
+        ${mcrField}
       </div>
       <div class="payout-table-wrap ${editable?'':'payout-readonly'}" id="builder-p${slot}-table"></div>
+      <div style="padding:10px 14px 0"><textarea class="form-textarea" id="builder-p${slot}-note" ${editable?'':'readonly'} placeholder="Optional — explain this payout table" style="width:100%;min-height:48px;resize:vertical">${(pt.note||'').replace(/</g,'&lt;')}</textarea></div>
     </div>`;
   }).join('');
   ids.forEach((mid,i)=>renderPayoutTableEditor(1000+i,builderWorkingContent.payoutTables[mid]));
 }
-function onPayoutSchemeChange(slot,key){
+function onPayoutTypeChange(slot,type){
   const mid=builderPayoutSlotMeasure[slot];if(!mid)return;
   const cur=collectPayoutTable(slot);
-  builderWorkingContent.payoutTables[mid]=normalizePayoutToScheme(cur,key);
+  cur.type=type;
+  if(type==='attainment_only'){
+    const tiers=(cur.thresholds[0]&&cur.thresholds[0].tiers&&cur.thresholds[0].tiers.length)?cur.thresholds[0].tiers:[createEmptyTier()];
+    cur.thresholds=[{id:payoutUid(),label:'',mcr:null,tiers:tiers}];
+  }else{
+    if(!cur.thresholds.length)cur.thresholds=[createEmptyBand()];
+  }
+  builderWorkingContent.payoutTables[mid]=cur;
+  renderBuilderPayoutTables();
+}
+function addPayoutBand(slot){
+  if(!builderMeasuresEditable)return;
+  const mid=builderPayoutSlotMeasure[slot];if(!mid)return;
+  const cur=collectPayoutTable(slot);
+  cur.thresholds.push(createEmptyBand());
+  builderWorkingContent.payoutTables[mid]=cur;
+  renderBuilderPayoutTables();
+}
+function removePayoutBand(slot,thIdx){
+  if(!builderMeasuresEditable)return;
+  const mid=builderPayoutSlotMeasure[slot];if(!mid)return;
+  const cur=collectPayoutTable(slot);
+  if(cur.thresholds.length<=1)return;
+  cur.thresholds.splice(thIdx,1);
+  builderWorkingContent.payoutTables[mid]=cur;
   renderBuilderPayoutTables();
 }
 function syncBuilderPayoutTablesFromDOM(){
@@ -2798,7 +2786,6 @@ function validateVersionContent(content){
   if(!content.planMeta||!content.planMeta.planName||!content.planMeta.planName.trim())errs.push('Plan name is required.');
   (content.flavors||[]).forEach(fl=>{
     if(!fl.role||!fl.role.trim())errs.push(`Flavor ${fl.flavorLabel} — role is required.`);
-    if(!fl.newHireGuarantee)errs.push(`Flavor ${fl.flavorLabel} — new hire guarantee is required (Yes/No).`);
     const sum=(fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);
     if(Math.round(sum)!==100)errs.push(`Flavor ${fl.flavorLabel} pay measures total ${sum%1===0?sum:sum.toFixed(1)}% (must be 100%).`);
     if((fl.measures||[]).length>MAX_BUILDER_MEASURES)errs.push(`Flavor ${fl.flavorLabel} has more than ${MAX_BUILDER_MEASURES} pay measures.`);
@@ -2848,11 +2835,11 @@ const COMPARE_BASE_META=[
   {key:'headcount',label:'HC',section:'Summary'},
   {key:'payMixBase',label:'Paymix · Base',section:'Summary'},
   {key:'payMixVar',label:'Paymix · Variable',section:'Summary'},
+  {key:'newHireGuarantee',label:'New hire guarantee',section:'Summary'},
   {key:'planName',label:'Plan Name',section:'Plan information'},
   {key:'role',label:'Role',section:'Plan information'},
   {key:'bonus',label:'Bonus',section:'Bonus & tether'},
   {key:'tether',label:'Tether',section:'Bonus & tether'},
-  {key:'designerNote',label:'Plan notes',section:'Plan notes',longText:true},
 ];
 
 function buildCompareFieldMeta(){
@@ -3548,20 +3535,24 @@ const QUOTA_BAND_SCHEMES=[
 const DEFAULT_QUOTA_SCHEME='opt2';
 const BLANK_SCHEME={key:'',bands:[],label:'Select quota band…'};
 function getQuotaScheme(key){if(!key)return BLANK_SCHEME;return QUOTA_BAND_SCHEMES.find(s=>s.key===key)||QUOTA_BAND_SCHEMES[0];}
-function blankPayoutTable(){return{schemeKey:'',thresholds:[],globalVctCap:'',prorateVct:false,payCurveType:'Linear',threshold:''};}
-function defaultBandTiers(){return[{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',mcr:null}];}
+function blankPayoutTable(){return{type:'',thresholds:[],mcr:'',note:'',globalVctCap:'',prorateVct:false,payCurveType:'Linear',threshold:''};}
+function defaultBandTiers(){return[{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',vctAtMax:'',mcr:null}];}
+function createEmptyBand(label){return{id:payoutUid(),label:label||'',mcr:null,tiers:[createEmptyTier()]};}
 /* Reshape a payout table to a quota-band scheme: one threshold (band) per scheme range. */
 function normalizePayoutToScheme(pt,key){
   const scheme=getQuotaScheme(key);
   const old=(pt&&pt.thresholds)||[];
   const baseTiers=(old[0]&&old[0].tiers&&old[0].tiers.length)?old[0].tiers:defaultBandTiers();
   return{
+    type:'quota_band',
     schemeKey:scheme.key,
     thresholds:scheme.bands.map((b,i)=>({
       id:payoutUid(),label:b,
       tiers:(old[i]&&old[i].tiers&&old[i].tiers.length)?JSON.parse(JSON.stringify(old[i].tiers)):JSON.parse(JSON.stringify(baseTiers)),
       mcr:(old[i]&&old[i].mcr)||null,
     })),
+    mcr:'',
+    note:'',
     globalVctCap:(pt&&pt.globalVctCap)||'',
     prorateVct:!!(pt&&pt.prorateVct),
     payCurveType:(pt&&pt.payCurveType)||'Linear',
@@ -3598,7 +3589,7 @@ function clonePayoutStructure(pt){
 }
 
 function createEmptyTier(){
-  return{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',mcr:null};
+  return{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',vctAtMax:'',mcr:null};
 }
 
 function createEmptyThreshold(label){
@@ -3742,72 +3733,21 @@ function loadBuilderPlanNote(planId){
   el.value=fy27?.fields?.designerNote||planDetails[planId]?.notes||'';
 }
 
-function updateComparePlanNote(side,value){
-  const key=compareSelection[side];
-  if(!key)return;
-  setSnapshotNote(key,value);
-  const savedEl=document.getElementById('compare-note-'+side+'-saved');
-  if(savedEl){savedEl.classList.add('show');setTimeout(()=>savedEl.classList.remove('show'),1500);}
-  updateCompareNotesHighlight();
-  refreshNotesDiff();
-}
-
-function renderCompareNotes(leftSnap,rightSnap){
-  const leftEl=document.getElementById('compare-note-left');
-  const rightEl=document.getElementById('compare-note-right');
-  if(!leftEl||!rightEl)return;
-  leftEl.value=leftSnap?.fields?.designerNote??'';
-  rightEl.value=rightSnap?.fields?.designerNote??'';
-  updateCompareNotesHighlight();
-}
-
-function updateCompareNotesHighlight(){
-  const left=document.getElementById('compare-note-left')?.value??'';
-  const right=document.getElementById('compare-note-right')?.value??'';
-  document.getElementById('compare-notes-left-card')?.classList.toggle('differs',left!==right);
-  document.getElementById('compare-notes-right-card')?.classList.toggle('differs',left!==right);
-}
-
 function refreshNotesDiff(){
   const leftSnap=getSnapshot(compareSelection.left);
   const rightSnap=getSnapshot(compareSelection.right);
   if(!leftSnap||!rightSnap)return;
-  const leftNote=leftSnap.fields.designerNote??'';
-  const rightNote=rightSnap.fields.designerNote??'';
-  lastCompareChanges=lastCompareChanges.filter(c=>c.label!=='Plan notes');
-  if(leftNote!==rightNote){
-    lastCompareChanges.push({label:'Plan notes',left:leftNote||'—',right:rightNote||'—',type:'mod',section:'Plan notes'});
-  }
-  const noteInDiffs=lastCompareDiffs.findIndex(d=>d.key==='designerNote');
-  const noteDiff={key:'designerNote',label:'Plan notes',section:'Plan notes',longText:true,left:leftNote||'—',right:rightNote||'—',type:leftNote===rightNote?'same':'mod'};
-  if(noteInDiffs>=0)lastCompareDiffs[noteInDiffs]=noteDiff;
-  else lastCompareDiffs.push(noteDiff);
   const changeCount=lastCompareChanges.length;
   document.getElementById('compare-subtitle').textContent=`${leftSnap.name} vs ${rightSnap.name} · ${changeCount} difference${changeCount===1?'':'s'} found`;
   document.getElementById('compare-identical-banner').style.display=changeCount===0?'block':'none';
   renderChangeSummary(lastCompareChanges);
-
-  const approvalCard=document.getElementById('compare-approval-card');
-  if(approvalCard&&approvalCard.style.display!=='none'){
-    document.getElementById('compare-approval-details').innerHTML=`
-      <div><strong>Version:</strong> ${rightSnap.proposalId?getVersion(rightSnap.proposalId)?.label:rightSnap.statusLabel} · ${rightSnap.statusLabel}</div>
-      <div><strong>Published baseline:</strong> ${leftSnap.isCurrentPlan?`Published v${leftSnap.revisionNumber}`:leftSnap.label} · ${leftSnap.fy}</div>
-      <div style="padding:8px;background:#FAEEDA;border-radius:var(--radius);border-left:2.5px solid #BA7517;margin-top:4px">${changeCount} material change${changeCount===1?'':'s'} require review before publishing.</div>`;
-  }
 }
 
 let planSnapshots=[];
 let compareSelection={left:null,right:null};
 let lastCompareDiffs=[];
 let lastCompareChanges=[];
-let compareShowDiffsOnly=true;
 
-const compareQuickPresets=[
-  {label:'A01 · Draft v1 vs Draft v2',left:'version|ver-A01-FY27-1',right:'version|ver-A01-FY27-2'},
-  {label:'B01 · FY26 vs FY27',left:'version|ver-B01-FY26-1',right:'version|ver-B01-FY27-1'},
-  {label:'A01 · Draft v2 vs Draft v3',left:'version|ver-A01-FY27-2',right:'version|ver-A01-FY27-3'},
-  {label:'S08 · FY26 vs FY27',left:'version|ver-S08-FY26-1',right:'version|ver-S08-FY27-1'},
-];
 
 /* ── Version-scoped content (source of truth for a version's flavors & payout tables) ── */
 function blankVersionContent(pk){
@@ -3862,6 +3802,7 @@ function buildFieldsFromContentFlavor(planId,fy,planMeta,flavor,payoutTables){
     payMix:hasVal(pmb)&&hasVal(pmv)?`${pmb} / ${pmv}`:'—',
     planName:planMeta.planName,
     role:flavor.role,
+    newHireGuarantee:flavor.newHireGuarantee||'—',
     bonus:planMeta.bonus||'N/A',
     tether:planMeta.tether||'N/A',
   };
@@ -4025,27 +3966,35 @@ function getBuilderMeasureVct(slot){
 
 let sharedPayoutSlots=new Set();
 function payoutSlotCap(slot){return document.getElementById(`builder-p${slot}-cap`)?.value||'';}
-function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable){
+function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable,type){
   const ro=editable?'':'readonly';
+  const lastCol=type==='attainment_only'
+    ? `<td><input class="form-input" value="${(tier.vctAtMax||'').replace(/"/g,'&quot;')}" data-field="vctmax" placeholder="VCT at tier max" ${ro}></td>`
+    : `<td class="vct-calc-cell" data-calc-vct>—</td>`;
   return`<tr data-tier="${tierIdx}">
     <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro} title="Upper bound of this attainment tier; leave blank on the last tier for 'and above'"></td>
     <td class="tier-range-cell" data-range style="font-size:11px;color:var(--pa-text-secondary)">—</td>
     <td><div class="xpcr-cell"><input class="form-input" type="number" min="0" step="0.01" value="${(tier.xPCR===''||tier.xPCR==null)?'':tier.xPCR}" data-field="xpcr" placeholder="e.g. 1.5" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro}><span class="xpcr-suffix">x</span></div></td>
-    <td class="vct-calc-cell" data-calc-vct>—</td>
+    ${lastCol}
     ${editable?`<td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removePayoutTier(${slot},${thIdx},${tierIdx})" title="Remove tier"><i class="ti ti-x"></i></button></td>`:'<td></td>'}
   </tr>`;
 }
 
-function renderPayoutThresholdBlock(slot,thIdx,threshold,editable){
-  const tierRows=threshold.tiers.map((t,i)=>renderPayoutTierRow(slot,thIdx,i,t,editable)).join('');
-  return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${(threshold.label||'').replace(/"/g,'&quot;')}">
-    <div class="payout-threshold-hdr">
+function renderPayoutThresholdBlock(slot,thIdx,threshold,editable,type){
+  const tierRows=threshold.tiers.map((t,i)=>renderPayoutTierRow(slot,thIdx,i,t,editable,type)).join('');
+  const isAttain=type==='attainment_only';
+  const bandNoun=type==='target_pct'?'Target band':'Quota band';
+  const lastHead=isAttain?'VCT at Tier Max':'%VCT (auto)';
+  const header=isAttain?'':`<div class="payout-threshold-hdr">
       <i class="ti ti-adjustments" style="color:var(--pa-theme-primary);font-size:14px"></i>
-      <strong style="font-size:12px">${threshold.label||'Quota band'}</strong>
-      <span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 100%" data-th-mcr oninput="onPayoutTierInput(${slot},${thIdx})" ${editable?'':'readonly'} style="width:80px"></span>
-    </div>
+      <input class="form-input" value="${(threshold.label||'').replace(/"/g,'&quot;')}" data-band-label-input placeholder="${bandNoun} label" ${editable?'':'readonly'} style="max-width:260px;font-weight:600">
+      <span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 100%" data-th-mcr ${editable?'':'readonly'} style="width:80px"></span>
+      ${editable?`<button type="button" class="measure-remove-btn" onclick="removePayoutBand(${slot},${thIdx})"><i class="ti ti-trash" style="font-size:11px"></i></button>`:''}
+    </div>`;
+  return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${(threshold.label||'').replace(/"/g,'&quot;')}">
+    ${header}
     <table class="payout-tier-table">
-      <thead><tr><th>Upper bound %</th><th>Range (auto)</th><th>xPCR</th><th>%VCT (auto)</th><th></th></tr></thead>
+      <thead><tr><th>Upper bound %</th><th>Range (auto)</th><th>xPCR</th><th>${lastHead}</th><th></th></tr></thead>
       <tbody>${tierRows}</tbody>
     </table>
     ${editable?`<div class="payout-threshold-actions"><button type="button" class="btn btn-sm" onclick="addPayoutTier(${slot},${thIdx})"><i class="ti ti-plus"></i> Add tier</button></div>`:''}
@@ -4056,9 +4005,14 @@ function renderPayoutTableEditor(slot,payoutTable){
   const wrap=document.getElementById(`builder-p${slot}-table`);
   if(!wrap)return;
   const pt=payoutTable||{};
-  if(!pt.thresholds||!pt.thresholds.length){wrap.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary);padding:10px 14px">Select a quota band above to configure payout tiers.</p>';return;}
   const editable=builderMeasuresEditable;
-  wrap.innerHTML=pt.thresholds.map((th,i)=>renderPayoutThresholdBlock(slot,i,th,editable)).join('');
+  if(!pt.type){wrap.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary);padding:10px 14px">Select a payout table type above to configure it.</p>';return;}
+  if(!pt.thresholds||!pt.thresholds.length){wrap.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary);padding:10px 14px">Add a band to configure payout tiers.</p>';}
+  else wrap.innerHTML=pt.thresholds.map((th,i)=>renderPayoutThresholdBlock(slot,i,th,editable,pt.type)).join('');
+  if(editable&&pt.type!=='attainment_only'){
+    const noun=pt.type==='target_pct'?'target band':'quota band';
+    wrap.innerHTML+=`<div style="padding:8px 14px"><button type="button" class="btn btn-sm" onclick="addPayoutBand(${slot})"><i class="ti ti-plus"></i> Add ${noun}</button></div>`;
+  }
   syncPayoutVctCalcs(slot);
 }
 
@@ -4085,28 +4039,28 @@ function syncPayoutVctCalcs(slot){
 }
 
 function collectPayoutTable(slot){
+  const type=document.getElementById(`builder-p${slot}-type`)?.value||'';
   const thresholds=[];
   document.querySelectorAll(`#builder-p${slot}-table .payout-threshold-block`).forEach(thEl=>{
     const tiers=[];let prev=0;
     thEl.querySelectorAll('tbody tr[data-tier]').forEach(row=>{
       const toRaw=row.querySelector('[data-field="to"]')?.value;
       const to=(toRaw===''||toRaw==null)?null:parseInt(toRaw,10);
-      tiers.push({id:payoutUid(),attainmentFrom:prev,attainmentTo:to,xPCR:parseXpcrValue(row.querySelector('[data-field="xpcr"]')?.value),mcr:null});
+      tiers.push({id:payoutUid(),attainmentFrom:prev,attainmentTo:to,xPCR:parseXpcrValue(row.querySelector('[data-field="xpcr"]')?.value),vctAtMax:row.querySelector('[data-field="vctmax"]')?.value||'',mcr:null});
       if(to!=null)prev=to;
     });
     thresholds.push({
       id:payoutUid(),
-      label:thEl.getAttribute('data-band-label')||'Quota band',
-      tiers:tiers.length?tiers:defaultBandTiers(),
+      label:(thEl.querySelector('[data-band-label-input]')?.value ?? thEl.getAttribute('data-band-label'))||'',
+      tiers:tiers.length?tiers:[createEmptyTier()],
       mcr:thEl.querySelector('[data-th-mcr]')?.value||null,
     });
   });
-  const mid=builderPayoutSlotMeasure[slot];
-  const storedPt=builderWorkingContent&&builderWorkingContent.payoutTables[mid];
-  const schemeKey=storedPt?(storedPt.schemeKey||''):DEFAULT_QUOTA_SCHEME;
   return{
-    schemeKey,
-    thresholds:thresholds.length?thresholds:normalizePayoutToScheme({},schemeKey).thresholds,
+    type,
+    thresholds,
+    mcr:document.getElementById(`builder-p${slot}-mcr`)?.value||'',
+    note:document.getElementById(`builder-p${slot}-note`)?.value||'',
     globalVctCap:document.getElementById(`builder-p${slot}-cap`)?.value||'',
     prorateVct:!!document.getElementById(`builder-p${slot}-prorate`)?.checked,
     payCurveType:document.getElementById(`builder-p${slot}-curve`)?.value||'Linear',
@@ -4346,22 +4300,9 @@ function buildCompareSelects(){
   ['left','right'].forEach(side=>{
     const sel=document.getElementById('compare-'+side+'-select');
     if(!sel)return;
-    const placeholder=side==='left'?'Select baseline version…':'Select version to compare…';
+    const placeholder='Select a plan flavor…';
     sel.innerHTML=`<option value="">${placeholder}</option>${options}`;
   });
-}
-
-function buildCompareQuickPresets(){
-  const row=document.getElementById('compare-quick-row');
-  if(!row)return;
-  row.innerHTML='<span class="compare-quick-label">Quick compare:</span>'+compareQuickPresets.map((p,i)=>`<span class="compare-quick-chip" onclick="applyCompareQuickPreset(${i})">${p.label}</span>`).join('');
-}
-
-function applyCompareQuickPreset(index){
-  const p=compareQuickPresets[index];
-  if(!p)return;
-  setCompareSelection(p.left,p.right);
-  runComparison();
 }
 
 function selectComparePlanFromSelect(side,key){
@@ -4408,23 +4349,9 @@ function updateCompareSlot(side,snap){
 }
 
 function updateCompareSteps(){
-  const hasLeft=!!compareSelection.left;
-  const hasRight=!!compareSelection.right;
-  const s1=document.getElementById('compare-step-1');
-  const s2=document.getElementById('compare-step-2');
-  const s3=document.getElementById('compare-step-3');
-  [s1,s2,s3].forEach(s=>{if(s){s.classList.remove('active','done');}});
-  if(!hasLeft){
-    s1?.classList.add('active');
-  }else if(!hasRight){
-    s1?.classList.add('done');
-    s2?.classList.add('active');
-  }else{
-    s1?.classList.add('done');
-    s2?.classList.add('done');
-    s3?.classList.add('active');
-  }
-  document.getElementById('compare-clear-btn').style.display=(hasLeft||hasRight)?'inline-flex':'none';
+  const hasAny=!!compareSelection.left||!!compareSelection.right;
+  const clearBtn=document.getElementById('compare-clear-btn');
+  if(clearBtn)clearBtn.style.display=hasAny?'inline-flex':'none';
 }
 
 function syncCompareSelects(){
@@ -4436,12 +4363,24 @@ function syncCompareSelects(){
   updateCompareSlot('right',compareSelection.right?getSnapshot(compareSelection.right):null);
 }
 
-function swapComparePlans(){
-  const tmp=compareSelection.left;
-  compareSelection.left=compareSelection.right;
-  compareSelection.right=tmp;
-  syncCompareSelects();
-  runComparison();
+function updateComparePlanNote(side,value){
+  const key=compareSelection[side];
+  if(key)setSnapshotNote(key,value);
+}
+
+function renderCompareNotes(leftSnap,rightSnap){
+  [['left',leftSnap],['right',rightSnap]].forEach(([side,snap])=>{
+    const box=document.getElementById('compare-note-'+side);
+    const title=document.getElementById('compare-note-'+side+'-title');
+    if(!box)return;
+    if(snap){
+      if(title)title.textContent=`${snap.name} — notes`;
+      box.value=getSnapshotNote(snap.key,snap,snap.fy)||'';
+    }else{
+      if(title)title.textContent=(side==='left'?'Plan 1':'Plan 2')+' notes';
+      box.value='';
+    }
+  });
 }
 
 function setCompareSelection(leftKey,rightKey){
@@ -4450,45 +4389,16 @@ function setCompareSelection(leftKey,rightKey){
   syncCompareSelects();
 }
 
-function toggleCompareDiffsOnly(checked){
-  compareShowDiffsOnly=!!checked;
-  if(document.getElementById('plan-compare-results')?.querySelector('.pa-compare-shell')&&document.getElementById('plan-compare-left')?.value){
-    runPlanFlavorCompare();
-    return;
-  }
-  const leftSnap=getSnapshot(compareSelection.left);
-  const rightSnap=getSnapshot(compareSelection.right);
-  if(leftSnap&&rightSnap&&lastCompareDiffs.length){
-    renderComparisonGrid(leftSnap,rightSnap,lastCompareDiffs);
-  }
-}
-
 function escapeCompareHtml(s){
   return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function getCompareStatusPill(type){
-  const map={
-    same:{cls:'same',label:'—',icon:''},
-    mod:{cls:'changed',label:'Changed',icon:'ti-arrows-exchange'},
-    add:{cls:'added',label:'Added',icon:'ti-plus'},
-    rem:{cls:'removed',label:'Removed',icon:'ti-minus'}
-  };
-  const s=map[type]||map.same;
-  if(type==='same')return `<span class="pa-status-pill ${s.cls}">—</span>`;
-  return `<span class="pa-status-pill ${s.cls}"><i class="ti ${s.icon}" style="font-size:10px"></i> ${s.label}</span>`;
-}
-
 function getCompareRowCellClass(type,side){
-  if(type==='mod')return 'cell-changed';
-  if(type==='add'&&side==='right')return 'cell-added';
-  if(type==='rem'&&side==='left')return 'cell-removed';
-  return '';
+  return type==='same'?'':'cell-changed';
 }
 
-function shouldIncludeCompareRow(d,diffsOnly){
+function shouldIncludeCompareRow(d){
   if(d.longText)return false;
-  if(diffsOnly&&d.type==='same')return false;
   if(/^Measure [3-4]$/.test(d.section)){
     const emptyLeft=(d.left==='—'||!d.left);
     const emptyRight=(d.right==='—'||!d.right);
@@ -4498,21 +4408,65 @@ function shouldIncludeCompareRow(d,diffsOnly){
 }
 
 function formatCompareCellValue(val,type,side){
-  if(type==='rem'&&side==='right')return '<span class="pa-val pa-val-empty">Removed</span>';
   if(val==='—'||val===''||val==null)return '<span class="pa-val pa-val-empty">—</span>';
   return `<span class="pa-val">${escapeCompareHtml(val)}</span>`;
 }
 
-function buildCompareTableBodyHtml(diffs,options={}){
-  const diffsOnly=options.diffsOnly||false;
+function parsePayoutData(json){try{return json?JSON.parse(json):null;}catch(e){return null;}}
+function renderComparePayoutTable(ptL,ptR){
+  const bandsL=(ptL&&ptL.thresholds)||[];
+  const bandsR=(ptR&&ptR.thresholds)||[];
+  if(!bandsL.length&&!bandsR.length)return '<span class="pa-val pa-val-empty">—</span>';
+  const tierRange=t=>t?formatAttainmentRange(t.attainmentFrom??0,t.attainmentTo):null;
+  const xp=t=>t?formatXpcrValue(t.xPCR):'—';
+  let rows='';
+  const bandCount=Math.max(bandsL.length,bandsR.length);
+  for(let i=0;i<bandCount;i++){
+    const bL=bandsL[i],bR=bandsR[i];
+    const label=escapeCompareHtml((bL&&bL.label)||(bR&&bR.label)||('Band '+(i+1)));
+    const tiersL=(bL&&bL.tiers)||[],tiersR=(bR&&bR.tiers)||[];
+    const tierCount=Math.max(tiersL.length,tiersR.length);
+    for(let j=0;j<tierCount;j++){
+      const tL=tiersL[j],tR=tiersR[j];
+      const rL=tierRange(tL),rR=tierRange(tR);
+      const range=escapeCompareHtml(rL||rR||'—');
+      const rangeDiff=(tL&&tR&&rL!==rR)?' diff':'';
+      const xL=xp(tL),xR=xp(tR),xDiff=(xL!==xR)?' diff':'';
+      rows+=`<tr><td>${label}</td><td class="${rangeDiff.trim()}">${range}</td><td class="${xDiff.trim()}">${escapeCompareHtml(xL)}</td><td class="${xDiff.trim()}">${escapeCompareHtml(xR)}</td></tr>`;
+    }
+    const mL=bL&&bL.mcr,mR=bR&&bR.mcr;
+    if((mL!=null&&mL!=='')||(mR!=null&&mR!=='')){
+      const mDiff=((mL||'')!==(mR||''))?' diff':'';
+      rows+=`<tr><td>${label} · MCR</td><td></td><td class="${mDiff.trim()}">${escapeCompareHtml(mL||'—')}</td><td class="${mDiff.trim()}">${escapeCompareHtml(mR||'—')}</td></tr>`;
+    }
+  }
+  const tmL=ptL&&ptL.mcr,tmR=ptR&&ptR.mcr;
+  if((tmL!=null&&tmL!=='')||(tmR!=null&&tmR!=='')){
+    const mDiff=((tmL||'')!==(tmR||''))?' diff':'';
+    rows+=`<tr><td>MCR (table)</td><td></td><td class="${mDiff.trim()}">${escapeCompareHtml(tmL||'—')}</td><td class="${mDiff.trim()}">${escapeCompareHtml(tmR||'—')}</td></tr>`;
+  }
+  return `<table class="compare-payout-table"><thead><tr><th>Band</th><th>Attainment</th><th>Plan 1</th><th>Plan 2</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap}={}){
   let html='';
   let currentSection='';
   let rowCount=0;
   diffs.forEach(d=>{
-    if(!shouldIncludeCompareRow(d,diffsOnly))return;
+    if(!shouldIncludeCompareRow(d))return;
     if(d.section!==currentSection){
       currentSection=d.section;
-      html+=`<tr class="pa-section-row"><td colspan="4">${escapeCompareHtml(currentSection)}</td></tr>`;
+      html+=`<tr class="pa-section-row"><td colspan="3">${escapeCompareHtml(currentSection)}</td></tr>`;
+    }
+    if(/^payoutTable\d+$/.test(d.key||'')){
+      const ptL=parsePayoutData(leftSnap&&leftSnap.fields&&leftSnap.fields[d.key+'Data']);
+      const ptR=parsePayoutData(rightSnap&&rightSnap.fields&&rightSnap.fields[d.key+'Data']);
+      html+=`<tr data-section="${escapeCompareHtml(d.section)}" data-type="${d.type}">
+      <td><span class="pa-field-name">${escapeCompareHtml(d.label)}</span></td>
+      <td colspan="2">${renderComparePayoutTable(ptL,ptR)}</td>
+    </tr>`;
+      rowCount++;
+      return;
     }
     const leftClass=getCompareRowCellClass(d.type,'left');
     const rightClass=getCompareRowCellClass(d.type,'right');
@@ -4521,7 +4475,6 @@ function buildCompareTableBodyHtml(diffs,options={}){
       <td><span class="pa-field-name">${escapeCompareHtml(d.label)}</span></td>
       <td class="${leftClass}">${formatCompareCellValue(d.left,d.type,'left')}</td>
       <td class="${rightClass}">${formatCompareCellValue(d.right,d.type,'right')}${deltaHtml}</td>
-      <td class="pa-status">${getCompareStatusPill(d.type)}</td>
     </tr>`;
     rowCount++;
   });
@@ -4529,18 +4482,15 @@ function buildCompareTableBodyHtml(diffs,options={}){
 }
 
 function buildCompareTableShell(leftSnap,rightSnap,diffs,options={}){
-  const diffsOnly=options.diffsOnly??compareShowDiffsOnly;
-  const {html,rowCount}=buildCompareTableBodyHtml(diffs,{diffsOnly});
+  const {html,rowCount}=buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap});
   const leftLabel=formatCompareColumnLabel(leftSnap,'left');
   const rightLabel=formatCompareColumnLabel(rightSnap,'right');
   const changes=diffs.filter(d=>d.type!=='same'&&!d.longText);
-  const emptyMsg=diffsOnly?'No differences — all fields match':'No fields to display';
+  const emptyMsg='No fields to display';
   const footerText=rowCount===0?emptyMsg:`${changes.length} difference${changes.length===1?'':'s'} · ${rowCount} row${rowCount===1?'':'s'} shown`;
-  const toggleHtml=options.showToggle!==false?`<label class="pa-toggle"><input type="checkbox" id="compare-diffs-only" ${diffsOnly?'checked':''} onchange="toggleCompareDiffsOnly(this.checked)"> Show differences only</label>`:'';
   return `<div class="pa-compare-shell">
     <div class="pa-compare-toolbar">
       <div class="pa-compare-toolbar-title"><i class="ti ti-table" style="margin-right:6px;color:var(--pa-theme-primary)"></i>Field comparison</div>
-      <div class="pa-compare-toolbar-actions">${toggleHtml}</div>
     </div>
     <div class="pa-datatable-scroll">
       <table class="pa-datatable">
@@ -4548,9 +4498,8 @@ function buildCompareTableShell(leftSnap,rightSnap,diffs,options={}){
           <th class="col-field">Field</th>
           <th class="col-baseline">${leftLabel}</th>
           <th class="col-compare">${rightLabel}</th>
-          <th class="col-status">Status</th>
         </tr></thead>
-        <tbody>${html||`<tr><td colspan="4"><div class="pa-compare-empty">${emptyMsg}</div></td></tr>`}</tbody>
+        <tbody>${html||`<tr><td colspan="3"><div class="pa-compare-empty">${emptyMsg}</div></td></tr>`}</tbody>
       </table>
     </div>
     <div class="pa-compare-footer">${footerText}</div>
@@ -4574,18 +4523,17 @@ function diffField(leftVal,rightVal){
   const l=leftVal??'—';
   const r=rightVal??'—';
   if(l==='—'&&r!=='—')return{type:'add',left:l,right:r};
-  if(l!=='—'&&r==='—')return{type:'rem',left:l,right:'Removed'};
+  if(l!=='—'&&r==='—')return{type:'rem',left:l,right:r};
   if(l!==r)return{type:'mod',left:l,right:r};
   return{type:'same',left:l,right:r};
 }
 
 function renderComparisonGrid(leftSnap,rightSnap,diffs){
-  const diffsOnly=compareShowDiffsOnly;
-  const {html,rowCount}=buildCompareTableBodyHtml(diffs,{diffsOnly});
+  const {html,rowCount}=buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap});
   const body=document.getElementById('compare-grid-body');
-  const emptyMsg=diffsOnly?'No differences — all fields match':'No field differences between these plans';
+  const emptyMsg='No fields to display';
   if(body){
-    body.innerHTML=html||`<tr><td colspan="4"><div class="pa-compare-empty">${emptyMsg}</div></td></tr>`;
+    body.innerHTML=html||`<tr><td colspan="3"><div class="pa-compare-empty">${emptyMsg}</div></td></tr>`;
   }
   const leftLabel=document.getElementById('compare-left-label');
   const rightLabel=document.getElementById('compare-right-label');
@@ -4596,8 +4544,6 @@ function renderComparisonGrid(leftSnap,rightSnap,diffs){
   if(footer){
     footer.textContent=rowCount===0?emptyMsg:`${changes.length} difference${changes.length===1?'':'s'} · ${rowCount} row${rowCount===1?'':'s'} shown`;
   }
-  const toggle=document.getElementById('compare-diffs-only');
-  if(toggle)toggle.checked=diffsOnly;
 }
 
 function renderChangeSummary(changes){
@@ -4713,21 +4659,20 @@ function applyCompareContext(preset){
 function clearCompareSelection(){
   compareSelection.left=null;
   compareSelection.right=null;
-  compareShowDiffsOnly=true;
   lastCompareDiffs=[];
   lastCompareChanges=[];
   syncCompareSelects();
   updateCompareSteps();
   const leftLabel=document.getElementById('compare-left-label');
   const rightLabel=document.getElementById('compare-right-label');
-  if(leftLabel)leftLabel.innerHTML='<i class="ti ti-arrow-left" style="font-size:10px"></i> Baseline';
-  if(rightLabel)rightLabel.innerHTML='<i class="ti ti-arrow-right" style="font-size:10px"></i> Compare';
+  if(leftLabel)leftLabel.textContent='Plan 1';
+  if(rightLabel)rightLabel.textContent='Plan 2';
+  const noteLeft=document.getElementById('compare-note-left');if(noteLeft)noteLeft.value='';
+  const noteRight=document.getElementById('compare-note-right');if(noteRight)noteRight.value='';
   const body=document.getElementById('compare-grid-body');
   if(body)body.innerHTML='';
   const footer=document.getElementById('compare-grid-footer');
   if(footer)footer.textContent='Select two versions to compare';
-  const toggle=document.getElementById('compare-diffs-only');
-  if(toggle)toggle.checked=true;
   const results=document.getElementById('compare-results');
   if(results)results.classList.remove('visible');
   const exportBtn=document.getElementById('compare-export-btn');
@@ -4735,13 +4680,7 @@ function clearCompareSelection(){
   const identical=document.getElementById('compare-identical-banner');
   if(identical)identical.style.display='none';
   const subtitle=document.getElementById('compare-subtitle');
-  if(subtitle)subtitle.textContent='Pick two plans side by side — any status, any fiscal year';
-  const noteLeft=document.getElementById('compare-note-left');
-  const noteRight=document.getElementById('compare-note-right');
-  if(noteLeft)noteLeft.value='';
-  if(noteRight)noteRight.value='';
-  document.getElementById('compare-notes-left-card')?.classList.remove('differs');
-  document.getElementById('compare-notes-right-card')?.classList.remove('differs');
+  if(subtitle)subtitle.textContent='Pick any two plan flavors to compare — any plan, version, or fiscal year';
   renderChangeSummary([]);
 }
 
@@ -4759,9 +4698,9 @@ function runComparison(){
     document.getElementById('compare-results').classList.remove('visible');
     document.getElementById('compare-export-btn').style.display='none';
     if(leftSnap||rightSnap){
-      document.getElementById('compare-subtitle').textContent=leftSnap?'Now select a comparison plan':'Select a baseline plan to begin';
+      document.getElementById('compare-subtitle').textContent='Select a second plan flavor to compare';
     }else{
-      document.getElementById('compare-subtitle').textContent='Pick two plans side by side — any status, any fiscal year';
+      document.getElementById('compare-subtitle').textContent='Pick any two plan flavors to compare — any plan, version, or fiscal year';
     }
     return;
   }
@@ -4787,8 +4726,8 @@ function runComparison(){
   lastCompareDiffs=diffs;
   lastCompareChanges=changes;
 
-  renderCompareNotes(leftSnap,rightSnap);
   renderComparisonGrid(leftSnap,rightSnap,diffs);
+  renderCompareNotes(leftSnap,rightSnap);
   refreshNotesDiff();
 }
 
@@ -5001,7 +4940,6 @@ buildPlanSnapshots();
 initBuilderDropdowns();
 renderBuilderMeasures(getDefaultMeasureConfigs(2));
 buildCompareSelects();
-buildCompareQuickPresets();
 compareSelection={left:null,right:null};
 buildLibrary();
 buildMulti();
