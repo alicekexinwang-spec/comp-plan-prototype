@@ -2916,8 +2916,8 @@ function onPayoutTypeChange(slot,type){
   const cur=collectPayoutTable(slot);
   cur.type=type;
   if(type==='attainment_only'){
-    const tiers=(cur.thresholds[0]&&cur.thresholds[0].tiers&&cur.thresholds[0].tiers.length)?cur.thresholds[0].tiers:[createEmptyTier()];
-    cur.thresholds=[{id:payoutUid(),label:'',mcr:null,tiers:tiers}];
+    const ex=cur.thresholds[0]||{};
+    cur.thresholds=[{id:payoutUid(),label:'',mcr:null,tierSetId:ex.tierSetId||'',tiers:ex.tiers||[]}];
   }else if(type==='quota_band'){
     cur.thresholds=[];cur.bandSetId='';
   }else{
@@ -2952,7 +2952,7 @@ function onQuotaBandSetChange(slot,setId){
     const set=findBandSet(setId);
     const bounds=(set&&set.bounds.length)?set.bounds:[''];
     let prev=0;
-    cur.thresholds=bounds.map(b=>{const to=(b===''||b==null)?null:Number(b);const label=boundsRangeLabel(prev,to,'');if(to!=null)prev=to;return{id:payoutUid(),label,mcr:null,tierSetId:'',tiers:[]};});
+    cur.thresholds=bounds.map((b,idx)=>{const to=(b===''||b==null)?null:Number(b);const label=boundsRangeLabel(prev,to,'');if(to!=null)prev=to;return{id:payoutUid(),label,description:(set&&set.descriptions&&set.descriptions[idx])||'',mcr:null,tierSetId:'',tiers:[]};});
   }else cur.thresholds=[];
   builderWorkingContent.payoutTables[mid]=cur;
   renderBuilderPayoutTables();
@@ -2967,16 +2967,6 @@ function setBandTierSet(slot,thIdx,setId){
     const set=findTierSet(setId);
     band.tiers=((set&&set.bounds.length)?set.bounds:['']).map(b=>({id:payoutUid(),attainmentFrom:0,attainmentTo:(b===''||b==null)?null:Number(b),xPCR:'',vctAtMax:'',mcr:null}));
   }else band.tiers=[];
-  builderWorkingContent.payoutTables[mid]=cur;
-  renderBuilderPayoutTables();
-}
-function applyAttainmentTierSet(slot,thIdx,setId){
-  if(!builderMeasuresEditable||!setId)return;
-  const set=findTierSet(setId);if(!set)return;
-  const mid=builderPayoutSlotMeasure[slot];if(!mid)return;
-  const cur=collectPayoutTable(slot);
-  if(!cur.thresholds[thIdx])return;
-  cur.thresholds[thIdx].tiers=(set.bounds.length?set.bounds:['']).map(b=>({id:payoutUid(),attainmentFrom:0,attainmentTo:(b===''||b==null)?null:Number(b),xPCR:'',vctAtMax:'',mcr:null}));
   builderWorkingContent.payoutTables[mid]=cur;
   renderBuilderPayoutTables();
 }
@@ -4187,18 +4177,16 @@ function getBuilderMeasureVct(slot){
 let sharedPayoutSlots=new Set();
 function payoutSlotCap(slot){return document.getElementById(`builder-p${slot}-cap`)?.value||'';}
 function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable,type){
-  const ro=editable?'':'readonly';
-  const toRo=(!editable||type==='quota_band')?'readonly':''; // quota_band upper bounds are set-defined
+  const ro=editable?'':'readonly'; // xPCR / VCT-at-max editable when editable
   const lastCol=type==='attainment_only'
     ? `<td><input class="form-input" value="${(tier.vctAtMax||'').replace(/"/g,'&quot;')}" data-field="vctmax" placeholder="VCT at tier max" ${ro}></td>`
     : `<td class="vct-calc-cell" data-calc-vct>—</td>`;
-  const canRemove=editable&&type!=='quota_band';
   return`<tr data-tier="${tierIdx}">
-    <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" oninput="onPayoutTierInput(${slot},${thIdx})" ${toRo} title="Upper bound of this attainment tier; leave blank on the last tier for 'and above'"></td>
+    <td><input class="form-input" type="number" min="0" max="999" value="${tier.attainmentTo??''}" placeholder="blank = & above" data-field="to" readonly title="Upper bound comes from the selected attainment tier set"></td>
     <td class="tier-range-cell" data-range style="font-size:11px;color:var(--pa-text-secondary)">—</td>
     <td><div class="xpcr-cell"><input class="form-input" type="number" min="0" step="0.01" value="${(tier.xPCR===''||tier.xPCR==null)?'':tier.xPCR}" data-field="xpcr" placeholder="e.g. 1.5" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro}><span class="xpcr-suffix">x</span></div></td>
     ${lastCol}
-    ${canRemove?`<td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removePayoutTier(${slot},${thIdx},${tierIdx})" title="Remove tier"><i class="ti ti-x"></i></button></td>`:'<td></td>'}
+    <td></td>
   </tr>`;
 }
 
@@ -4208,39 +4196,45 @@ function renderPayoutThresholdBlock(slot,thIdx,threshold,editable,type){
   const bandNoun=type==='target_pct'?'Target band':'Quota band';
   const lastHead=isAttain?'VCT at Tier Max':'%VCT (auto)';
   const labelAttr=(threshold.label||'').replace(/"/g,'&quot;');
+  const tierSel=`<select class="form-select" data-tierset ${editable?'':'disabled'} onchange="setBandTierSet(${slot},${thIdx},this.value)" style="min-width:180px"><option value="" ${!threshold.tierSetId?'selected':''}>Select attainment tier set…</option>${attainmentTierSets.map(s=>`<option value="${s.id}" ${s.id===threshold.tierSetId?'selected':''}>${escapeCompareHtml(s.name)}</option>`).join('')}</select>`;
+  const tierSetSpan=`<span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Attainment tier set</label>${tierSel}</span>`;
+  const mcrSpan=`<span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 7%" data-th-mcr ${editable?'':'readonly'} style="width:80px"></span>`;
   let header='';
   if(isQuota){
-    const tierSel=`<select class="form-select" data-tierset ${editable?'':'disabled'} onchange="setBandTierSet(${slot},${thIdx},this.value)" style="min-width:180px"><option value="" ${!threshold.tierSetId?'selected':''}>Select attainment tier set…</option>${attainmentTierSets.map(s=>`<option value="${s.id}" ${s.id===threshold.tierSetId?'selected':''}>${escapeCompareHtml(s.name)}</option>`).join('')}</select>`;
     header=`<div class="payout-threshold-hdr">
       <i class="ti ti-adjustments" style="color:var(--pa-theme-primary);font-size:14px"></i>
-      <strong style="font-size:12px">${escapeCompareHtml(threshold.label||'Quota band')}</strong>
-      <span style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">Attainment tier set</label>${tierSel}</span>
-      <span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 7%" data-th-mcr ${editable?'':'readonly'} style="width:80px"></span>
+      <strong style="font-size:12px">${escapeCompareHtml(threshold.description||threshold.label||'Quota band')}</strong>
+      ${threshold.description&&threshold.label?`<span style="font-size:10px;color:var(--pa-text-secondary)">${escapeCompareHtml(threshold.label)}</span>`:''}
+      ${tierSetSpan}${mcrSpan}
     </div>`;
-  }else if(!isAttain){
+  }else if(isAttain){
     header=`<div class="payout-threshold-hdr">
       <i class="ti ti-adjustments" style="color:var(--pa-theme-primary);font-size:14px"></i>
-      <input class="form-input" value="${labelAttr}" data-band-label-input placeholder="${bandNoun} label" ${editable?'':'readonly'} style="max-width:260px;font-weight:600">
-      <span style="margin-left:auto;display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--pa-text-secondary)">MCR</label><input class="form-input" value="${threshold.mcr??''}" placeholder="e.g. 7%" data-th-mcr ${editable?'':'readonly'} style="width:80px"></span>
+      ${tierSetSpan}
+    </div>`;
+  }else{
+    header=`<div class="payout-threshold-hdr">
+      <i class="ti ti-adjustments" style="color:var(--pa-theme-primary);font-size:14px"></i>
+      <input class="form-input" value="${labelAttr}" data-band-label-input placeholder="${bandNoun} label" ${editable?'':'readonly'} style="max-width:200px;font-weight:600">
+      ${tierSetSpan}${mcrSpan}
       ${editable?`<button type="button" class="measure-remove-btn" onclick="removePayoutBand(${slot},${thIdx})"><i class="ti ti-trash" style="font-size:11px"></i></button>`:''}
     </div>`;
   }
-  // quota_band, editable, no tier set chosen yet → prompt, no tier table
-  if(isQuota&&editable&&!threshold.tierSetId){
-    return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${labelAttr}">
+  // editable, no tier set chosen yet → prompt, no tier table
+  const descAttr=(threshold.description||'').replace(/"/g,'&quot;');
+  if(editable&&!threshold.tierSetId){
+    return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${labelAttr}" data-band-desc="${descAttr}">
       ${header}
-      <p style="font-size:11px;color:var(--pa-text-secondary);padding:8px 10px">Choose an attainment tier set for this band.</p>
+      <p style="font-size:11px;color:var(--pa-text-secondary);padding:8px 10px">Choose an attainment tier set${isAttain?'':' for this band'}.</p>
     </div>`;
   }
   const tierRows=(threshold.tiers||[]).map((t,i)=>renderPayoutTierRow(slot,thIdx,i,t,editable,type)).join('');
-  const actions=(editable&&!isQuota)?`<div class="payout-threshold-actions"><button type="button" class="btn btn-sm" onclick="addPayoutTier(${slot},${thIdx})"><i class="ti ti-plus"></i> Add tier</button>${attainmentTierSets.length?`<select class="form-select" onchange="applyAttainmentTierSet(${slot},${thIdx},this.value)" style="min-width:170px"><option value="">Apply tier set…</option>${attainmentTierSets.map(s=>`<option value="${s.id}">${escapeCompareHtml(s.name)}</option>`).join('')}</select>`:''}</div>`:'';
-  return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${labelAttr}">
+  return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${labelAttr}" data-band-desc="${descAttr}">
     ${header}
     <table class="payout-tier-table">
       <thead><tr><th>Upper bound %</th><th>Range (auto)</th><th>xPCR</th><th>${lastHead}</th><th></th></tr></thead>
       <tbody>${tierRows}</tbody>
     </table>
-    ${actions}
   </div>`;
 }
 
@@ -4295,11 +4289,13 @@ function collectPayoutTable(slot){
     const band={
       id:payoutUid(),
       label:(thEl.querySelector('[data-band-label-input]')?.value ?? thEl.getAttribute('data-band-label'))||'',
-      tiers:tiers.length?tiers:(type==='quota_band'?[]:[createEmptyTier()]),
+      tiers:tiers.length?tiers:[],
       mcr:thEl.querySelector('[data-th-mcr]')?.value||null,
     };
     const tierSetEl=thEl.querySelector('[data-tierset]');
     if(tierSetEl)band.tierSetId=tierSetEl.value||'';
+    const bd=thEl.getAttribute('data-band-desc');
+    if(bd)band.description=bd;
     thresholds.push(band);
   });
   return{
@@ -4316,22 +4312,6 @@ function collectPayoutTable(slot){
 }
 
 function onPayoutTierInput(slot){syncPayoutVctCalcs(slot);}
-
-function addPayoutTier(slot,thIdx){
-  if(!builderMeasuresEditable)return;
-  const pt=collectPayoutTable(slot);
-  if(!pt.thresholds[thIdx])return;
-  pt.thresholds[thIdx].tiers.push(createEmptyTier());
-  renderPayoutTableEditor(slot,pt);
-}
-
-function removePayoutTier(slot,thIdx,tierIdx){
-  if(!builderMeasuresEditable)return;
-  const pt=collectPayoutTable(slot);
-  if(!pt.thresholds[thIdx]||pt.thresholds[thIdx].tiers.length<=1)return;
-  pt.thresholds[thIdx].tiers.splice(tierIdx,1);
-  renderPayoutTableEditor(slot,pt);
-}
 
 function collectBuilderMeasureConfigs(){
   const container=document.getElementById('builder-measures-container');
@@ -4670,7 +4650,7 @@ function renderComparePayoutTable(ptL,ptR){
   const bandCount=Math.max(bandsL.length,bandsR.length);
   for(let i=0;i<bandCount;i++){
     const bL=bandsL[i],bR=bandsR[i];
-    const label=escapeCompareHtml((bL&&bL.label)||(bR&&bR.label)||('Band '+(i+1)));
+    const label=escapeCompareHtml((bL&&(bL.description||bL.label))||(bR&&(bR.description||bR.label))||('Band '+(i+1)));
     const tiersL=(bL&&bL.tiers)||[],tiersR=(bR&&bR.tiers)||[];
     const tierCount=Math.max(tiersL.length,tiersR.length);
     for(let j=0;j<tierCount;j++){
