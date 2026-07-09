@@ -85,10 +85,17 @@ include only the minimum user-facing information needed to understand and use th
   PLAN id** (historical naming). Each: `versionId` (`ver-A01-FY27-2`), `status`, `approvalStage`,
   timestamps, `isActivePublished`, and `content`.
 - `version.content` (the real per-version store the builder reads/writes) =
-  `{ planMeta{headcount,payMixBase,payMixVar,planName,bonus,bonusDescription,tether,newHireGuarantee},
-  flavors[{flavorId,flavorLabel,role,flavorName,measures[{measureId,description,vct,perf,pay}]}],
-  payoutTables{ measureId → {schemeKey,thresholds[{label,tiers[{attainmentFrom,attainmentTo,xPCR}],mcr}],
-  globalVctCap,prorateVct,payCurveType,threshold} } }`.
+  `{ planMeta{planName,bonus,bonusDescription,tether,keyPolicies},
+  flavors[{flavorId,flavorLabel,role,flavorName,headcount,payMixBase,payMixVar,newHireGuarantee,
+  measures[{description,vct,perf,pay}]}],
+  payoutTables[{id,title,type,bandSetId,thresholds[{label,description,tierSetId,mcr,
+  tiers[{attainmentFrom,attainmentTo,xPCR,vctAtMax,mcr}]}],mcr,note,globalVctCap,prorateVct,payCurveType,threshold}] }`.
+  **Performance measures and payout tables are INDEPENDENT — no mapping.** Measures have no
+  `measureId`; the free-text "Performance Measure(s)" (`description`) is the measure's only name.
+  `payoutTables` is a **version-level array** (shared across the version's flavors) added manually via
+  an **"Add payout table"** button; each has its own `id` (`payoutUid()`) + free-text `title`.
+  **HC / Paymix / new-hire-guarantee are per-flavor** (not planMeta). HC/Paymix are optional; plan
+  name + per-flavor role are required.
 - Keys: `planKey(planId,fy)` = `"planId|fy"`; `parsePlanKey` splits it.
 
 ## Hierarchy & rules
@@ -99,16 +106,39 @@ include only the minimum user-facing information needed to understand and use th
   payout_system_config, completed`. `statusFromStage()` derives status from stage; **only one
   version per plan may be in the approval queue at a time** (`getPendingApprovalVersions`).
 - Payout **%VCT is stepped/marginal (tax-bracket): cumulative Σ(bracket width × xPCR), capped by
-  the table Cap**; open-ended top tier shows `—`. Quota bands come from `QUOTA_BAND_SCHEMES`
-  (36 real options `opt1…opt36`; default `DEFAULT_QUOTA_SCHEME='opt2'`).
+  the table Cap**; open-ended top tier shows `—`.
+- Payout tables are added independently (not derived from measures), each with a free-text `title`
+  (handlers `addBuilderPayoutTable` / `removeBuilderPayoutTable` / `setBuilderPayoutTitle`; the
+  builder maps DOM slot → array index via `builderPayoutSlotIndex`). Each has a **type**
+  (`quota_band` | `target_pct` | `attainment_only`) and is
+  **set-driven** (the old 36 `QUOTA_BAND_SCHEMES` are gone): `quota_band` picks a **quota band set**
+  (→ bands, remembered on `pt.bandSetId`) and each band picks an **attainment tier set** (→ tier
+  upper bounds, remembered on `threshold.tierSetId`); `target_pct` = manually-added bands, each with a
+  tier set; `attainment_only` = one implicit band + tier set (per-tier free-text "VCT at tier max",
+  table-level `pt.mcr`). Tier upper bounds + band labels are **set-defined/read-only**; the user fills
+  xPCR per tier and MCR per band. Handlers: `onQuotaBandSetChange`, `setBandTierSet`.
+- **New-hire guarantee** is entered per-flavor at the **Release Validation** approval stage
+  (`setReleaseValidationGuarantee`; `advanceVersionStage` blocks leaving `release_validation` until
+  every flavor has one) — NOT at plan creation.
+
+## Configuration (reusable sets)
+- Setup nav has two Config screens — **Quota Band Sets** and **Attainment Tier Sets** — backed by
+  `quotaBandSets` / `attainmentTierSets`, persisted to localStorage (`compplan_config_sets_v4`). Each
+  set = `{id,name,bounds:[num]}` (band sets also carry a parallel `descriptions:[str]`); ranges
+  auto-derive from the upper bounds. These feed the payout builder's set-driven construction, and a
+  band's description shows on applied payout bands + in Compare.
 
 ## Conventions
 - Builder is driven entirely by `version.content` via `builderWorkingContent`; edits persist on
-  **Save** (`saveBuilderVersion`) — no auto-save. Validation (100% VCT per flavor, required
-  new-hire-guarantee) blocks submit.
-- Snapshots (`buildPlanSnapshots`) are derived per (version, flavor) and feed Compare; they emit
-  legacy field keys (`measureNVct`, `payoutTableN`, …) so `diffField`/`compareFieldMeta` need no
-  changes — preserve that shape.
+  **Save** (`saveBuilderVersion`) — no auto-save. `validateVersionContent` (enforced only at
+  **Submit**, not Save) requires plan name, per-flavor role, and 100% VCT per flavor.
+- Compare is **symmetric** (Plan 1 / Plan 2, no baseline/swap/status-column — differences highlighted
+  only), always shows all fields, has editable per-plan notes, and shows **measures and payout tables
+  as separate sections** — payout tables listed positionally (`Payout table N`) each with its title +
+  a **merged table** (`renderComparePayoutTable`). Snapshots (`buildPlanSnapshots`) are derived per
+  (version, flavor) and emit positional field keys (measures: `measureNName`(=description)/`measureNVct`/…;
+  payout: `payoutTableNTitle`/`payoutTableN`/`payoutTableNData`/`payoutTableNCap` + `payoutTableCount`).
+  `buildCompareFieldMeta(payoutCount)` is rebuilt per comparison from `max(both counts)`.
 - Legacy `plans[]` array + `syncLegacyFromVersions` shims still back parts of some screens; keep
   them in sync on writes (`reconcilePlanFlavors`, publish/clone paths do this).
 - There is `renderBuilderMeasureBlock`/`renderBuilderMeasures` legacy dead code (pre-`version.content`);
@@ -116,8 +146,10 @@ include only the minimum user-facing information needed to understand and use th
 
 ## Run / verify
 - Preview server `webui` (port 4599) from `CODEX/.claude/launch.json`; open
-  `/comp-plan-prototype.html`. `preview_screenshot` is unreliable on this renderer — verify via
-  `preview_eval` DOM reads + `preview_console_logs` (error level).
+  `/comp-plan-prototype.html`. If 4599 is held by another chat, use `webui2` (port 4610,
+  `static-server-4610.js`) — same file, local-only config. `preview_screenshot` is unreliable on this
+  renderer — verify via `preview_eval` DOM reads + `preview_console_logs` (error level). Config sets
+  live in localStorage; clear `compplan_config_sets_v4` for a fresh seed.
 
 ## Git
 - Repo root is the **home dir** (`C:\Users\kexinw`) with many unrelated untracked files —
