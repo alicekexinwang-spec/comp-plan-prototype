@@ -111,6 +111,10 @@ include only the minimum user-facing information needed to understand and use th
   version per plan may be in the approval queue at a time** (`getPendingApprovalVersions`).
 - Payout **%VCT is stepped/marginal (tax-bracket): cumulative Σ(bracket width × xPCR), capped by
   the table Cap**; open-ended top tier shows `—`.
+- Numeric-entry inputs: **VCT Wt%** (measure row) and **Cap** (payout) are entered as digits with a
+  `%` adornment and stored as `"NN%"` (`onBuilderVctInput`/`onBuilderCapInput`); **Threshold** is
+  optional, integer-only, stored as a number or `''` (blank). Cap is optional; seeded tables start
+  with no cap/threshold.
 - Payout tables are added independently (not derived from measures), each with a free-text `title`
   (handlers `addBuilderPayoutTable` / `removeBuilderPayoutTable` / `setBuilderPayoutTitle`; the
   builder maps DOM slot → array index via `builderPayoutSlotIndex`). Each has a **type**

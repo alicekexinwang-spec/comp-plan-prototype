@@ -3,7 +3,18 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — bonus becomes a list of up to 5 (uncommitted)
+## Latest change — builder input formatting (uncommitted)
+Tightened three builder inputs:
+- **VCT Wt%** (measure row): numeric entry with a `%` adornment; stored `"NN%"` (`onBuilderVctInput`).
+- **Threshold** (payout): optional, integer-only (`type=text inputmode=numeric` + regex); no default
+  `0`; stored as a number or `''`.
+- **Cap** (payout): optional, numeric entry with a `%` adornment; stored `"NN%"` (`onBuilderCapInput`).
+- Seed cleanup: seeded payout tables now start with **no cap and no threshold** (old free-text cap
+  notes dropped, since cap is a user-entered %). `collectPayoutTable`/`normalizePayoutToScheme` updated.
+- New CSS `.pct-suffix` mirrors `.xpcr-suffix`. Stored formats unchanged for `parsePctValue`,
+  `flavorVctSum`, validation, and Compare. Verified on webui2 (no console errors). **Not committed.**
+
+## Earlier change — bonus becomes a list of up to 5 (committed 10e92f3)
 Bonus is no longer a single `planMeta.bonus`/`bonusDescription` pair. Now `planMeta.bonuses` is a
 **version-level array of up to 5** (`MAX_BUILDER_BONUSES`), each `{type, payoutDetails, maxPayout}`:
 - Bonus Type dropdown = Lead Referral Bonus / Linearity Bonus / M1 & M2 Achievement Bonus (+ a

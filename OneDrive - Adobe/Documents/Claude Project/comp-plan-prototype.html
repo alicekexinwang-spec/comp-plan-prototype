@@ -305,6 +305,7 @@ tr:hover td{background:var(--pa-surface-hover)}
 .payout-tier-table .tier-actions{text-align:center;width:32px}
 .xpcr-cell{display:flex;align-items:center;gap:3px}
 .xpcr-suffix{color:var(--pa-text-secondary);font-size:11px}
+.pct-suffix{color:var(--pa-text-secondary);font-size:11px}
 .payout-mcr-row td{background:var(--pa-warning-bg)}
 .payout-threshold-actions{padding:8px 10px;border-top:1px solid var(--pa-border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .config-set-card{border:1px solid var(--pa-border);border-radius:var(--pa-radius);padding:12px;margin-bottom:12px;background:var(--pa-surface)}
@@ -2849,7 +2850,7 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   const dis=editable?'':'disabled';
   return `<tr>
     <td><input class="form-input" value="${(m.description||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'description',this.value)" placeholder="Performance measure(s)" style="min-width:140px"></td>
-    <td><input class="form-input" value="${m.vct||''}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'vct',this.value);recalcFlavorVctSum(${fi})" style="width:70px" placeholder="e.g. 50%"></td>
+    <td><div class="xpcr-cell"><input class="form-input" value="${(m.vct||'').replace(/%/g,'')}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderVctInput(${fi},${mi},this)" style="width:44px" placeholder="e.g. 50"><span class="pct-suffix">%</span></div></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
@@ -2859,6 +2860,8 @@ const MAX_BUILDER_FLAVORS=5;
 function onBuilderFlavorField(fi,field,v){if(builderWorkingContent.flavors[fi])builderWorkingContent.flavors[fi][field]=v;}
 function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-${fi}`);if(!el)return;const sum=flavorVctSum(builderWorkingContent.flavors[fi]);const ok=Math.round(sum)===100;el.textContent=`VCT total ${sum%1===0?sum:sum.toFixed(1)}%`;el.className=`badge ${ok?'badge-approved':'badge-rejected'}`;}
 function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
+function onBuilderVctInput(fi,mi,el){el.value=el.value.replace(/[^0-9.]/g,'');setBuilderFlavorMeasure(fi,mi,'vct',el.value?el.value+'%':'');recalcFlavorVctSum(fi);}
+function onBuilderCapInput(slot,el){el.value=el.value.replace(/[^0-9.]/g,'');syncPayoutVctCalcs(slot);}
 function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',vct:'',perf:'',pay:''});renderBuilderFlavors();}
 function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();}
 function addBuilderFlavor(){
@@ -2892,8 +2895,8 @@ function renderBuilderPayoutTables(){
       <div class="payout-options-bar">
         <span class="pf pf-wide"><label>Payout type</label>${typeSel}</span>
         <span class="pf"><label>Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
-        <span class="pf"><label>Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="number" min="0" value="${pt.threshold!=null?pt.threshold:0}" ${editable?'':'readonly'} title="Minimum attainment required for payout" style="width:72px"></span>
-        <span class="pf"><label>Cap</label><input class="form-input" id="builder-p${slot}-cap" value="${(pt.globalVctCap||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="syncPayoutVctCalcs(${slot})" placeholder="e.g. 200%" style="width:120px"></span>
+        <span class="pf"><label>Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="text" inputmode="numeric" value="${(pt.threshold!=null&&pt.threshold!=='')?pt.threshold:''}" ${editable?'':'readonly'} oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Minimum attainment required for payout (optional)" placeholder="Optional" style="width:72px"></span>
+        <span class="pf"><label>Cap</label><span class="xpcr-cell"><input class="form-input" id="builder-p${slot}-cap" value="${(String(pt.globalVctCap||'').match(/[\d.]+/)||[''])[0]}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderCapInput(${slot},this)" placeholder="e.g. 200" style="width:90px"><span class="pct-suffix">%</span></span></span>
         <label class="pf pf-check"><input type="checkbox" id="builder-p${slot}-prorate" ${pt.prorateVct?'checked':''} ${editable?'':'disabled'}> Prorate VCT</label>
         ${mcrField}${bandSetField}
       </div>
@@ -3824,7 +3827,7 @@ function normalizePayoutToScheme(pt,key){
     globalVctCap:(pt&&pt.globalVctCap)||'',
     prorateVct:!!(pt&&pt.prorateVct),
     payCurveType:(pt&&pt.payCurveType)||'Linear',
-    threshold:(pt&&pt.threshold!=null)?pt.threshold:0,
+    threshold:(pt&&pt.threshold!=null)?pt.threshold:'',
   };
 }
 /* %VCT for a tier = max attainment × xPCR (payout as % of the measure's VCT), capped by the table Cap. */
@@ -4043,8 +4046,8 @@ function seedVersionContent(){
         if(seenMeasure[c.measureId])return;
         seenMeasure[c.measureId]=true;
         const pt=clonePayoutStructure(c.payoutTable);
-        if(c.globalVctCap&&!pt.globalVctCap)pt.globalVctCap=c.globalVctCap;
         const norm=normalizePayoutToScheme(pt,DEFAULT_QUOTA_SCHEME);
+        norm.globalVctCap='';  // cap is a user-entered % now — drop legacy free-text notes
         norm.id=payoutUid();
         norm.title=getMeasureById(c.measureId)?.name||c.measureId;
         payoutTables.push(norm);
@@ -4384,10 +4387,10 @@ function collectPayoutTable(slot){
     thresholds,
     mcr:document.getElementById(`builder-p${slot}-mcr`)?.value||'',
     note:document.getElementById(`builder-p${slot}-note`)?.value||'',
-    globalVctCap:document.getElementById(`builder-p${slot}-cap`)?.value||'',
+    globalVctCap:(()=>{const c=(document.getElementById(`builder-p${slot}-cap`)?.value||'').trim();return c?c+'%':'';})(),
     prorateVct:!!document.getElementById(`builder-p${slot}-prorate`)?.checked,
     payCurveType:document.getElementById(`builder-p${slot}-curve`)?.value||'Linear',
-    threshold:document.getElementById(`builder-p${slot}-threshold`)?.value||'0',
+    threshold:(()=>{const t=(document.getElementById(`builder-p${slot}-threshold`)?.value||'').trim();return t===''?'':parseInt(t,10);})(),
   };
 }
 
