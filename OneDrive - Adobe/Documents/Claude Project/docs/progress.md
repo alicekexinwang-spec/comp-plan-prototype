@@ -3,7 +3,66 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — builder input formatting (uncommitted)
+## Latest change — payout table as a matrix (display) (uncommitted)
+Display-only: read-only builder view + Compare now render `quota_band`/`target_pct` payout tables as the
+classic **matrix** — quota bands = columns, attainment tiers = rows, xPCR cells, MCR row.
+- New helpers `payoutBandsShareTiers` / `buildPayoutMatrixTable` / `renderPayoutMatrixTables`; bands
+  **merge into one matrix when they share a tier set**, else render as **separate one-column tables**.
+- Wired into `renderSinglePayoutTable` (Compare) and `renderPayoutTableEditor` (read-only branch only);
+  editable builder editor unchanged. `attainment_only` unchanged. Added `.payout-matrix` CSS.
+- Verified on webui2 (no console errors): read-only B01 quota_band → merged matrix (Quota Size × 3 bands,
+  tier rows, xPCR); Compare A01 v1/v2 → 4 matrices with MCR row (7%); S08 target_pct (differing tier sets)
+  → separate stacked tables; editable A01 draft still shows per-band editor. **Not committed.**
+
+## Earlier change — payout-table layout tightened (uncommitted)
+Layout-only polish (no model/logic change) on both payout surfaces:
+- **Builder tier table**: dropped the wasted empty 5th column (now 4 cols: Upper bound % / Range /
+  xPCR / %VCT|VCT-at-max, ~299px), recomputed scoped column widths, and trimmed paddings/margins
+  (`.payout-tier-table td` 3px 6px, `.payout-threshold-block`/`-hdr`, `.payout-options-bar`).
+- **Compare table** (`renderSinglePayoutTable`): band label now shown **once per band via `rowspan`**
+  (spanning its tiers + MCR row) instead of repeating on every row; added `<colgroup>` widths +
+  `cp-band`/`cp-att`/`cp-xpcr` cell classes (rowspan-safe, not `nth-child`).
+- Verified on webui2 (no console errors): builder shows 4-col tier tables (3 bands, readonly ok);
+  Compare A01 v1 vs v2 shows each band once with matching rowspans and aligned columns. **Not committed.**
+
+## Earlier change — refreshed dummy/seed data (uncommitted)
+Rewrote `seedVersionContent` to author demo content from a new `SEED_CONTENT` map (keyed by
+`planId|fy`) instead of the legacy field-map pipeline, so the demo now matches the new model:
+- Added config-set-driven payout builders `seedQuotaBandTable` / `seedAttainmentOnlyTable` /
+  `seedTargetPctTable` (resolve `quotaBandSets`/`attainmentTierSets` by name → real `bandSetId`/`tierSetId`).
+- Every flavor's measures total **100% VCT**; realistic measure descriptions; all three payout **types**
+  present (quota_band ×14, target_pct ×1, attainment_only ×2); caps (200/250/150%) + integer thresholds
+  (50/60) on several tables; **bonuses** seeded on A01 (Linearity) and S08 (M1&M2 + Lead Referral).
+- FY26 baselines and A01 v1/v2/v3 differ (measures/tether/top-tier xPCR) so Compare shows real diffs.
+- Legacy field maps left in place (still used by `buildPlanFieldData` fallback).
+- Verified on webui2 (no console errors): 0 VCT-sum failures, 0 payout id/title/bandSetId/tierSetId
+  issues, builder renders A01 (3 flavors @100%, titled tables, cap/threshold, 1 bonus), submit
+  validation passes, Compare renders per-flavor + payout + bonus sections. **Not committed.**
+
+## Earlier change — Compare payout tables shown per-plan (uncommitted)
+In Compare, each `Payout table N` row now renders **each plan's payout table as its own standalone
+table** in its column (`renderSinglePayoutTable`: Band/Attainment/xPCR) instead of one merged
+Plan1/Plan2 table; **no diff highlighting** on the payout tables. Removed the now-unused merged
+`renderComparePayoutTable`. Verified on webui2 (no errors): 2 tables per payout row, no colspan, no
+diff cells. **Not committed** (stacks on the plan-level Compare change, also uncommitted).
+
+## Earlier change — Compare at compensation-plan level (uncommitted)
+Compare now operates at the **plan/version level**, not the flavor level:
+- `buildPlanSnapshots` emits **one snapshot per version** (key `version|<versionId>`, no flavor); each
+  dropdown option is one plan version (no "Flavor A/B/C" text).
+- `buildFieldsFromContentFlavor` → **`buildFieldsFromContentVersion`**: plan-level fields once
+  (`planId`, `planName`, `tether`, payout tables, bonuses) + **per-flavor** keys `flavor${L}…`
+  (role/HC/paymix/NHG/measures) + `flavorLabels`.
+- `buildCompareFieldMeta(payoutCount,bonusCount,flavors)` adds a **Flavor A/B/C** section per flavor
+  (union across both sides via `compareFlavorShape`); grid order: Plan information → Flavor sections →
+  Payout table N → Bonus N → Tether. `COMPARE_BASE_META` trimmed (HC/paymix/role/NHG moved per-flavor).
+- HC delta keys off `meta.hc`; change summary prefixes flavor/payout/bonus labels with their section.
+  Copy "plan flavor" → "plan/plan version". Presets (already `version|<id>`) now resolve exactly.
+- Verified on webui2 (no console errors): 11 per-version snapshots, dropdown has no "Flavor", grid
+  sections correct, unequal flavor sets (A vs A/B/C) render without crash, builder preset works. **Not
+  committed.**
+
+## Earlier change — builder input formatting (committed 73562e7)
 Tightened three builder inputs:
 - **VCT Wt%** (measure row): numeric entry with a `%` adornment; stored `"NN%"` (`onBuilderVctInput`).
 - **Threshold** (payout): optional, integer-only (`type=text inputmode=numeric` + regex); no default

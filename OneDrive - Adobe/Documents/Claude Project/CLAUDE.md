@@ -140,18 +140,36 @@ include only the minimum user-facing information needed to understand and use th
 - Builder is driven entirely by `version.content` via `builderWorkingContent`; edits persist on
   **Save** (`saveBuilderVersion`) — no auto-save. `validateVersionContent` (enforced only at
   **Submit**, not Save) requires plan name, per-flavor role, and 100% VCT per flavor.
-- Compare is **symmetric** (Plan 1 / Plan 2, no baseline/swap/status-column — differences highlighted
-  only), always shows all fields, has editable per-plan notes, and shows **measures and payout tables
-  as separate sections** — payout tables listed positionally (`Payout table N`) each with its title +
-  a **merged table** (`renderComparePayoutTable`). Snapshots (`buildPlanSnapshots`) are derived per
-  (version, flavor) and emit positional field keys (measures: `measureNName`(=description)/`measureNVct`/…;
-  payout: `payoutTableNTitle`/`payoutTableN`/`payoutTableNData`/`payoutTableNCap` + `payoutTableCount`;
-  bonuses: positional `Bonus N` sections `bonusNType`/`bonusNDetails`/`bonusNMax` + `bonusCount`).
-  `buildCompareFieldMeta(payoutCount,bonusCount)` is rebuilt per comparison from `max(both counts)`.
+- Compare is **compensation-plan / version level** (NOT flavor level): `buildPlanSnapshots` emits
+  **one snapshot per version** (key `version|<versionId>`, no flavor), and each dropdown option is one
+  plan version. It's **symmetric** (Plan 1 / Plan 2, differences highlighted only), has editable
+  per-plan notes. `buildFieldsFromContentVersion` flattens a version into: plan-level (`planId`,
+  `planName`, `tether`); **per-flavor** keys `flavor${L}Role|HC|PayMixBase|PayMixVar|NHG|Measure${n}Name`
+  (=description)`|Vct|PerfPd|PayFreq` + `flavor${L}MeasureCount`, plus `flavorLabels`; payout positional
+  (`payoutTableNTitle`/`payoutTableN`/`payoutTableNData`/`payoutTableNCap` + `payoutTableCount`); bonus
+  positional (`bonusNType/Details/Max` + `bonusCount`). The grid groups rows into sections **Plan
+  information → Flavor A/B/C → Payout table N → Bonus N → Tether**; each plan's payout table renders
+  as its **own standalone table** in its column (`renderSinglePayoutTable`), no diff highlighting.
+  `buildCompareFieldMeta(payoutCount,bonusCount,flavors)` is rebuilt per comparison from
+  `max(both counts)` + the union of flavor labels (`compareFlavorShape`).
+- **Payout table display (read-only builder view + Compare) is a matrix** for `quota_band`/`target_pct`:
+  **quota bands = columns, attainment tiers = rows, xPCR in cells, MCR row** (`renderPayoutMatrixTables`
+  / `buildPayoutMatrixTable`, class `.payout-matrix`). Bands are **merged into one matrix when they share
+  the same tier axis** (`payoutBandsShareTiers` — same `tierSetId` / same tier bounds), else rendered as
+  **separate one-column tables**. `attainment_only` keeps its tier-list rendering. The **editable** builder
+  keeps the per-band stacked editor (display-only change).
 - Legacy `plans[]` array + `syncLegacyFromVersions` shims still back parts of some screens; keep
   them in sync on writes (`reconcilePlanFlavors`, publish/clone paths do this).
 - There is `renderBuilderMeasureBlock`/`renderBuilderMeasures` legacy dead code (pre-`version.content`);
   the live builder uses `renderBuilderFlavors` + `renderBuilderPayoutTables`.
+- **Seed/demo content** is authored in `SEED_CONTENT` (keyed by `planId|fy`) and built by
+  `seedVersionContent` via config-set-driven payout builders (`seedQuotaBandTable` /
+  `seedAttainmentOnlyTable` / `seedTargetPctTable`, which resolve `quotaBandSets`/`attainmentTierSets`
+  by name so seeded tables carry real `bandSetId`/`tierSetId`). Demo data obeys the new rules: per-flavor
+  measures total 100% VCT, all three payout types appear, some caps (`%`)/integer thresholds are set, and
+  bonuses are seeded on A01 & S08. The old field maps (`fy26Baselines`/`fy27CurrentFields`/
+  `planFieldTemplates`/`payMixMap`/`roleMap`) are no longer used by seeding but remain for the legacy
+  `buildPlanFieldData` fallback.
 
 ## Run / verify
 - Preview server `webui` (port 4599) from `CODEX/.claude/launch.json`; open

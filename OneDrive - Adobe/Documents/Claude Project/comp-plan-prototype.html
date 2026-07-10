@@ -278,28 +278,38 @@ tr:hover td{background:var(--pa-surface-hover)}
 .measure-payout-unit .payout-footnote{padding:0 14px 12px}
 .payout-linked-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--pa-canvas);border-bottom:1px solid var(--pa-border);font-size:11px;font-weight:600;color:var(--pa-text-secondary)}
 .payout-linked-hdr i{margin-right:6px;color:var(--pa-theme-primary)}
-.payout-options-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;background:var(--pa-canvas);border:var(--border);border-radius:var(--radius);padding:10px 12px;margin:8px 0}
+.payout-options-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--pa-canvas);border:var(--border);border-radius:var(--radius);padding:8px 10px;margin:8px 0}
 .payout-options-bar .pf{display:flex;align-items:center;gap:6px;font-size:11px}
 .payout-options-bar .pf>label{font-size:11px;color:var(--pa-text-secondary);white-space:nowrap}
 .payout-options-bar .pf-wide{flex-basis:100%}
 .payout-options-bar .pf-check{color:var(--pa-text-secondary)}
-.payout-threshold-block{border:1px solid var(--pa-border);margin:10px 14px;background:var(--pa-surface)}
-.payout-threshold-block:first-of-type{margin-top:12px}
-.payout-threshold-hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--pa-theme-light);border-bottom:1px solid var(--pa-border)}
+.payout-threshold-block{border:1px solid var(--pa-border);margin:8px 14px;background:var(--pa-surface)}
+.payout-threshold-block:first-of-type{margin-top:10px}
+.payout-threshold-hdr{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--pa-theme-light);border-bottom:1px solid var(--pa-border)}
 .payout-threshold-hdr input{flex:1;font-weight:600;font-size:12px}
-.compare-payout-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:2px}
+.compare-payout-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:2px;table-layout:fixed}
 .compare-payout-table th{background:var(--pa-canvas);border:1px solid var(--pa-border);padding:4px 6px;text-align:left;font-weight:600}
+.compare-payout-table th:last-child{text-align:right}
 .compare-payout-table td{border:1px solid var(--pa-border);padding:3px 6px}
+.compare-payout-table td.cp-att{white-space:nowrap}
+.compare-payout-table td.cp-xpcr{text-align:right}
+.compare-payout-table td.cp-band{vertical-align:top;font-weight:500;word-break:break-word}
 .compare-payout-table td.diff{background:var(--pa-warning-bg);font-weight:600}
+.payout-matrix{table-layout:fixed}
+.payout-matrix th{text-align:center}
+.payout-matrix thead th:first-child{text-align:left}
+.payout-matrix td.cp-band{text-align:left;font-weight:500;vertical-align:middle;word-break:break-word}
+.payout-matrix td.cp-xpcr{text-align:center}
+.payout-matrix tr.cp-mcr td{background:var(--pa-warning-bg);font-weight:600}
 .payout-tier-table{width:100%;border-collapse:collapse;font-size:11px}
 .payout-tier-table th{padding:6px 8px;background:var(--pa-canvas);border:1px solid var(--pa-border);font-weight:600;text-align:left;white-space:nowrap}
-.payout-tier-table td{padding:4px 6px;border:1px solid var(--pa-border);vertical-align:middle}
+.payout-tier-table td{padding:3px 6px;border:1px solid var(--pa-border);vertical-align:middle}
 .payout-tier-table input.form-input,.payout-tier-table select.form-select{padding:3px 6px 4px;font-size:11px;min-height:24px}
 .payout-threshold-block .payout-tier-table input.form-input{width:100%}
-.payout-threshold-block .payout-tier-table th:nth-child(1){width:26%}
-.payout-threshold-block .payout-tier-table th:nth-child(2),.payout-threshold-block .payout-tier-table th:nth-child(4){width:24%}
-.payout-threshold-block .payout-tier-table th:nth-child(3){width:20%}
-.payout-threshold-block .payout-tier-table th:nth-child(2),.payout-threshold-block .payout-tier-table .tier-range-cell{text-align:center}
+.payout-threshold-block .payout-tier-table th:nth-child(1){width:16%}
+.payout-threshold-block .payout-tier-table th:nth-child(2),.payout-threshold-block .payout-tier-table th:nth-child(4){width:30%}
+.payout-threshold-block .payout-tier-table th:nth-child(3){width:24%}
+.payout-threshold-block .payout-tier-table th:nth-child(1),.payout-threshold-block .payout-tier-table th:nth-child(2),.payout-threshold-block .payout-tier-table .tier-range-cell{text-align:center}
 .payout-tier-table .vct-calc-cell{background:var(--pa-surface-selected);font-weight:600;color:var(--pa-theme-primary);text-align:center;white-space:nowrap}
 .payout-threshold-block .payout-tier-table th:nth-child(4){text-align:center}
 .payout-tier-table .tier-actions{text-align:center;width:32px}
@@ -965,7 +975,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="page-header">
           <div>
             <div class="page-title">Compare Plans</div>
-            <div class="page-subtitle" id="compare-subtitle">Pick any two plan flavors to compare — any plan, version, or fiscal year</div>
+            <div class="page-subtitle" id="compare-subtitle">Pick any two plans to compare — any plan, version, or fiscal year</div>
           </div>
           <div class="btn-group">
             <button class="btn btn-sm" id="compare-clear-btn" onclick="clearCompareSelection()" style="display:none"><i class="ti ti-refresh"></i> Start over</button>
@@ -987,9 +997,9 @@ tr:hover td{background:var(--pa-surface-hover)}
                 <span class="compare-slot-clear" id="compare-clear-left" style="display:none" onclick="clearCompareSide('left')"><i class="ti ti-x" style="font-size:10px"></i> Clear</span>
               </div>
               <select class="form-select" id="compare-left-select" onchange="selectComparePlanFromSelect('left',this.value)">
-                <option value="">Select a plan flavor…</option>
+                <option value="">Select a plan version…</option>
               </select>
-              <div class="compare-slot-empty" id="compare-empty-left"><i class="ti ti-file"></i><span>Choose a plan flavor</span></div>
+              <div class="compare-slot-empty" id="compare-empty-left"><i class="ti ti-file"></i><span>Choose a plan version</span></div>
               <div class="compare-slot-summary" id="compare-summary-left"></div>
             </div>
             <div class="compare-slot" id="compare-slot-right">
@@ -998,9 +1008,9 @@ tr:hover td{background:var(--pa-surface-hover)}
                 <span class="compare-slot-clear" id="compare-clear-right" style="display:none" onclick="clearCompareSide('right')"><i class="ti ti-x" style="font-size:10px"></i> Clear</span>
               </div>
               <select class="form-select" id="compare-right-select" onchange="selectComparePlanFromSelect('right',this.value)">
-                <option value="">Select a plan flavor…</option>
+                <option value="">Select a plan version…</option>
               </select>
-              <div class="compare-slot-empty" id="compare-empty-right"><i class="ti ti-file"></i><span>Choose a plan flavor</span></div>
+              <div class="compare-slot-empty" id="compare-empty-right"><i class="ti ti-file"></i><span>Choose a plan version</span></div>
               <div class="compare-slot-summary" id="compare-summary-right"></div>
             </div>
           </div>
@@ -3089,30 +3099,37 @@ const MAX_BUILDER_MEASURES=4;
 let builderMeasuresEditable=false;
 
 const COMPARE_BASE_META=[
-  {key:'planId',label:'Plan #',section:'Summary'},
-  {key:'headcount',label:'HC',section:'Summary'},
-  {key:'payMixBase',label:'Paymix · Base',section:'Summary'},
-  {key:'payMixVar',label:'Paymix · Variable',section:'Summary'},
-  {key:'newHireGuarantee',label:'New hire guarantee',section:'Summary'},
+  {key:'planId',label:'Plan #',section:'Plan information'},
   {key:'planName',label:'Plan Name',section:'Plan information'},
-  {key:'role',label:'Role',section:'Plan information'},
   {key:'tether',label:'Tether',section:'Tether'},
 ];
 
-function buildCompareFieldMeta(payoutCount,bonusCount){
+function buildCompareFieldMeta(payoutCount,bonusCount,flavors){
   const n=Math.max(0,payoutCount==null?0:payoutCount|0);
   const bn=Math.max(0,bonusCount==null?0:bonusCount|0);
+  const flavs=Array.isArray(flavors)?flavors:[];
   const meta=[...COMPARE_BASE_META];
   const insertAt=meta.findIndex(m=>m.key==='tether');
   const extra=[];
-  for(let i=1;i<=MAX_BUILDER_MEASURES;i++){
+  // Per-flavor sections (grouped by flavor label).
+  flavs.forEach(({label:L,measureCount})=>{
+    const sec=`Flavor ${L}`;
     extra.push(
-      {key:`measure${i}Name`,label:'Measure',section:`Measure ${i}`},
-      {key:`measure${i}Vct`,label:'VCT Wt%',section:`Measure ${i}`},
-      {key:`measure${i}PerfPd`,label:'Perf Pd',section:`Measure ${i}`},
-      {key:`measure${i}PayFreq`,label:'Pay Freq',section:`Measure ${i}`},
+      {key:`flavor${L}Role`,label:'Role',section:sec},
+      {key:`flavor${L}HC`,label:'HC',section:sec,hc:true},
+      {key:`flavor${L}PayMixBase`,label:'Paymix · Base',section:sec},
+      {key:`flavor${L}PayMixVar`,label:'Paymix · Variable',section:sec},
+      {key:`flavor${L}NHG`,label:'New hire guarantee',section:sec},
     );
-  }
+    for(let i=1;i<=Math.max(0,measureCount|0);i++){
+      extra.push(
+        {key:`flavor${L}Measure${i}Name`,label:`Measure ${i}`,section:sec},
+        {key:`flavor${L}Measure${i}Vct`,label:`Measure ${i} · VCT Wt%`,section:sec},
+        {key:`flavor${L}Measure${i}PerfPd`,label:`Measure ${i} · Perf Pd`,section:sec},
+        {key:`flavor${L}Measure${i}PayFreq`,label:`Measure ${i} · Pay Freq`,section:sec},
+      );
+    }
+  });
   for(let i=1;i<=n;i++){
     extra.push(
       {key:`payoutTable${i}Title`,label:'Title',section:`Payout table ${i}`},
@@ -3131,7 +3148,7 @@ function buildCompareFieldMeta(payoutCount,bonusCount){
   return meta;
 }
 
-let compareFieldMeta=buildCompareFieldMeta(0,0);
+let compareFieldMeta=buildCompareFieldMeta(0,0,[]);
 
 const planFieldTemplates={
   'H01.A':{
@@ -4031,74 +4048,203 @@ function blankVersionContent(pk){
     payoutTables:[],
   };
 }
-/* Seed each existing version's content once from the static field maps. */
+/* ── Seed payout-table builders (config-set driven, so tables carry real bandSetId/tierSetId
+   and match builder-created ones). Look sets up by name from quotaBandSets/attainmentTierSets. ── */
+function findBandSetByName(name){return quotaBandSets.find(s=>s.name===name);}
+function findTierSetByName(name){return attainmentTierSets.find(s=>s.name===name);}
+function seedTiersFromTierSet(tierSet,xpcrByTier,vctByTier){
+  const bounds=(tierSet&&tierSet.bounds&&tierSet.bounds.length)?tierSet.bounds:[''];
+  let prev=0;
+  return bounds.map((b,i)=>{
+    const to=(b===''||b==null)?null:Number(b);
+    const from=prev; if(to!=null)prev=to;
+    return{id:payoutUid(),attainmentFrom:from,attainmentTo:to,
+      xPCR:(xpcrByTier&&xpcrByTier[i]!=null)?xpcrByTier[i]:'',
+      vctAtMax:(vctByTier&&vctByTier[i]!=null)?vctByTier[i]:'',mcr:null};
+  });
+}
+function seedQuotaBandTable(title,bandSetName,tierSetName,xpcrByTier,opts){
+  opts=opts||{};
+  const bandSet=findBandSetByName(bandSetName);
+  const tierSet=findTierSetByName(tierSetName);
+  const bounds=(bandSet&&bandSet.bounds&&bandSet.bounds.length)?bandSet.bounds:[''];
+  let prev=0;
+  const thresholds=bounds.map((b,i)=>{
+    const to=(b===''||b==null)?null:Number(b);
+    const label=boundsRangeLabel(prev,to,''); if(to!=null)prev=to;
+    return{id:payoutUid(),label,description:(bandSet&&bandSet.descriptions&&bandSet.descriptions[i])||'',
+      mcr:opts.bandMcr||null,tierSetId:(tierSet&&tierSet.id)||'',tiers:seedTiersFromTierSet(tierSet,xpcrByTier)};
+  });
+  return{id:payoutUid(),title,type:'quota_band',bandSetId:(bandSet&&bandSet.id)||'',thresholds,
+    mcr:'',note:'',globalVctCap:opts.cap||'',prorateVct:false,payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
+}
+function seedAttainmentOnlyTable(title,tierSetName,vctByTier,opts){
+  opts=opts||{};
+  const tierSet=findTierSetByName(tierSetName);
+  const thresholds=[{id:payoutUid(),label:'',description:'',mcr:null,tierSetId:(tierSet&&tierSet.id)||'',tiers:seedTiersFromTierSet(tierSet,null,vctByTier)}];
+  return{id:payoutUid(),title,type:'attainment_only',bandSetId:'',thresholds,
+    mcr:opts.mcr||'',note:'',globalVctCap:opts.cap||'',prorateVct:false,payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
+}
+function seedTargetPctTable(title,bands,opts){
+  opts=opts||{};
+  const thresholds=(bands||[]).map(bd=>{
+    const tierSet=findTierSetByName(bd.tierSetName);
+    return{id:payoutUid(),label:bd.label||'',description:bd.description||'',mcr:bd.mcr||null,tierSetId:(tierSet&&tierSet.id)||'',tiers:seedTiersFromTierSet(tierSet,bd.xpcrByTier)};
+  });
+  return{id:payoutUid(),title,type:'target_pct',bandSetId:'',thresholds,
+    mcr:'',note:'',globalVctCap:opts.cap||'',prorateVct:false,payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
+}
+function mkMeasure(description,vct,perf,pay){return{description,vct,perf,pay};}
+
+/* Authored demo content, keyed by planKey (planId|fy). Measures total 100% VCT per flavor;
+   payout tables are independent + config-set driven; bonuses seeded on A01 & S08. */
+const SEED_CONTENT={
+  'A01|FY27':{
+    tether:'Renewal tether 80%',
+    bonuses:[{type:'Linearity Bonus',payoutDetails:'Paid quarterly when quarterly linearity reaches ≥85% of quota pacing.',maxPayout:'150% of quarterly VCT'}],
+    payouts:()=>[
+      seedQuotaBandTable('New Business Accelerator','<$1.5, ≥$1.5–<$3.5, ≥$3.5','0–100%, >100–150%, >150%',[1,1.5,2],{cap:'200%',threshold:50,bandMcr:'7%'}),
+      seedQuotaBandTable('Renewal Payout Schedule','<$1.5, ≥$1.5','0–100%, >100%',[1,1.25],{}),
+    ],
+    flavors:{
+      A:{headcount:284,payMixBase:70,payMixVar:30,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','50%','Annual','Quarterly'),mkMeasure('Renewal ARR','30%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')]},
+      B:{headcount:96,payMixBase:75,payMixVar:25,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','60%','Annual','Quarterly'),mkMeasure('Renewal ARR','40%','Annual','Quarterly')]},
+      C:{headcount:52,payMixBase:65,payMixVar:35,newHireGuarantee:'Yes',measures:[mkMeasure('Net New ARR','45%','Annual','Quarterly'),mkMeasure('Renewal ARR','30%','Annual','Quarterly'),mkMeasure('Pipeline Generation','25%','Annual','Monthly')]},
+    },
+  },
+  'A01|FY26':{
+    tether:'Renewal tether 75%',bonuses:[],
+    payouts:()=>[
+      seedQuotaBandTable('New Business Accelerator','<$1.5, ≥$1.5–<$3.5, ≥$3.5','0–100%, >100–150%, >150%',[1,1.5,1.75],{cap:'250%',threshold:50,bandMcr:'7%'}),
+      seedQuotaBandTable('Renewal Payout Schedule','<$1.5, ≥$1.5','0–100%, >100%',[1,1.2],{}),
+    ],
+    flavors:{A:{headcount:271,payMixBase:70,payMixVar:30,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','55%','Annual','Quarterly'),mkMeasure('Renewal ARR','30%','Annual','Quarterly'),mkMeasure('Strategic Products','15%','Annual','Quarterly')]}},
+  },
+  'B01|FY27':{
+    tether:'—',bonuses:[],
+    payouts:()=>[
+      seedQuotaBandTable('Field Accelerator','<$10, ≥$10–<$20, ≥$20','0–100%, >100–150%, >150%',[1,1.5,2],{cap:'200%'}),
+      seedQuotaBandTable('Renewal Payout Schedule','<$1.5, ≥$1.5','0–100%, >100%',[1,1.25],{}),
+    ],
+    flavors:{
+      A:{headcount:203,payMixBase:70,payMixVar:30,newHireGuarantee:'No',measures:[mkMeasure('Renewal ARR','60%','Annual','Quarterly'),mkMeasure('Net New ARR','40%','Annual','Quarterly')]},
+      B:{headcount:67,payMixBase:65,payMixVar:35,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','50%','Annual','Monthly'),mkMeasure('Pipeline Generation','30%','Annual','Monthly'),mkMeasure('Renewal ARR','20%','Annual','Monthly')]},
+      C:{headcount:89,payMixBase:60,payMixVar:40,newHireGuarantee:'Yes',measures:[mkMeasure('Net New ARR','55%','Annual','Quarterly'),mkMeasure('Renewal ARR','25%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')]},
+    },
+  },
+  'B01|FY26':{
+    tether:'—',bonuses:[],
+    payouts:()=>[seedQuotaBandTable('Field Accelerator','<$10, ≥$10–<$20, ≥$20','0–100%, >100–150%, >150%',[1,1.4,1.8],{cap:'200%'})],
+    flavors:{
+      A:{headcount:190,payMixBase:70,payMixVar:30,newHireGuarantee:'No',measures:[mkMeasure('Renewal ARR','60%','Annual','Quarterly'),mkMeasure('Net New ARR','40%','Annual','Quarterly')]},
+      C:{headcount:82,payMixBase:60,payMixVar:40,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','55%','Annual','Quarterly'),mkMeasure('Renewal ARR','25%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')]},
+    },
+  },
+  'S08|FY27':{
+    tether:'Renewal tether 85%',
+    bonuses:[
+      {type:'M1 & M2 Achievement Bonus',payoutDetails:'Bonus when both M1 (Net New ARR) and M2 (Renewal) exceed 100% attainment for the period.',maxPayout:'$25,000'},
+      {type:'Lead Referral Bonus',payoutDetails:'Flat bonus per qualified referral converted to closed-won.',maxPayout:'$10,000'},
+    ],
+    payouts:()=>[
+      seedQuotaBandTable('New Business Accelerator','<$1, ≥$1–<$3, ≥$3','0–100%, >100–150%, >150%',[1,1.5,2],{cap:'200%',threshold:60}),
+      seedTargetPctTable('Target Attainment Payout',[
+        {label:'Below target',description:'Below 100% of target',tierSetName:'0–100%, >100%',xpcrByTier:[0.5,1]},
+        {label:'At / above target',description:'100% of target and above',tierSetName:'0–100%, >100–150%, >150%',xpcrByTier:[1,1.5,2]},
+      ],{cap:'200%'}),
+    ],
+    flavors:{
+      A:{headcount:178,payMixBase:80,payMixVar:20,newHireGuarantee:'No',measures:[mkMeasure('Pipeline Generation','50%','Quarterly','Monthly'),mkMeasure('Net New ARR','50%','Quarterly','Monthly')]},
+      B:{headcount:44,payMixBase:55,payMixVar:45,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','60%','Annual','Quarterly'),mkMeasure('Renewal ARR','40%','Annual','Quarterly')]},
+      C:{headcount:48,payMixBase:75,payMixVar:25,newHireGuarantee:'Yes',measures:[mkMeasure('Net New ARR','65%','Annual','Monthly'),mkMeasure('Renewal ARR','20%','Annual','Monthly'),mkMeasure('Strategic Products','15%','Annual','Monthly')]},
+    },
+  },
+  'S08|FY26':{
+    tether:'Renewal tether 80%',bonuses:[],
+    payouts:()=>[seedQuotaBandTable('New Business Accelerator','<$1, ≥$1–<$3, ≥$3','0–100%, >100–150%, >150%',[1,1.4,1.8],{cap:'200%'})],
+    flavors:{A:{headcount:165,payMixBase:80,payMixVar:20,newHireGuarantee:'No',measures:[mkMeasure('Pipeline Generation','50%','Quarterly','Monthly'),mkMeasure('Net New ARR','50%','Quarterly','Monthly')]}},
+  },
+  'S02|FY27':{
+    tether:'N/A',bonuses:[],
+    payouts:()=>[seedAttainmentOnlyTable('Objective Attainment','0–100%, >100–150%, >150%',['50%','100%','150%'],{mcr:'7%',cap:'150%'})],
+    flavors:{A:{headcount:156,payMixBase:60,payMixVar:40,newHireGuarantee:'No',measures:[mkMeasure('Net Revenue Retention','60%','Annual','Quarterly'),mkMeasure('Customer Expansion','40%','Annual','Quarterly')]}},
+  },
+  'T04|FY27':{
+    tether:'—',bonuses:[],
+    payouts:()=>[seedQuotaBandTable('Digital Accelerator','<$0.75, ≥$0.75–<$1.5, ≥$1.5','0–100%, >100–150%, >150%',[1,1.5,2],{cap:'200%'})],
+    flavors:{A:{headcount:36,payMixBase:60,payMixVar:40,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','70%','Annual','Quarterly'),mkMeasure('Renewal ARR','30%','Annual','Quarterly')]}},
+  },
+  'M01|FY27':{
+    tether:'—',bonuses:[],
+    payouts:()=>[seedAttainmentOnlyTable('Ramp Attainment','0–100%, >100%',['75%','100%'],{cap:'150%'})],
+    flavors:{A:{headcount:70,payMixBase:65,payMixVar:35,newHireGuarantee:'No',measures:[mkMeasure('Net New ARR','60%','Annual','Monthly'),mkMeasure('Pipeline Generation','40%','Annual','Monthly')]}},
+  },
+};
+
+/* Seed each version's content once from SEED_CONTENT (config-set-driven payout tables). */
 function seedVersionContent(){
+  const clone=x=>JSON.parse(JSON.stringify(x));
   planVersions.forEach(ver=>{
     if(ver.content)return;
-    const pk=planKey(ver.flavorId,ver.fy);
-    const flavors=getFlavorsForPlan(pk);
-    const payoutTables=[];      // independent array (deduped from the former by-measureId map)
-    const seenMeasure={};
-    const contentFlavors=flavors.map(f=>{
-      const raw=(ver.fy==='FY26'?fy26Baselines[f.flavorId]:fy27CurrentFields[f.flavorId])||fy27CurrentFields[f.flavorId]||fy26Baselines[f.flavorId]||{};
-      const cfgs=getMeasureConfigsFromFields(buildMeasureFieldsFromIds(raw,planFieldTemplates[f.flavorId]||{}));
-      cfgs.forEach(c=>{
-        if(seenMeasure[c.measureId])return;
-        seenMeasure[c.measureId]=true;
-        const pt=clonePayoutStructure(c.payoutTable);
-        const norm=normalizePayoutToScheme(pt,DEFAULT_QUOTA_SCHEME);
-        norm.globalVctCap='';  // cap is a user-entered % now — drop legacy free-text notes
-        norm.id=payoutUid();
-        norm.title=getMeasureById(c.measureId)?.name||c.measureId;
-        payoutTables.push(norm);
-      });
-      const pmF=parsePayMix(payMixMap[f.flavorId]||'70 / 30');
-      return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,flavorName:f.flavorName||f.role,role:f.role,headcount:raw.headcount,payMixBase:pmF.base,payMixVar:pmF.var,newHireGuarantee:'No',measures:cfgs.map(c=>({description:getMeasureById(c.measureId)?.name||c.measureId,vct:c.vct,perf:c.perf,pay:c.pay}))};
+    const planId=ver.flavorId;
+    const pk=planKey(planId,ver.fy);
+    const plan=getPlan(planId,ver.fy);
+    const sc=SEED_CONTENT[pk];
+    if(!sc){ver.content=blankVersionContent(pk);ver.content.planMeta.planName=plan?.planName||planId;return;}
+    const contentFlavors=getFlavorsForPlan(pk).map(f=>{
+      const fd=sc.flavors[f.flavorLabel]||sc.flavors.A||{measures:[]};
+      return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,flavorName:f.flavorName||f.role,role:f.role,
+        headcount:(fd.headcount!=null?fd.headcount:''),payMixBase:(fd.payMixBase!=null?fd.payMixBase:''),payMixVar:(fd.payMixVar!=null?fd.payMixVar:''),
+        newHireGuarantee:fd.newHireGuarantee||'No',measures:clone(fd.measures||[])};
     });
-    const rep=flavors[0];
-    const rawRep=rep?((ver.fy==='FY26'?fy26Baselines[rep.flavorId]:fy27CurrentFields[rep.flavorId])||fy27CurrentFields[rep.flavorId]||{}):{};
-    const plan=getPlan(ver.flavorId,ver.fy);
     ver.content={
-      planMeta:{planName:plan?.planName||ver.flavorId,bonuses:[],tether:rawRep.tether||'N/A',keyPolicies:''},
+      planMeta:{planName:plan?.planName||planId,bonuses:clone(sc.bonuses||[]),tether:sc.tether||'N/A',keyPolicies:''},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
-      payoutTables,
+      payoutTables:sc.payouts?sc.payouts():[],
     };
   });
-  // Demo differentiation so version-to-version comparison shows real diffs.
-  const v2=getVersion('ver-A01-FY27-2');
-  if(v2&&v2.content?.flavors?.[0]?.measures?.[0]){v2.content.flavors[0].measures[0].vct='55%';v2.content.planMeta.tether='Renewal tether 85%';}
-  const v3=getVersion('ver-A01-FY27-3');
-  if(v3&&v3.content?.flavors?.[0]?.measures?.[0]){v3.content.flavors[0].measures[0].vct='60%';v3.content.planMeta.tether='Renewal tether 90%';}
+  // Per-version demo diffs for A01 FY27 (keep 100% VCT) so version-to-version compare shows changes.
+  const setA=(v,measures,tether,topXpcr)=>{
+    if(!v||!v.content)return;
+    if(v.content.flavors[0])v.content.flavors[0].measures=measures;
+    v.content.planMeta.tether=tether;
+    const pt=v.content.payoutTables[0];
+    if(pt)pt.thresholds.forEach(b=>{const t=b.tiers[b.tiers.length-1];if(t)t.xPCR=topXpcr;});
+  };
+  setA(getVersion('ver-A01-FY27-2'),[mkMeasure('Net New ARR','55%','Annual','Quarterly'),mkMeasure('Renewal ARR','25%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 85%',2.25);
+  setA(getVersion('ver-A01-FY27-3'),[mkMeasure('Net New ARR','60%','Annual','Quarterly'),mkMeasure('Renewal ARR','20%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 90%',2.5);
 }
-/* Build the legacy field-shape (measureNxxx / payoutTableN) that compareFieldMeta/diffField
-   consume, from a version's content for a single flavor. */
-function buildFieldsFromContentFlavor(planId,fy,planMeta,flavor,payoutTables){
+/* Build the field-shape that compareFieldMeta/diffField consume, from a version's content.
+   Compare is plan/version-level: plan/version-level fields once, then per-flavor fields
+   keyed by flavor label (flavor${L}…). */
+function buildFieldsFromContentVersion(planId,fy,planMeta,flavors,payoutTables){
   const hasVal=x=>x!=null&&x!=='';
-  const hc=flavor.headcount,pmb=flavor.payMixBase,pmv=flavor.payMixVar;
+  const flavs=Array.isArray(flavors)?flavors:[];
   const fields={
     planId,
-    headcount:hasVal(hc)?hc:'—',
-    payMixBase:hasVal(pmb)?String(pmb):'—',
-    payMixVar:hasVal(pmv)?String(pmv):'—',
-    payMix:hasVal(pmb)&&hasVal(pmv)?`${pmb} / ${pmv}`:'—',
     planName:planMeta.planName,
-    role:flavor.role,
-    newHireGuarantee:flavor.newHireGuarantee||'—',
     tether:planMeta.tether||'N/A',
+    flavorLabels:flavs.map(f=>f.flavorLabel),
   };
-  // Measures — positional; name is now the free-text description.
-  (flavor.measures||[]).forEach((m,i)=>{
-    const n=i+1;
-    if(n>MAX_BUILDER_MEASURES)return;
-    fields[`measure${n}Name`]=hasVal(m.description)?m.description:'—';
-    fields[`measure${n}Vct`]=m.vct||'—';
-    fields[`measure${n}PerfPd`]=m.perf||'Annual';
-    fields[`measure${n}PayFreq`]=m.pay||'Quarterly';
+  // Per-flavor fields, keyed by flavor label.
+  flavs.forEach(fl=>{
+    const L=fl.flavorLabel;
+    const hc=fl.headcount,pmb=fl.payMixBase,pmv=fl.payMixVar;
+    fields[`flavor${L}Role`]=hasVal(fl.role)?fl.role:'—';
+    fields[`flavor${L}HC`]=hasVal(hc)?hc:'—';
+    fields[`flavor${L}PayMixBase`]=hasVal(pmb)?String(pmb):'—';
+    fields[`flavor${L}PayMixVar`]=hasVal(pmv)?String(pmv):'—';
+    fields[`flavor${L}NHG`]=fl.newHireGuarantee||'—';
+    const measures=fl.measures||[];
+    measures.forEach((m,i)=>{
+      const n=i+1;
+      fields[`flavor${L}Measure${n}Name`]=hasVal(m.description)?m.description:'—';
+      fields[`flavor${L}Measure${n}Vct`]=m.vct||'—';
+      fields[`flavor${L}Measure${n}PerfPd`]=m.perf||'Annual';
+      fields[`flavor${L}Measure${n}PayFreq`]=m.pay||'Quarterly';
+    });
+    fields[`flavor${L}MeasureCount`]=measures.length;
   });
-  for(let n=(flavor.measures||[]).length+1;n<=MAX_BUILDER_MEASURES;n++){
-    fields[`measure${n}Name`]='—';fields[`measure${n}Vct`]='—';
-    fields[`measure${n}PerfPd`]='—';fields[`measure${n}PayFreq`]='—';
-  }
   // Payout tables — independent array, positional by index (shared across flavors).
   const pts=Array.isArray(payoutTables)?payoutTables:[];
   pts.forEach((pt,i)=>{
@@ -4128,27 +4274,24 @@ function buildPlanSnapshots(){
     const plan=getPlan(ver.flavorId,ver.fy);
     const planId=ver.flavorId;
     const content=ver.content||blankVersionContent(planKey(planId,ver.fy));
-    (content.flavors||[]).forEach(flavor=>{
-      const p={id:planId,name:plan?.planName||planId,role:flavor.role,fy:ver.fy,status:ver.status,ver:ver.versionNumber+'.0'};
-      const fields=buildFieldsFromContentFlavor(planId,ver.fy,content.planMeta||{},flavor,content.payoutTables||[]);
-      const snap=makeSnapshot(p,ver.fy,String(ver.versionNumber),statusMap[ver.status]||'draft',{},{
-        key:`version|${ver.versionId}|${flavor.flavorId}`,
-        fields,
-        entityType:ver.status==='published'?'revision':'proposal',
-        revisionId:ver.status==='published'?ver.versionId:null,
-        proposalId:ver.versionId,
-        proposalName:ver.label,
-        isCurrentPlan:ver.isActivePublished&&ver.status==='published',
-        revisionNumber:ver.versionNumber,
-        sourceProposalId:ver.sourceVersionId,
-        flavorId:flavor.flavorId,
-        flavorLabel:flavor.flavorLabel,
-      });
-      snap.label=`${plan?.planName||planId} · ${ver.fy} — ${ver.label} · Flavor ${flavor.flavorLabel} · ${VERSION_STATUS_LABELS[ver.status]}`;
-      snap.statusLabel=ver.isActivePublished?'Published Version':VERSION_STATUS_LABELS[ver.status];
-      snap.name=`${ver.label} · Flavor ${flavor.flavorLabel}`+(ver.description?' · '+ver.description:'');
-      planSnapshots.push(snap);
+    const flavs=content.flavors||[];
+    const p={id:planId,name:plan?.planName||planId,role:flavs.map(f=>f.role).filter(Boolean).join(' / '),fy:ver.fy,status:ver.status,ver:ver.versionNumber+'.0'};
+    const fields=buildFieldsFromContentVersion(planId,ver.fy,content.planMeta||{},flavs,content.payoutTables||[]);
+    const snap=makeSnapshot(p,ver.fy,String(ver.versionNumber),statusMap[ver.status]||'draft',{},{
+      key:`version|${ver.versionId}`,
+      fields,
+      entityType:ver.status==='published'?'revision':'proposal',
+      revisionId:ver.status==='published'?ver.versionId:null,
+      proposalId:ver.versionId,
+      proposalName:ver.label,
+      isCurrentPlan:ver.isActivePublished&&ver.status==='published',
+      revisionNumber:ver.versionNumber,
+      sourceProposalId:ver.sourceVersionId,
     });
+    snap.label=`${plan?.planName||planId} · ${ver.fy} — ${ver.label} · ${VERSION_STATUS_LABELS[ver.status]}`;
+    snap.statusLabel=ver.isActivePublished?'Published Version':VERSION_STATUS_LABELS[ver.status];
+    snap.name=`${ver.label}`+(ver.description?' · '+ver.description:'');
+    planSnapshots.push(snap);
   });
 }
 
@@ -4268,7 +4411,6 @@ function renderPayoutTierRow(slot,thIdx,tierIdx,tier,editable,type){
     <td class="tier-range-cell" data-range style="font-size:11px;color:var(--pa-text-secondary)">—</td>
     <td><div class="xpcr-cell"><input class="form-input" type="number" min="0" step="0.01" value="${(tier.xPCR===''||tier.xPCR==null)?'':tier.xPCR}" data-field="xpcr" placeholder="e.g. 1.5" oninput="onPayoutTierInput(${slot},${thIdx})" ${ro}><span class="xpcr-suffix">x</span></div></td>
     ${lastCol}
-    <td></td>
   </tr>`;
 }
 
@@ -4314,7 +4456,7 @@ function renderPayoutThresholdBlock(slot,thIdx,threshold,editable,type){
   return`<div class="payout-threshold-block" data-th-idx="${thIdx}" data-band-label="${labelAttr}" data-band-desc="${descAttr}">
     ${header}
     <table class="payout-tier-table">
-      <thead><tr><th>Upper bound %</th><th>Range (auto)</th><th>xPCR</th><th>${lastHead}</th><th></th></tr></thead>
+      <thead><tr><th>Upper bound %</th><th>Range (auto)</th><th>xPCR</th><th>${lastHead}</th></tr></thead>
       <tbody>${tierRows}</tbody>
     </table>
   </div>`;
@@ -4326,6 +4468,11 @@ function renderPayoutTableEditor(slot,payoutTable){
   const pt=payoutTable||{};
   const editable=builderMeasuresEditable;
   if(!pt.type){wrap.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary);padding:10px 14px">Select a payout table type above to configure it.</p>';return;}
+  // Read-only display: render quota_band / target_pct as a matrix (bands = columns, tiers = rows).
+  if(!editable&&(pt.type==='quota_band'||pt.type==='target_pct')&&pt.thresholds&&pt.thresholds.length){
+    wrap.innerHTML=`<div style="padding:0 14px 4px">${renderPayoutMatrixTables(pt,'payout-tier-table')}</div>`;
+    return;
+  }
   if(editable&&pt.type==='quota_band'&&!pt.bandSetId){wrap.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary);padding:10px 14px">Choose a quota band set above to define the bands.</p>';return;}
   if(!pt.thresholds||!pt.thresholds.length){wrap.innerHTML='<p style="font-size:11px;color:var(--pa-text-secondary);padding:10px 14px">'+(pt.type==='quota_band'?'Choose a quota band set above to define the bands.':'Add a band to configure payout tiers.')+'</p>';}
   else wrap.innerHTML=pt.thresholds.map((th,i)=>renderPayoutThresholdBlock(slot,i,th,editable,pt.type)).join('');
@@ -4610,7 +4757,7 @@ function buildCompareSelects(){
   ['left','right'].forEach(side=>{
     const sel=document.getElementById('compare-'+side+'-select');
     if(!sel)return;
-    const placeholder='Select a plan flavor…';
+    const placeholder='Select a plan version…';
     sel.innerHTML=`<option value="">${placeholder}</option>${options}`;
   });
 }
@@ -4723,39 +4870,62 @@ function formatCompareCellValue(val,type,side){
 }
 
 function parsePayoutData(json){try{return json?JSON.parse(json):null;}catch(e){return null;}}
-function renderComparePayoutTable(ptL,ptR){
-  const bandsL=(ptL&&ptL.thresholds)||[];
-  const bandsR=(ptR&&ptR.thresholds)||[];
-  if(!bandsL.length&&!bandsR.length)return '<span class="pa-val pa-val-empty">—</span>';
-  const tierRange=t=>t?formatAttainmentRange(t.attainmentFrom??0,t.attainmentTo):null;
-  const xp=t=>t?formatXpcrValue(t.xPCR):'—';
+/* Matrix rendering (display only): quota bands = columns, attainment tiers = rows, xPCR cells + MCR row. */
+function payoutBandsShareTiers(pt){
+  const bands=(pt&&pt.thresholds)||[];
+  if(!bands.length)return false;
+  if(bands.length===1)return (bands[0].tiers||[]).length>0;
+  const key=b=>(b.tierSetId||'')||(b.tiers||[]).map(t=>t.attainmentTo==null?'∞':t.attainmentTo).join('|');
+  const first=key(bands[0]);
+  return bands.every(b=>key(b)===first)&&(bands[0].tiers||[]).length>0;
+}
+function buildPayoutMatrixTable(bands,type,cls){
+  const rowTiers=(bands[0]&&bands[0].tiers)||[];
+  const group=type==='target_pct'?'Target':'Quota Size';
+  const anyMcr=bands.some(b=>b.mcr!=null&&b.mcr!=='');
+  const head=`<thead><tr><th class="cp-band" rowspan="2">Quota Attainment Tier</th><th colspan="${bands.length}">${escapeCompareHtml(group)}</th></tr><tr>${bands.map((b,i)=>`<th>${escapeCompareHtml(b.description||b.label||('Band '+(i+1)))}</th>`).join('')}</tr></thead>`;
+  let body='';
+  rowTiers.forEach((t,r)=>{
+    const range=escapeCompareHtml(formatAttainmentRange(t.attainmentFrom??0,t.attainmentTo));
+    body+=`<tr><td class="cp-band">${range}</td>${bands.map(b=>{const tt=(b.tiers||[])[r];return `<td class="cp-xpcr">${tt&&tt.xPCR!==''&&tt.xPCR!=null?escapeCompareHtml(formatXpcrValue(tt.xPCR)):'—'}</td>`;}).join('')}</tr>`;
+  });
+  if(anyMcr)body+=`<tr class="cp-mcr"><td class="cp-band">MCR</td>${bands.map(b=>`<td class="cp-xpcr">${(b.mcr!=null&&b.mcr!=='')?escapeCompareHtml(b.mcr):'—'}</td>`).join('')}</tr>`;
+  const cols=`<colgroup><col style="width:32%">${bands.map(()=>'<col>').join('')}</colgroup>`;
+  return `<table class="${cls} payout-matrix">${cols}${head}<tbody>${body}</tbody></table>`;
+}
+function renderPayoutMatrixTables(pt,cls){
+  const bands=(pt&&pt.thresholds)||[];
+  if(!bands.length)return '<span class="pa-val pa-val-empty">—</span>';
+  let html;
+  if(payoutBandsShareTiers(pt)){
+    html=buildPayoutMatrixTable(bands,pt.type,cls);
+  }else{
+    html=bands.map(b=>buildPayoutMatrixTable([b],pt.type,cls)).join('<div style="height:8px"></div>');
+  }
+  if(pt.mcr!=null&&pt.mcr!=='')html+=`<div style="font-size:11px;color:var(--pa-text-secondary);margin-top:4px">Table MCR: ${escapeCompareHtml(pt.mcr)}</div>`;
+  return html;
+}
+function renderSinglePayoutTable(pt){
+  const bands=(pt&&pt.thresholds)||[];
+  if(!bands.length)return '<span class="pa-val pa-val-empty">—</span>';
+  if(pt&&(pt.type==='quota_band'||pt.type==='target_pct'))return renderPayoutMatrixTables(pt,'compare-payout-table');
   let rows='';
-  const bandCount=Math.max(bandsL.length,bandsR.length);
-  for(let i=0;i<bandCount;i++){
-    const bL=bandsL[i],bR=bandsR[i];
-    const label=escapeCompareHtml((bL&&(bL.description||bL.label))||(bR&&(bR.description||bR.label))||('Band '+(i+1)));
-    const tiersL=(bL&&bL.tiers)||[],tiersR=(bR&&bR.tiers)||[];
-    const tierCount=Math.max(tiersL.length,tiersR.length);
-    for(let j=0;j<tierCount;j++){
-      const tL=tiersL[j],tR=tiersR[j];
-      const rL=tierRange(tL),rR=tierRange(tR);
-      const range=escapeCompareHtml(rL||rR||'—');
-      const rangeDiff=(tL&&tR&&rL!==rR)?' diff':'';
-      const xL=xp(tL),xR=xp(tR),xDiff=(xL!==xR)?' diff':'';
-      rows+=`<tr><td>${label}</td><td class="${rangeDiff.trim()}">${range}</td><td class="${xDiff.trim()}">${escapeCompareHtml(xL)}</td><td class="${xDiff.trim()}">${escapeCompareHtml(xR)}</td></tr>`;
-    }
-    const mL=bL&&bL.mcr,mR=bR&&bR.mcr;
-    if((mL!=null&&mL!=='')||(mR!=null&&mR!=='')){
-      const mDiff=((mL||'')!==(mR||''))?' diff':'';
-      rows+=`<tr><td>${label} · MCR</td><td></td><td class="${mDiff.trim()}">${escapeCompareHtml(mL||'—')}</td><td class="${mDiff.trim()}">${escapeCompareHtml(mR||'—')}</td></tr>`;
-    }
-  }
-  const tmL=ptL&&ptL.mcr,tmR=ptR&&ptR.mcr;
-  if((tmL!=null&&tmL!=='')||(tmR!=null&&tmR!=='')){
-    const mDiff=((tmL||'')!==(tmR||''))?' diff':'';
-    rows+=`<tr><td>MCR (table)</td><td></td><td class="${mDiff.trim()}">${escapeCompareHtml(tmL||'—')}</td><td class="${mDiff.trim()}">${escapeCompareHtml(tmR||'—')}</td></tr>`;
-  }
-  return `<table class="compare-payout-table"><thead><tr><th>Band</th><th>Attainment</th><th>Plan 1</th><th>Plan 2</th></tr></thead><tbody>${rows}</tbody></table>`;
+  bands.forEach((b,i)=>{
+    const label=escapeCompareHtml(b.description||b.label||('Band '+(i+1)));
+    const tiers=b.tiers||[];
+    const hasMcr=b.mcr!=null&&b.mcr!=='';
+    const span=Math.max(1,tiers.length+(hasMcr?1:0));
+    let first=true;
+    const bandCell=()=>{const c=first?`<td class="cp-band" rowspan="${span}">${label}</td>`:'';first=false;return c;};
+    if(!tiers.length&&!hasMcr){rows+=`<tr><td class="cp-band">${label}</td><td>—</td><td>—</td></tr>`;return;}
+    tiers.forEach(t=>{
+      const range=escapeCompareHtml(formatAttainmentRange(t.attainmentFrom??0,t.attainmentTo));
+      rows+=`<tr>${bandCell()}<td class="cp-att">${range}</td><td class="cp-xpcr">${escapeCompareHtml(formatXpcrValue(t.xPCR))}</td></tr>`;
+    });
+    if(hasMcr)rows+=`<tr>${bandCell()}<td class="cp-att">MCR</td><td class="cp-xpcr">${escapeCompareHtml(b.mcr)}</td></tr>`;
+  });
+  if(pt&&pt.mcr!=null&&pt.mcr!=='')rows+=`<tr><td class="cp-band">MCR (table)</td><td class="cp-att"></td><td class="cp-xpcr">${escapeCompareHtml(pt.mcr)}</td></tr>`;
+  return `<table class="compare-payout-table"><colgroup><col style="width:42%"><col><col style="width:56px"></colgroup><thead><tr><th>Band</th><th>Attainment</th><th>xPCR</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap}={}){
@@ -4773,7 +4943,8 @@ function buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap}={}){
       const ptR=parsePayoutData(rightSnap&&rightSnap.fields&&rightSnap.fields[d.key+'Data']);
       html+=`<tr data-section="${escapeCompareHtml(d.section)}" data-type="${d.type}">
       <td><span class="pa-field-name">${escapeCompareHtml(d.label)}</span></td>
-      <td colspan="2">${renderComparePayoutTable(ptL,ptR)}</td>
+      <td>${renderSinglePayoutTable(ptL)}</td>
+      <td>${renderSinglePayoutTable(ptR)}</td>
     </tr>`;
       rowCount++;
       return;
@@ -4871,7 +5042,8 @@ function renderChangeSummary(changes){
   list.innerHTML=changes.map(c=>{
     const st=styles[c.type];
     const trunc=(s,max=40)=>!s||s==='—'?s:(s.length>max?s.substring(0,max)+'…':s);
-    const text=c.type==='add'?`<strong>${c.label} added:</strong> ${trunc(c.right)}`:c.type==='rem'?`<strong>${c.label} removed</strong>`:c.label==='Plan notes'?`<strong>Plan notes:</strong> content differs between plans`:`<strong>${c.label}:</strong> ${trunc(c.left)} → ${trunc(c.right)}`;
+    const lbl=/^(Flavor|Payout table|Bonus) /.test(c.section||'')?`${c.section} · ${c.label}`:c.label;
+    const text=c.type==='add'?`<strong>${lbl} added:</strong> ${trunc(c.right)}`:c.type==='rem'?`<strong>${lbl} removed</strong>`:lbl==='Plan notes'?`<strong>Plan notes:</strong> content differs between plans`:`<strong>${lbl}:</strong> ${trunc(c.left)} → ${trunc(c.right)}`;
     return `<div style="padding:8px 10px;background:${st.bg};border-radius:var(--pa-radius);font-size:12px;border-left:2px solid ${st.border}">${text}</div>`;
   }).join('');
 }
@@ -4887,6 +5059,12 @@ function formatCompareColumnLabel(snap,side){
   return`<div style="font-weight:600;font-size:11px"><i class="ti ${icon}" style="font-size:10px;margin-right:4px;color:var(--pa-theme-primary)"></i>${snap.id} · ${title}</div><div style="font-size:10px;font-weight:400;color:var(--pa-text-secondary);margin-top:2px">${snap.fy} · ${snap.statusLabel}</div>`;
 }
 
+/* Union of flavor labels across both snapshots (order-preserving), with per-label max measure count. */
+function compareFlavorShape(a,b){
+  const labels=[];
+  [a,b].forEach(s=>((s&&s.fields&&s.fields.flavorLabels)||[]).forEach(L=>{if(!labels.includes(L))labels.push(L);}));
+  return labels.map(L=>({label:L,measureCount:Math.max(Number(a?.fields?.[`flavor${L}MeasureCount`])||0,Number(b?.fields?.[`flavor${L}MeasureCount`])||0)}));
+}
 function computeHeadcountDelta(left,right){
   const l=parseInt(left),r=parseInt(right);
   if(isNaN(l)||isNaN(r)||l===r)return'';
@@ -4896,7 +5074,7 @@ function computeHeadcountDelta(left,right){
 
 /* ── Shared Comparison Engine ── */
 const comparePresets={
-  standalone:{left:null,right:null,preset:'Custom comparison',ctx:'standalone',ctxDesc:'Compare published versions, drafts, or any two plan flavors'},
+  standalone:{left:null,right:null,preset:'Custom comparison',ctx:'standalone',ctxDesc:'Compare published versions, drafts, or any two plans'},
   builder:{left:'version|ver-A01-FY27-1',right:'version|ver-A01-FY27-2',preset:'Published vs draft',ctx:'builder',ctxDesc:'Compare your working draft against the published version'},
   approval:{left:'version|ver-A01-FY26-1',right:'version|ver-A01-FY27-2',preset:'Published vs submitted version',ctx:'approval',ctxDesc:'Approver view — published version vs version submitted for approval'},
   duplicate:{left:'version|ver-B01-FY26-1',right:'version|ver-B01-FY27-1',preset:'Duplicate comparison',ctx:'duplicate',ctxDesc:'New revision compared to source after duplication'}
@@ -4990,7 +5168,7 @@ function clearCompareSelection(){
   const identical=document.getElementById('compare-identical-banner');
   if(identical)identical.style.display='none';
   const subtitle=document.getElementById('compare-subtitle');
-  if(subtitle)subtitle.textContent='Pick any two plan flavors to compare — any plan, version, or fiscal year';
+  if(subtitle)subtitle.textContent='Pick any two plans to compare — any plan, version, or fiscal year';
   renderChangeSummary([]);
 }
 
@@ -5008,9 +5186,9 @@ function runComparison(){
     document.getElementById('compare-results').classList.remove('visible');
     document.getElementById('compare-export-btn').style.display='none';
     if(leftSnap||rightSnap){
-      document.getElementById('compare-subtitle').textContent='Select a second plan flavor to compare';
+      document.getElementById('compare-subtitle').textContent='Select a second plan to compare';
     }else{
-      document.getElementById('compare-subtitle').textContent='Pick any two plan flavors to compare — any plan, version, or fiscal year';
+      document.getElementById('compare-subtitle').textContent='Pick any two plans to compare — any plan, version, or fiscal year';
     }
     return;
   }
@@ -5021,13 +5199,13 @@ function runComparison(){
 
   const diffs=[];
   const changes=[];
-  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0),Math.max(Number(leftSnap.fields?.bonusCount)||0,Number(rightSnap.fields?.bonusCount)||0));
+  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0),Math.max(Number(leftSnap.fields?.bonusCount)||0,Number(rightSnap.fields?.bonusCount)||0),compareFlavorShape(leftSnap,rightSnap));
   compareFieldMeta.forEach(meta=>{
     const leftVal=leftSnap.fields[meta.key];
     const rightVal=rightSnap.fields[meta.key];
     const d=diffField(leftVal,rightVal);
     const entry={...meta,left:d.left,right:d.right,type:d.type};
-    if(meta.key==='headcount'&&d.type==='mod')entry.delta=computeHeadcountDelta(d.left,d.right);
+    if(meta.hc&&d.type==='mod')entry.delta=computeHeadcountDelta(d.left,d.right);
     diffs.push(entry);
     if(d.type!=='same'&&!meta.longText){
       changes.push({label:meta.label,left:d.left,right:d.right,type:d.type,section:meta.section});
