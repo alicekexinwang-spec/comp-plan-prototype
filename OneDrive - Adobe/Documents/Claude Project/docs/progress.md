@@ -3,7 +3,80 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — payout table as a matrix (display) (uncommitted)
+## Latest change — quota-band range convention + Role View flavor column (uncommitted)
+1. **Quota bands are now `[prev, to)`** (inclusive lower, exclusive upper — the boundary value belongs
+   to the next/higher band): `< 1.5` / `≥ 1.5 – < 3.5` / `≥ 3.5`. Added a `lowerInclusive` param to
+   `boundsRangeLabel` (passed true from the band config card + live update + `onQuotaBandSetChange` +
+   `seedQuotaBandTable`); updated `quotaBandDesc` (`<`/`≥ – <`/`≥`). Attainment tiers keep `(prev, to]`
+   (`formatAttainmentRange` + tier config unchanged).
+2. **Role View**: added a **Flavor** column (A/B/C) after Role.
+Verified on webui2 (no console errors): band formatter/desc + applied band labels use the new convention,
+tiers unchanged, Role View shows the Flavor column. (Config-set descriptions persist in localStorage —
+clear `compplan_config_sets_v4` for regenerated defaults.) **Not committed.**
+
+## Earlier change — explicit range endpoints (uncommitted)
+Quota-band / attainment-tier range labels now make endpoint inclusion explicit (bands/tiers are
+`(prev, to]`): first `≤ X`, middle `> X – Y`, open top `> X`. Updated `boundsRangeLabel` (config set
+screens + applied band labels), `formatAttainmentRange` (payout summary / matrix / Compare), and the
+inline range in `syncPayoutVctCalcs` (editable builder tier table). Display-only. Verified on webui2 (no
+console errors): formatters + Compare matrix rows read `≤ 100%` / `> 100% – 150%` / `> 150%`. **Not committed.**
+
+## Earlier change — pay measure → payout table link + submit validation (uncommitted)
+Each pay measure now has a **"Payout table" dropdown** on its measure row (stores `m.payoutTableId`;
+options = the version's payout tables). A measure links to one table; a table can be linked by many
+measures. **Submit** (`validateVersionContent`) now requires every measure to link to an existing table
+and every table to have ≥1 measure. Adding/removing a payout table refreshes the dropdowns;
+removing a table clears measures that pointed to it. Seed: `linkByTitle` on multi-table plans (A01,
+B01·FY27, S08·FY27) + a final pass sets each measure's `payoutTableId`. Verified on webui2 (no console
+errors): all seeded versions valid (validate = []), A01 maps correctly, dropdown selection works,
+read-only disabled, both validation errors fire. **Not committed.**
+
+## Earlier change — Compare: persist notes + send for approval (uncommitted)
+- **Plan notes** in Compare now persist to the version (`content.planMeta.designerNote`): bridged the
+  existing `get/setSnapshotNote` to new `get/setVersionNoteById`, so note edits save on the version and
+  round-trip with the builder (`loadBuilderPlanNote`/`saveBuilderPlanNote`; `saveBuilderVersion` +
+  `submitCurrentVersion` preserve `designerNote`).
+- **Send for approval**: added `#compare-submit-btn` + `sendComparePlanForApproval` — auto-detects the
+  editable (draft/withdrawn) selected side and submits via the guarded `submitVersionById`
+  (validation + one-in-queue). Shown only when both sides selected and one is submittable.
+- Verified on webui2 (no errors): note edit → `getVersion(...).content.planMeta.designerNote`, shows in
+  compare box + builder; M01 draft → submit → `pending_review`/`first_review`, button hides; A01 draft →
+  queue-guard alert (A01 v2 already pending); two published → no button. **Not committed.**
+
+## Earlier change — Role View: clickable plan/version (uncommitted)
+Role View rows are now drill-downs: **Plan #** and **Plan Name** link to `openPlanDetail(pk)` (plan
+detail screen); the **Version** label links to `openVersionInBuilder(versionId)` (version in the builder,
+read-only if locked). Added `pk`/`versionId` to each row + a `.rv-link` style. Verified on webui2 (no
+errors): links carry the right handlers; invoking them opens `screen-plan` / `screen-builder`.
+**Not committed.**
+
+## Earlier change — Role View: Role as a column (uncommitted)
+Changed Role View so **Role is a regular column** (Plan # / Plan Name / Role / FY / Version / HC /
+Pay·Mix / measure groups / Bonus / Tether) instead of a full-width section-header row; rows are flat but
+still sorted by role so same-role rows stay adjacent. Removed the section-row logic + `.roleview-group`
+CSS. Verified on webui2 (no errors): 0 group rows, 22 flat rows, Role column populated, Role filter →
+4 Solution Architect rows. **Not committed.**
+
+## Earlier change — Role View filters (uncommitted)
+Added a filter bar to the Role View: **Role / FY / Status / Owner / search**, all feeding
+`renderRoleView`. Role & Owner selects are populated dynamically from the data (`fillRoleViewSelect`,
+preserves current selection); FY/Status are static. Rows filtered before grouping; `maxN` and subtitle
+reflect the filtered set; empty combo shows "No plans match filters". Verified on webui2 (no errors):
+role→1 group/4 rows, FY26→4 rows, Published→10 rows, search "renewal"→20 rows, selection preserved.
+**Not committed** (stacks on the Role View change below).
+
+## Earlier change — Role View (uncommitted)
+Replaced the hardcoded "Multi-Role View" with a data-driven **Role View** (`renderRoleView`; nav label
+"Role View", screen id still `multi`):
+- Lists **every version × flavor across FY26 + FY27**, grouped by flavor **role** (section header rows).
+- Columns: Plan # / Plan Name / FY / Version / HC / Pay·Mix, then a **column group per performance
+  measure** (Measure / VCT Wt% / Perf period / Payout freq, up to 4), then Bonus (`roleBonusSummary`) /
+  Tether. Two-row header (measure super-headers colspan-4); wide table scrolls horizontally.
+- Removed `multiData`/`buildMulti`; wired `renderRoleView` into bootstrap + `showScreen('multi')`.
+- Verified on webui2 (no console errors): 12 role groups, 22 plan versions; Solution Architect shows A01
+  FY26 v1 + FY27 v1/v2/v3 with per-version VCT (50/55/60%), Linearity bonus, tether values. **Not committed.**
+
+## Earlier change — payout table as a matrix (display) (committed 20fa100)
 Display-only: read-only builder view + Compare now render `quota_band`/`target_pct` payout tables as the
 classic **matrix** — quota bands = columns, attainment tiers = rows, xPCR cells, MCR row.
 - New helpers `payoutBandsShareTiers` / `buildPayoutMatrixTable` / `renderPayoutMatrixTables`; bands

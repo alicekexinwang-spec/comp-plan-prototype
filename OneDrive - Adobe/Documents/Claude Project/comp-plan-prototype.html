@@ -301,6 +301,13 @@ tr:hover td{background:var(--pa-surface-hover)}
 .payout-matrix td.cp-band{text-align:left;font-weight:500;vertical-align:middle;word-break:break-word}
 .payout-matrix td.cp-xpcr{text-align:center}
 .payout-matrix tr.cp-mcr td{background:var(--pa-warning-bg);font-weight:600}
+.roleview-table{width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap}
+.roleview-table th{background:var(--pa-canvas);border:1px solid var(--pa-border);padding:5px 8px;font-weight:600;text-align:left;vertical-align:middle}
+.roleview-table td{border:1px solid var(--pa-border);padding:4px 8px;vertical-align:top}
+.roleview-table th.mg{text-align:center;background:var(--pa-theme-light);color:var(--pa-theme-dark)}
+.roleview-table td.num,.roleview-table th.num{text-align:center}
+.rv-link{color:#185FA5;cursor:pointer}
+.rv-link:hover{text-decoration:underline}
 .payout-tier-table{width:100%;border-collapse:collapse;font-size:11px}
 .payout-tier-table th{padding:6px 8px;background:var(--pa-canvas);border:1px solid var(--pa-border);font-weight:600;text-align:left;white-space:nowrap}
 .payout-tier-table td{padding:3px 6px;border:1px solid var(--pa-border);vertical-align:middle}
@@ -671,7 +678,7 @@ tr:hover td{background:var(--pa-surface-hover)}
       <div class="nav-item" onclick="showScreen('library')"><i class="ti ti-files"></i> Compensation Plans</div>
       <div class="nav-item" onclick="enterPlanBuilder()"><i class="ti ti-tool"></i> Plan Builder</div>
       <div class="nav-item" onclick="openComparePlatform('standalone')"><i class="ti ti-columns"></i> Compare Plans</div>
-      <div class="nav-item" onclick="showScreen('multi')"><i class="ti ti-table"></i> Multi-Role View</div>
+      <div class="nav-item" onclick="showScreen('multi')"><i class="ti ti-users"></i> Role View</div>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Workflow</div>
@@ -979,6 +986,7 @@ tr:hover td{background:var(--pa-surface-hover)}
           </div>
           <div class="btn-group">
             <button class="btn btn-sm" id="compare-clear-btn" onclick="clearCompareSelection()" style="display:none"><i class="ti ti-refresh"></i> Start over</button>
+            <button class="btn btn-primary btn-sm" id="compare-submit-btn" onclick="sendComparePlanForApproval()" style="display:none"><i class="ti ti-send"></i> Send for approval</button>
             <button class="btn btn-sm" id="compare-export-btn" style="display:none"><i class="ti ti-download"></i> Export diff</button>
             <button class="btn btn-sm" id="compare-back-btn" style="display:none" onclick="compareGoBack()"><i class="ti ti-arrow-left"></i> Back</button>
           </div>
@@ -1059,25 +1067,22 @@ tr:hover td{background:var(--pa-surface-hover)}
         </div>
       </div>
 
-      <!-- SCREEN 5: MULTI-ROLE -->
+      <!-- SCREEN 5: ROLE VIEW -->
       <div id="screen-multi" class="screen">
         <div class="page-header">
-          <div><div class="page-title">Multi-Role Comparison — FY26 vs FY27</div><div class="page-subtitle">18 roles · Commercial segment · Draft comparison</div></div>
+          <div><div class="page-title">Role View</div><div class="page-subtitle" id="roleview-subtitle">Plans by role · all fiscal years</div></div>
           <div class="btn-group">
-            <select class="filter-select"><option>All segments</option><option selected>Commercial</option></select>
             <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
           </div>
         </div>
-        <div class="grid-4" style="margin-bottom:16px">
-          <div class="metric-card"><div class="metric-label">Roles with changes</div><div class="metric-value">12</div><div class="metric-sub">of 18 total</div></div>
-          <div class="metric-card"><div class="metric-label">Pay mix unchanged</div><div class="metric-value">15</div><div class="metric-sub">3 modified</div></div>
-          <div class="metric-card"><div class="metric-label">Freq. changes</div><div class="metric-value" style="color:#BA7517">7</div><div class="metric-sub">Monthly → Quarterly</div></div>
-          <div class="metric-card"><div class="metric-label">New tethers</div><div class="metric-value" style="color:#3B6D11">4</div><div class="metric-sub">Added in FY27</div></div>
+        <div class="filter-bar">
+          <select class="filter-select" id="roleview-role-filter" onchange="renderRoleView()"><option value="">All roles</option></select>
+          <select class="filter-select" id="roleview-fy-filter" onchange="renderRoleView()"><option value="">All Fiscal Years</option><option value="FY27">FY27</option><option value="FY26">FY26</option></select>
+          <select class="filter-select" id="roleview-status-filter" onchange="renderRoleView()"><option value="">All Statuses</option><option value="draft">Draft</option><option value="pending_review">Pending review</option><option value="approved">Approved</option><option value="withdrawn">Withdrawn</option><option value="published">Published</option></select>
+          <select class="filter-select" id="roleview-owner-filter" onchange="renderRoleView()"><option value="">All Owners</option></select>
+          <input class="search-input" id="roleview-search" placeholder="Search role, plan, measure…" type="search" oninput="renderRoleView()">
         </div>
-        <div class="table-wrap">
-          <table><thead><tr><th>Role</th><th>HC</th><th>Pay mix</th><th>ARR %</th><th>Renewal %</th><th>Perf period</th><th>Payout freq</th><th>Bonus</th><th>Tether</th><th>FY26 HC</th><th>FY27 change</th></tr></thead>
-          <tbody id="multi-tbody"></tbody></table>
-        </div>
+        <div class="table-wrap" id="roleview-table"></div>
       </div>
 
       <!-- SCREEN 6: APPROVAL -->
@@ -1588,7 +1593,7 @@ const screens={
   builder:{title:'Plan Builder'},
   compare:{title:'Compare Plans'},
   plan:{title:'Compensation Plan'},
-  multi:{title:'Multi-Role Comparison'},
+  multi:{title:'Role View'},
   approval:{title:'Approval Review'},
   tracker:{title:'Version Tracker'},
   mechanics:{title:'Plan Mechanics — H01.A'},
@@ -1710,15 +1715,21 @@ function seedConfigSets(){
 function quotaBandDesc(from,to){
   const lab=v=>{v=Number(v);return v>=1000?'$'+v.toLocaleString():'$'+v+' Million';};
   if(to===null||to===''||to==null)return '>='+lab(from)+' USD';
-  if(Number(from)===0)return '<='+lab(to)+' USD';
-  return '>='+lab(from)+' - <='+lab(to)+' USD';
+  if(Number(from)===0)return '<'+lab(to)+' USD';
+  return '>='+lab(from)+' - <'+lab(to)+' USD';
 }
 function findBandSet(id){return quotaBandSets.find(s=>s.id===id);}
 function findTierSet(id){return attainmentTierSets.find(s=>s.id===id);}
-function boundsRangeLabel(from,to,unit){
+function boundsRangeLabel(from,to,unit,lowerInclusive){
+  if(lowerInclusive){ // quota band: [prev, to) — boundary value belongs to the next (higher) band
+    if(to===null||to===''||to==null)return `≥ ${from}${unit}`;
+    if(Number(from)===0)return `< ${to}${unit}`;
+    return `≥ ${from}${unit} – < ${to}${unit}`;
+  }
+  // attainment tier: (prev, to]
   if(to===null||to===''||to==null)return `> ${from}${unit}`;
   if(Number(from)===0)return `≤ ${to}${unit}`;
-  return `${from}${unit} – ${to}${unit}`;
+  return `> ${from}${unit} – ${to}${unit}`;
 }
 function renderBoundsSetCard(s,kind){
   const unit=kind==='tier'?'%':'';
@@ -1732,7 +1743,7 @@ function renderBoundsSetCard(s,kind){
   let prev=0;
   const rows=s.bounds.map((b,i)=>{
     const from=prev;const to=(b===''||b==null)?null:Number(b);
-    const range=boundsRangeLabel(from,to,unit);
+    const range=boundsRangeLabel(from,to,unit,isBand);
     const descCell=isBand?`<td><input class="form-input" value="${((s.descriptions&&s.descriptions[i])||'').replace(/"/g,'&quot;')}" oninput="setBandDesc('${s.id}',${i},this.value)" placeholder="${quotaBandDesc(from,to).replace(/"/g,'&quot;')}" style="min-width:220px"></td>`:'';
     if(to!=null)prev=to;
     return `<tr>
@@ -1782,7 +1793,7 @@ function refreshBoundsSetRanges(setId){
   if(!set)return;
   const cells=card.querySelectorAll('tbody tr .tier-range-cell');
   let prev=0;
-  set.bounds.forEach((b,i)=>{const from=prev;const to=(b===''||b==null)?null:Number(b);if(cells[i])cells[i].textContent=boundsRangeLabel(from,to,unit);if(to!=null)prev=to;});
+  set.bounds.forEach((b,i)=>{const from=prev;const to=(b===''||b==null)?null:Number(b);if(cells[i])cells[i].textContent=boundsRangeLabel(from,to,unit,kind==='band');if(to!=null)prev=to;});
 }
 
 /* ── Compensation Plan → Flavor → Version data model ──
@@ -2345,7 +2356,7 @@ function submitCurrentVersion(){
   const v=getVersion(currentVersionId);
   if(v&&builderWorkingContent&&isVersionEditable(v)){
     const gv=id=>document.getElementById(id)?.value;
-    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:builderWorkingContent.planMeta.bonuses||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:builderWorkingContent.planMeta.bonuses||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||builderWorkingContent.planMeta.designerNote||''};
     syncBuilderPayoutTablesFromDOM();
     v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   }
@@ -2586,6 +2597,7 @@ function showScreen(id){
   if(id==='compare')document.querySelector('.nav-item[onclick*="openComparePlatform"]')?.classList.add('active');
   if(id==='builder')document.querySelector('.nav-item[onclick*="enterPlanBuilder"]')?.classList.add('active');
   if(id==='plan')document.querySelector('.nav-item[onclick*="showScreen(\'library\'"]')?.classList.add('active');
+  if(id==='multi')renderRoleView();
   if(id==='config-bands')renderConfigBandSets();
   if(id==='config-tiers')renderConfigTierSets();
   if(id==='metric-definitions')renderMetricDefinitionsList();
@@ -2796,6 +2808,7 @@ function populateBuilderFromVersion(v){
   initBuilderDropdowns();
   const pk=planKey(v.flavorId,v.fy);
   builderWorkingContent=JSON.parse(JSON.stringify(v.content||blankVersionContent(pk)));
+  (builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId==null)m.payoutTableId='';}));
   const pm=builderWorkingContent.planMeta||{};
   const {planId}=parsePlanKey(pk);
   const plan=getPlan(planId,v.fy);
@@ -2849,7 +2862,7 @@ function renderBuilderFlavorBlock(fl,fi,editable){
       </div></div>
     </div>
     <table class="payout-tier-table builder-measure-table" style="margin-top:8px;width:100%">
-      <thead><tr><th style="min-width:280px">Performance Measure(s)</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="width:32px"></th></tr></thead>
+      <thead><tr><th style="min-width:280px">Performance Measure(s)</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     ${editable?`<div style="padding:10px 14px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
@@ -2863,6 +2876,7 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
     <td><div class="xpcr-cell"><input class="form-input" value="${(m.vct||'').replace(/%/g,'')}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderVctInput(${fi},${mi},this)" style="width:44px" placeholder="e.g. 50"><span class="pct-suffix">%</span></div></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
+    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'payoutTableId',this.value)"><option value="" ${!m.payoutTableId?'selected':''}>Select…</option>${(builderWorkingContent.payoutTables||[]).map((pt,pi)=>`<option value="${pt.id}" ${pt.id===m.payoutTableId?'selected':''}>${escapeCompareHtml(pt.title||('Payout table '+(pi+1)))}</option>`).join('')}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
   </tr>`;
 }
@@ -2872,14 +2886,14 @@ function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-
 function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
 function onBuilderVctInput(fi,mi,el){el.value=el.value.replace(/[^0-9.]/g,'');setBuilderFlavorMeasure(fi,mi,'vct',el.value?el.value+'%':'');recalcFlavorVctSum(fi);}
 function onBuilderCapInput(slot,el){el.value=el.value.replace(/[^0-9.]/g,'');syncPayoutVctCalcs(slot);}
-function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',vct:'',perf:'',pay:''});renderBuilderFlavors();}
+function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',vct:'',perf:'',pay:'',payoutTableId:''});renderBuilderFlavors();}
 function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();}
 function addBuilderFlavor(){
   if(!builderMeasuresEditable)return;
   if(builderWorkingContent.flavors.length>=MAX_BUILDER_FLAVORS){alert(`Maximum ${MAX_BUILDER_FLAVORS} flavors per comp plan.`);return;}
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:''}]});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:''}]});
   renderBuilderFlavors();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();}
@@ -2960,7 +2974,7 @@ function onQuotaBandSetChange(slot,setId){
     const set=findBandSet(setId);
     const bounds=(set&&set.bounds.length)?set.bounds:[''];
     let prev=0;
-    cur.thresholds=bounds.map((b,idx)=>{const to=(b===''||b==null)?null:Number(b);const label=boundsRangeLabel(prev,to,'');if(to!=null)prev=to;return{id:payoutUid(),label,description:(set&&set.descriptions&&set.descriptions[idx])||'',mcr:null,tierSetId:'',tiers:[]};});
+    cur.thresholds=bounds.map((b,idx)=>{const to=(b===''||b==null)?null:Number(b);const label=boundsRangeLabel(prev,to,'',true);if(to!=null)prev=to;return{id:payoutUid(),label,description:(set&&set.descriptions&&set.descriptions[idx])||'',mcr:null,tierSetId:'',tiers:[]};});
   }else cur.thresholds=[];
   builderWorkingContent.payoutTables[r.idx]=cur;
   renderBuilderPayoutTables();
@@ -2981,13 +2995,15 @@ function addBuilderPayoutTable(){
   if(!builderMeasuresEditable)return;
   syncBuilderPayoutTablesFromDOM();
   builderWorkingContent.payoutTables.push(Object.assign({id:payoutUid(),title:''},blankPayoutTable()));
-  renderBuilderPayoutTables();
+  renderBuilderPayoutTables();renderBuilderFlavors();
 }
 function removeBuilderPayoutTable(idx){
   if(!builderMeasuresEditable)return;
   syncBuilderPayoutTablesFromDOM();
+  const rid=builderWorkingContent.payoutTables[idx]&&builderWorkingContent.payoutTables[idx].id;
   builderWorkingContent.payoutTables.splice(idx,1);
-  renderBuilderPayoutTables();
+  if(rid)(builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId===rid)m.payoutTableId='';}));
+  renderBuilderPayoutTables();renderBuilderFlavors();
 }
 function setBuilderPayoutTitle(idx,val){const pt=builderWorkingContent.payoutTables[idx];if(pt)pt.title=val;}
 const MAX_BUILDER_BONUSES=5;
@@ -3060,6 +3076,16 @@ function validateVersionContent(content){
     if(Math.round(sum)!==100)errs.push(`Flavor ${fl.flavorLabel} pay measures total ${sum%1===0?sum:sum.toFixed(1)}% (must be 100%).`);
     if((fl.measures||[]).length>MAX_BUILDER_MEASURES)errs.push(`Flavor ${fl.flavorLabel} has more than ${MAX_BUILDER_MEASURES} pay measures.`);
   });
+  // Pay measure ↔ payout table linking: every measure links to an existing table; every table ≥1 measure.
+  const tableIds=new Set((content.payoutTables||[]).map(t=>t.id));
+  const linkedTableIds=new Set();
+  (content.flavors||[]).forEach(fl=>(fl.measures||[]).forEach((m,i)=>{
+    if(!m.payoutTableId||!tableIds.has(m.payoutTableId))errs.push(`Flavor ${fl.flavorLabel} — pay measure "${m.description||('Measure '+(i+1))}" has no payout table linked.`);
+    else linkedTableIds.add(m.payoutTableId);
+  }));
+  (content.payoutTables||[]).forEach((t,i)=>{
+    if(!linkedTableIds.has(t.id))errs.push(`Payout table "${t.title||('#'+(i+1))}" has no pay measure linked.`);
+  });
   return errs;
 }
 function saveBuilderVersion(){
@@ -3068,7 +3094,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.bonuses)||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies')};
+  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.bonuses)||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote)||''};
   syncBuilderPayoutTablesFromDOM();
   v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -3753,9 +3779,10 @@ function parseAttainmentRange(label){
 }
 
 function formatAttainmentRange(from,to){
-  if(to==null||to==='')return `>${from}%`;
+  if(to==null||to==='')return `> ${from}%`;
   if(from===to)return `${from}%`;
-  return `${from}% – ${to}%`;
+  if(Number(from)===0)return `≤ ${to}%`;
+  return `> ${from}% – ${to}%`;
 }
 
 function templateKeyToPayoutStructure(key){
@@ -3993,18 +4020,27 @@ function getDefaultPlanNote(p,fy){
   return `${p.name} FY26 approved baseline.`;
 }
 
+function versionIdFromKey(key){return (key&&key.indexOf('version|')===0)?key.split('|')[1]:null;}
+function getVersionNoteById(id){const v=getVersion(id);return (v&&v.content&&v.content.planMeta&&v.content.planMeta.designerNote)||'';}
+function setVersionNoteById(id,text){const v=getVersion(id);if(v&&v.content){if(!v.content.planMeta)v.content.planMeta={};v.content.planMeta.designerNote=text;}}
+
 function getSnapshotNote(key,p,fy){
+  const vid=versionIdFromKey(key);
+  if(vid){const n=getVersionNoteById(vid);if(n)return n;}
   if(planNotesStore[key]!=null)return planNotesStore[key];
   return getDefaultPlanNote(p,fy);
 }
 
 function setSnapshotNote(key,value){
   planNotesStore[key]=value;
+  const vid=versionIdFromKey(key);
+  if(vid)setVersionNoteById(vid,value);
   const snap=getSnapshot(key);
   if(snap)snap.fields.designerNote=value;
 }
 
 function saveBuilderPlanNote(value){
+  if(builderWorkingContent&&builderWorkingContent.planMeta)builderWorkingContent.planMeta.designerNote=value;
   if(!currentDraftPlan)return;
   currentDraftPlan.designerNote=value;
   const key=`${currentDraftPlan.id}|${currentDraftPlan.fy||'FY27'}|${currentDraftPlan.version||'1.0'}|${currentDraftPlan.status||'draft'}`;
@@ -4016,7 +4052,9 @@ function saveBuilderPlanNote(value){
 function loadBuilderPlanNote(planId){
   const el=document.getElementById('builder-plan-notes');
   if(!el)return;
-  if(currentDraftPlan?.designerNote!=null){el.value=currentDraftPlan.designerNote;return;}
+  const wc=builderWorkingContent&&builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote;
+  if(wc){el.value=wc;return;}
+  if(currentDraftPlan?.designerNote){el.value=currentDraftPlan.designerNote;return;}
   const fy27=planSnapshots.find(s=>s.id===planId&&s.fy==='FY27');
   el.value=fy27?.fields?.designerNote||planDetails[planId]?.notes||'';
 }
@@ -4044,7 +4082,7 @@ function blankVersionContent(pk){
   const f0=getFlavorsForPlan(pk)[0];
   return{
     planMeta:{planName:plan?.planName||planId,bonuses:[],tether:'',keyPolicies:''},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:''}]}],
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:''}]}],
     payoutTables:[],
   };
 }
@@ -4071,7 +4109,7 @@ function seedQuotaBandTable(title,bandSetName,tierSetName,xpcrByTier,opts){
   let prev=0;
   const thresholds=bounds.map((b,i)=>{
     const to=(b===''||b==null)?null:Number(b);
-    const label=boundsRangeLabel(prev,to,''); if(to!=null)prev=to;
+    const label=boundsRangeLabel(prev,to,'',true); if(to!=null)prev=to;
     return{id:payoutUid(),label,description:(bandSet&&bandSet.descriptions&&bandSet.descriptions[i])||'',
       mcr:opts.bandMcr||null,tierSetId:(tierSet&&tierSet.id)||'',tiers:seedTiersFromTierSet(tierSet,xpcrByTier)};
   });
@@ -4102,6 +4140,7 @@ const SEED_CONTENT={
   'A01|FY27':{
     tether:'Renewal tether 80%',
     bonuses:[{type:'Linearity Bonus',payoutDetails:'Paid quarterly when quarterly linearity reaches ≥85% of quota pacing.',maxPayout:'150% of quarterly VCT'}],
+    linkByTitle:{'New Business Accelerator':['Net New ARR','Strategic Products','Pipeline Generation'],'Renewal Payout Schedule':['Renewal ARR']},
     payouts:()=>[
       seedQuotaBandTable('New Business Accelerator','<$1.5, ≥$1.5–<$3.5, ≥$3.5','0–100%, >100–150%, >150%',[1,1.5,2],{cap:'200%',threshold:50,bandMcr:'7%'}),
       seedQuotaBandTable('Renewal Payout Schedule','<$1.5, ≥$1.5','0–100%, >100%',[1,1.25],{}),
@@ -4114,6 +4153,7 @@ const SEED_CONTENT={
   },
   'A01|FY26':{
     tether:'Renewal tether 75%',bonuses:[],
+    linkByTitle:{'New Business Accelerator':['Net New ARR','Strategic Products','Pipeline Generation'],'Renewal Payout Schedule':['Renewal ARR']},
     payouts:()=>[
       seedQuotaBandTable('New Business Accelerator','<$1.5, ≥$1.5–<$3.5, ≥$3.5','0–100%, >100–150%, >150%',[1,1.5,1.75],{cap:'250%',threshold:50,bandMcr:'7%'}),
       seedQuotaBandTable('Renewal Payout Schedule','<$1.5, ≥$1.5','0–100%, >100%',[1,1.2],{}),
@@ -4122,6 +4162,7 @@ const SEED_CONTENT={
   },
   'B01|FY27':{
     tether:'—',bonuses:[],
+    linkByTitle:{'Field Accelerator':['Net New ARR','Pipeline Generation','Strategic Products'],'Renewal Payout Schedule':['Renewal ARR']},
     payouts:()=>[
       seedQuotaBandTable('Field Accelerator','<$10, ≥$10–<$20, ≥$20','0–100%, >100–150%, >150%',[1,1.5,2],{cap:'200%'}),
       seedQuotaBandTable('Renewal Payout Schedule','<$1.5, ≥$1.5','0–100%, >100%',[1,1.25],{}),
@@ -4146,6 +4187,7 @@ const SEED_CONTENT={
       {type:'M1 & M2 Achievement Bonus',payoutDetails:'Bonus when both M1 (Net New ARR) and M2 (Renewal) exceed 100% attainment for the period.',maxPayout:'$25,000'},
       {type:'Lead Referral Bonus',payoutDetails:'Flat bonus per qualified referral converted to closed-won.',maxPayout:'$10,000'},
     ],
+    linkByTitle:{'New Business Accelerator':['Net New ARR','Pipeline Generation'],'Target Attainment Payout':['Renewal ARR','Strategic Products']},
     payouts:()=>[
       seedQuotaBandTable('New Business Accelerator','<$1, ≥$1–<$3, ≥$3','0–100%, >100–150%, >150%',[1,1.5,2],{cap:'200%',threshold:60}),
       seedTargetPctTable('Target Attainment Payout',[
@@ -4213,6 +4255,17 @@ function seedVersionContent(){
   };
   setA(getVersion('ver-A01-FY27-2'),[mkMeasure('Net New ARR','55%','Annual','Quarterly'),mkMeasure('Renewal ARR','25%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 85%',2.25);
   setA(getVersion('ver-A01-FY27-3'),[mkMeasure('Net New ARR','60%','Annual','Quarterly'),mkMeasure('Renewal ARR','20%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 90%',2.5);
+  // Final pass: link each measure to a payout table (per linkByTitle, else the first table).
+  planVersions.forEach(ver=>{
+    const c=ver.content;if(!c)return;
+    const tables=c.payoutTables||[];
+    const linkMap=SEED_CONTENT[planKey(ver.flavorId,ver.fy)]?.linkByTitle||null;
+    const tableIdForMeasure=desc=>{
+      if(linkMap){const hit=tables.find(t=>(linkMap[t.title]||[]).includes(desc));if(hit)return hit.id;}
+      return tables[0]?tables[0].id:'';
+    };
+    (c.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{m.payoutTableId=tableIdForMeasure(m.description);}));
+  });
 }
 /* Build the field-shape that compareFieldMeta/diffField consume, from a version's content.
    Compare is plan/version-level: plan/version-level fields once, then per-flavor fields
@@ -4493,7 +4546,7 @@ function syncPayoutVctCalcs(slot){
       const to=toRaw===''?null:Number(toRaw);
       const xpcrRaw=(row.querySelector('[data-field="xpcr"]')?.value||'').trim();
       const rangeCell=row.querySelector('[data-range]');
-      if(rangeCell)rangeCell.textContent=(to==null)?`> ${prev}%`:`${prev}% – ${to}%`;
+      if(rangeCell)rangeCell.textContent=(to==null)?`> ${prev}%`:(prev===0?`≤ ${to}%`:`> ${prev}% – ${to}%`);
       const cell=row.querySelector('[data-calc-vct]');
       if(to==null||xpcrRaw===''){ if(cell)cell.textContent='—'; if(to!=null)prev=to; return; }
       cum+=(to-prev)*parseXpcrValue(xpcrRaw); // marginal contribution of this bracket
@@ -5165,6 +5218,8 @@ function clearCompareSelection(){
   if(results)results.classList.remove('visible');
   const exportBtn=document.getElementById('compare-export-btn');
   if(exportBtn)exportBtn.style.display='none';
+  const submitBtn=document.getElementById('compare-submit-btn');
+  if(submitBtn)submitBtn.style.display='none';
   const identical=document.getElementById('compare-identical-banner');
   if(identical)identical.style.display='none';
   const subtitle=document.getElementById('compare-subtitle');
@@ -5178,6 +5233,38 @@ function compareGoBack(){
   if(compareReturnScreen==='plan'&&currentPlanKey)renderPlanDetail(currentPlanKey);
 }
 
+function compareSubmittableVersionId(leftSnap,rightSnap){
+  // Prefer the right side (the "proposal"), then left; return the first editable version id.
+  for(const snap of [rightSnap,leftSnap]){
+    if(!snap)continue;
+    const vid=snap.proposalId||versionIdFromKey(snap.key);
+    const v=vid?getVersion(vid):null;
+    if(v&&isVersionEditable(v))return vid;
+  }
+  return null;
+}
+function updateCompareSubmitBtn(leftSnap,rightSnap){
+  const btn=document.getElementById('compare-submit-btn');
+  if(!btn)return;
+  const vid=compareSubmittableVersionId(leftSnap,rightSnap);
+  if(vid){
+    const v=getVersion(vid);
+    btn.style.display='inline-flex';
+    btn.title=`Send ${v.flavorId} v${v.versionNumber} for approval`;
+    btn.dataset.versionId=vid;
+  }else{
+    btn.style.display='none';
+    btn.dataset.versionId='';
+  }
+}
+function sendComparePlanForApproval(){
+  const leftSnap=getSnapshot(compareSelection.left);
+  const rightSnap=getSnapshot(compareSelection.right);
+  const vid=compareSubmittableVersionId(leftSnap,rightSnap);
+  if(!vid){alert('Select a draft version to send for approval.');return;}
+  submitVersionById(vid);
+  runComparison();
+}
 function runComparison(){
   const leftSnap=getSnapshot(compareSelection.left);
   const rightSnap=getSnapshot(compareSelection.right);
@@ -5185,6 +5272,7 @@ function runComparison(){
   if(!leftSnap||!rightSnap){
     document.getElementById('compare-results').classList.remove('visible');
     document.getElementById('compare-export-btn').style.display='none';
+    const sb=document.getElementById('compare-submit-btn');if(sb)sb.style.display='none';
     if(leftSnap||rightSnap){
       document.getElementById('compare-subtitle').textContent='Select a second plan to compare';
     }else{
@@ -5194,6 +5282,7 @@ function runComparison(){
   }
   document.getElementById('compare-results').classList.add('visible');
   document.getElementById('compare-export-btn').style.display='inline-flex';
+  updateCompareSubmitBtn(leftSnap,rightSnap);
   document.getElementById('compare-left-label').innerHTML=formatCompareColumnLabel(leftSnap,'left');
   document.getElementById('compare-right-label').innerHTML=formatCompareColumnLabel(rightSnap,'right');
 
@@ -5314,35 +5403,95 @@ function buildLibrary(){
   }).join('')||'<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--muted)">No comp plans match filters</td></tr>';
 }
 
-const multiData=[
-  {role:'DX Account Exec',hc:284,mix:'70/30',arr:'50%',renewal:'30%',period:'Annual',freq:'Quarterly',bonus:'10%',tether:'Yes',fy26hc:271,change:'+13'},
-  {role:'CXO Product Spec.',hc:156,mix:'65/35',arr:'60%',renewal:'20%',period:'Annual',freq:'Quarterly',bonus:'15%',tether:'No',fy26hc:148,change:'+8'},
-  {role:'Commerce AE',hc:203,mix:'70/30',arr:'55%',renewal:'25%',period:'Annual',freq:'Quarterly',bonus:'10%',tether:'No',fy26hc:210,change:'-7'},
-  {role:'SMB AE',hc:412,mix:'75/25',arr:'65%',renewal:'20%',period:'Semi-annual',freq:'Monthly',bonus:'8%',tether:'No',fy26hc:398,change:'+14'},
-  {role:'Enterprise AE',hc:89,mix:'60/40',arr:'45%',renewal:'35%',period:'Annual',freq:'Quarterly',bonus:'20%',tether:'Yes',fy26hc:92,change:'-3'},
-  {role:'SMB Renewal Spec.',hc:178,mix:'80/20',arr:'20%',renewal:'65%',period:'Annual',freq:'Quarterly',bonus:'10%',tether:'Yes',fy26hc:165,change:'+13'},
-  {role:'Partner Channel AE',hc:67,mix:'65/35',arr:'50%',renewal:'25%',period:'Annual',freq:'Semi-annual',bonus:'12%',tether:'No',fy26hc:70,change:'-3'},
-  {role:'Strategic Named Acct',hc:44,mix:'55/45',arr:'40%',renewal:'35%',period:'Annual',freq:'Quarterly',bonus:'25%',tether:'Yes',fy26hc:41,change:'+3'},
-];
-
-function buildMulti(){
-  const tbody=document.getElementById('multi-tbody');
-  if(!tbody)return;
-  tbody.innerHTML=multiData.map(r=>{
-    const chg=parseInt(r.change);
-    const chgColor=chg>0?'#3B6D11':chg<0?'#A32D2D':'var(--muted)';
-    return`<tr>
-      <td style="font-weight:500;font-size:12px">${r.role}</td>
-      <td>${r.hc}</td><td style="font-size:11px">${r.mix}</td>
-      <td>${r.arr}</td><td>${r.renewal}</td>
-      <td style="font-size:11px">${r.period}</td>
-      <td style="font-size:11px">${r.freq}</td>
-      <td>${r.bonus}</td>
-      <td>${r.tether==='Yes'?'<span class="badge badge-approved">Yes</span>':'<span class="badge badge-draft">No</span>'}</td>
-      <td>${r.fy26hc}</td>
-      <td style="font-weight:500;color:${chgColor}">${r.change}</td>
-    </tr>`;
-  }).join('');
+/* Role View — every version × flavor, grouped by flavor role, all fiscal years. */
+function roleBonusSummary(bonuses){
+  if(!Array.isArray(bonuses)||!bonuses.length)return 'None';
+  return bonuses.map(b=>{const t=b.type||'—';return b.maxPayout?`${t} (max ${b.maxPayout})`:t;}).join('; ');
+}
+function renderRoleView(){
+  const cont=document.getElementById('roleview-table');
+  if(!cont)return;
+  const rows=[];
+  planVersions.forEach(v=>{
+    const c=v.content;if(!c)return;
+    const plan=getPlan(v.flavorId,v.fy);
+    (c.flavors||[]).forEach(fl=>{
+      rows.push({
+        role:(fl.role||'').trim()||'—',
+        flavorLabel:fl.flavorLabel||'—',
+        planId:v.flavorId,
+        pk:planKey(v.flavorId,v.fy),
+        versionId:v.versionId,
+        planName:(c.planMeta&&c.planMeta.planName)||plan?.planName||v.flavorId,
+        fy:v.fy,
+        verLabel:v.label||('v'+v.versionNumber),
+        status:v.status,
+        verNum:v.versionNumber||0,
+        hc:(fl.headcount!=null&&fl.headcount!=='')?fl.headcount:'—',
+        payMix:(fl.payMixBase!=null&&fl.payMixBase!==''&&fl.payMixVar!=null&&fl.payMixVar!=='')?`${fl.payMixBase} / ${fl.payMixVar}`:'—',
+        measures:fl.measures||[],
+        bonus:roleBonusSummary(c.planMeta&&c.planMeta.bonuses),
+        tether:(c.planMeta&&c.planMeta.tether)||'—',
+        owner:plan?.owner||'—',
+      });
+    });
+  });
+  // Populate dynamic filter dropdowns (preserve current selection) from all rows.
+  fillRoleViewSelect('roleview-role-filter',[...new Set(rows.map(r=>r.role))].sort((a,b)=>a.localeCompare(b)),'All roles');
+  fillRoleViewSelect('roleview-owner-filter',[...new Set(rows.map(r=>r.owner))].filter(o=>o&&o!=='—').sort((a,b)=>a.localeCompare(b)),'All Owners');
+  // Read filters.
+  const roleF=document.getElementById('roleview-role-filter')?.value||'';
+  const fyF=document.getElementById('roleview-fy-filter')?.value||'';
+  const statusF=document.getElementById('roleview-status-filter')?.value||'';
+  const ownerF=document.getElementById('roleview-owner-filter')?.value||'';
+  const q=(document.getElementById('roleview-search')?.value||'').toLowerCase().trim();
+  const filtered=rows.filter(r=>{
+    if(roleF&&r.role!==roleF)return false;
+    if(fyF&&r.fy!==fyF)return false;
+    if(statusF&&r.status!==statusF)return false;
+    if(ownerF&&r.owner!==ownerF)return false;
+    if(q){
+      const hay=`${r.planId} ${r.planName} ${r.role} ${r.fy} ${r.verLabel} ${r.bonus} ${r.tether} ${(r.measures||[]).map(m=>(m.description||'')+' '+(m.vct||'')).join(' ')}`.toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+  const sub=document.getElementById('roleview-subtitle');
+  if(!filtered.length){
+    cont.innerHTML='<p style="font-size:12px;color:var(--pa-text-secondary);padding:12px">No plans match filters.</p>';
+    if(sub)sub.textContent='0 roles · 0 plan versions';
+    return;
+  }
+  const maxN=Math.max(1,Math.min(MAX_BUILDER_MEASURES,filtered.reduce((m,r)=>Math.max(m,r.measures.length),0)));
+  const roles=[...new Set(filtered.map(r=>r.role))];
+  const esc=escapeCompareHtml;
+  // header (two rows) — Role is a column
+  let head=`<thead><tr>`;
+  ['Plan #','Plan Name','Role','Flavor','FY','Version','HC','Pay / Mix'].forEach(h=>{head+=`<th rowspan="2">${h}</th>`;});
+  for(let n=1;n<=maxN;n++)head+=`<th class="mg" colspan="4">Measure ${n}</th>`;
+  head+=`<th rowspan="2">Bonus</th><th rowspan="2">Tether</th></tr><tr>`;
+  for(let n=1;n<=maxN;n++)head+=`<th>Performance measure</th><th class="num">VCT Wt%</th><th>Performance period</th><th>Payout frequency</th>`;
+  head+=`</tr></thead>`;
+  const sorted=filtered.slice().sort((a,b)=>a.role.localeCompare(b.role)||a.planId.localeCompare(b.planId)||a.fy.localeCompare(b.fy)||a.verNum-b.verNum);
+  let body='';
+  sorted.forEach(r=>{
+    let cells=`<td style="font-weight:600"><span class="rv-link" onclick="openPlanDetail('${r.pk}')">${esc(r.planId)}</span></td><td><span class="rv-link" onclick="openPlanDetail('${r.pk}')">${esc(r.planName)}</span></td><td style="font-weight:500">${esc(r.role)}</td><td class="num">${esc(r.flavorLabel)}</td><td class="num">${esc(r.fy)}</td><td><span class="rv-link" onclick="openVersionInBuilder('${r.versionId}')">${esc(r.verLabel)}</span> · <span style="color:var(--pa-text-secondary)">${esc(VERSION_STATUS_LABELS[r.status]||r.status)}</span></td><td class="num">${esc(String(r.hc))}</td><td class="num">${esc(r.payMix)}</td>`;
+    for(let n=0;n<maxN;n++){
+      const m=r.measures[n];
+      if(m){cells+=`<td>${esc(m.description||'—')}</td><td class="num">${esc(m.vct||'—')}</td><td>${esc(m.perf||'—')}</td><td>${esc(m.pay||'—')}</td>`;}
+      else{cells+=`<td>—</td><td class="num">—</td><td>—</td><td>—</td>`;}
+    }
+    cells+=`<td style="white-space:normal;max-width:220px">${esc(r.bonus)}</td><td style="white-space:normal;max-width:160px">${esc(r.tether)}</td>`;
+    body+=`<tr>${cells}</tr>`;
+  });
+  cont.innerHTML=`<table class="roleview-table">${head}<tbody>${body}</tbody></table>`;
+  if(sub)sub.textContent=`${roles.length} role${roles.length===1?'':'s'} · ${filtered.length} plan version${filtered.length===1?'':'s'} · ${fyF||'FY26 & FY27'}`;
+}
+function fillRoleViewSelect(id,values,allLabel){
+  const sel=document.getElementById(id);if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">${allLabel}</option>`+values.map(v=>`<option value="${escapeCompareHtml(v)}">${escapeCompareHtml(v)}</option>`).join('');
+  sel.value=values.includes(cur)?cur:'';
 }
 
 const trackerData=[
@@ -5431,7 +5580,7 @@ renderBuilderMeasures(getDefaultMeasureConfigs(2));
 buildCompareSelects();
 compareSelection={left:null,right:null};
 buildLibrary();
-buildMulti();
+renderRoleView();
 buildProposalTracker();
 buildCharts();
 clearCompareSelection();

@@ -90,8 +90,10 @@ include only the minimum user-facing information needed to understand and use th
   measures[{description,vct,perf,pay}]}],
   payoutTables[{id,title,type,bandSetId,thresholds[{label,description,tierSetId,mcr,
   tiers[{attainmentFrom,attainmentTo,xPCR,vctAtMax,mcr}]}],mcr,note,globalVctCap,prorateVct,payCurveType,threshold}] }`.
-  **Performance measures and payout tables are INDEPENDENT — no mapping.** Measures have no
-  `measureId`; the free-text "Performance Measure(s)" (`description`) is the measure's only name.
+  The free-text "Performance Measure(s)" (`description`) is the measure's name; each measure also has a
+  **`payoutTableId`** linking it to exactly one payout table (chosen via a "Payout table" dropdown on the
+  measure row). **Submit** (`validateVersionContent`) requires every measure to link to an existing
+  payout table and every payout table to have ≥1 measure linked. Measures carry no `measureId`/metric.
   `payoutTables` is a **version-level array** (shared across the version's flavors) added manually via
   an **"Add payout table"** button; each has its own `id` (`payoutUid()`) + free-text `title`.
   `planMeta.bonuses` is a **version-level list of up to 5** (`MAX_BUILDER_BONUSES`), each
@@ -134,7 +136,12 @@ include only the minimum user-facing information needed to understand and use th
   `quotaBandSets` / `attainmentTierSets`, persisted to localStorage (`compplan_config_sets_v4`). Each
   set = `{id,name,bounds:[num]}` (band sets also carry a parallel `descriptions:[str]`); ranges
   auto-derive from the upper bounds. These feed the payout builder's set-driven construction, and a
-  band's description shows on applied payout bands + in Compare.
+  band's description shows on applied payout bands + in Compare. Range labels are **explicit about
+  endpoints**, with **different conventions per set type**: **quota bands are `[prev, to)`** (inclusive
+  lower, exclusive upper — the boundary value belongs to the next/higher band): first `< X`, middle
+  `≥ X – < Y`, open top `≥ X` (`boundsRangeLabel(…,lowerInclusive=true)`, `quotaBandDesc`). **Attainment
+  tiers are `(prev, to]`**: first `≤ X`, middle `> X – Y`, open top `> X` (`boundsRangeLabel(…,false)`,
+  `formatAttainmentRange`).
 
 ## Conventions
 - Builder is driven entirely by `version.content` via `builderWorkingContent`; edits persist on
@@ -151,13 +158,27 @@ include only the minimum user-facing information needed to understand and use th
   information → Flavor A/B/C → Payout table N → Bonus N → Tether**; each plan's payout table renders
   as its **own standalone table** in its column (`renderSinglePayoutTable`), no diff highlighting.
   `buildCompareFieldMeta(payoutCount,bonusCount,flavors)` is rebuilt per comparison from
-  `max(both counts)` + the union of flavor labels (`compareFlavorShape`).
+  `max(both counts)` + the union of flavor labels (`compareFlavorShape`). The per-plan **note** textareas
+  persist to the version (`content.planMeta.designerNote`, bridged via `get/setSnapshotNote` ↔
+  `get/setVersionNoteById`; round-trips with the builder plan-notes). A **"Send for approval"** button
+  (`#compare-submit-btn` → `sendComparePlanForApproval`) auto-submits the editable (draft/withdrawn)
+  selected side via `submitVersionById` (its validation + one-in-queue guards); shown only when both
+  sides are selected and one is submittable.
 - **Payout table display (read-only builder view + Compare) is a matrix** for `quota_band`/`target_pct`:
   **quota bands = columns, attainment tiers = rows, xPCR in cells, MCR row** (`renderPayoutMatrixTables`
   / `buildPayoutMatrixTable`, class `.payout-matrix`). Bands are **merged into one matrix when they share
   the same tier axis** (`payoutBandsShareTiers` — same `tierSetId` / same tier bounds), else rendered as
   **separate one-column tables**. `attainment_only` keeps its tier-list rendering. The **editable** builder
   keeps the per-band stacked editor (display-only change).
+- **Role View** (nav "Role View", screen id still `multi`, `renderRoleView`) replaced the old hardcoded
+  Multi-Role View: a data-driven table of **every version × flavor across all FYs**, sorted by flavor
+  **role** (Role is a **column**, not a section header). Columns: Plan # / Plan Name / Role / Flavor / FY / Version / HC / Pay·Mix, then one
+  **column group per performance measure** (Measure / VCT Wt% / Perf period / Payout freq, up to
+  `MAX_BUILDER_MEASURES`), then Bonus (`roleBonusSummary` joins bonus types) / Tether. Has a filter bar
+  (Role / FY / Status / Owner / search) feeding the same `renderRoleView`; Role & Owner selects are
+  populated dynamically (`fillRoleViewSelect`, selection-preserving). Renders lazily via
+  `showScreen('multi')` + at bootstrap. Plan #/Plan Name cells link to `openPlanDetail(pk)` and the
+  Version cell links to `openVersionInBuilder(versionId)`.
 - Legacy `plans[]` array + `syncLegacyFromVersions` shims still back parts of some screens; keep
   them in sync on writes (`reconcilePlanFlavors`, publish/clone paths do this).
 - There is `renderBuilderMeasureBlock`/`renderBuilderMeasures` legacy dead code (pre-`version.content`);
