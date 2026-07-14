@@ -587,6 +587,24 @@ tr:hover td{background:var(--pa-surface-hover)}
 .pa-pivot-content{padding:16px;background:var(--pa-surface)}
 .pa-pivot-panel{display:none}
 .pa-pivot-panel.active{display:block}
+/* Reusable: flavor tab strip + collapsible section (shared by builder / approval) */
+.flavor-pivot{margin-bottom:12px;flex-wrap:wrap;border-radius:var(--pa-radius) var(--pa-radius) 0 0}
+.flavor-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.flavor-dot.ok{background:#3B6D11}.flavor-dot.warn{background:#BA7517}.flavor-dot.bad{background:#E24B4A}
+.flavor-tab-sub{font-weight:400;color:var(--pa-text-secondary);margin-left:6px}
+.flavor-tab-add{color:var(--pa-theme-primary)}
+.pa-collapse{border:var(--border);border-radius:var(--pa-radius);margin-bottom:8px;overflow:hidden;background:var(--card-bg)}
+.pa-collapse-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-size:12px;font-weight:600;color:var(--pa-theme-dark);background:var(--pa-theme-light);user-select:none}
+.pa-collapse-chevron{transition:transform .15s;font-size:14px;color:var(--pa-theme-primary)}
+.pa-collapse.open>.pa-collapse-hdr .pa-collapse-chevron{transform:rotate(90deg)}
+.pa-collapse-title{flex:0 0 auto}
+.pa-collapse-badge{margin-left:auto;font-weight:400;font-size:11px;color:var(--muted)}
+.pa-collapse-body{display:none;padding:10px 12px}
+.pa-collapse.open>.pa-collapse-body{display:block}
+.cmp-section-toggle{cursor:pointer;user-select:none}
+.cmp-section-toggle td{background:var(--pa-theme-light)}
+.cmp-section-toggle .pa-collapse-chevron{transition:transform .15s;font-size:13px;margin-right:6px;color:var(--pa-theme-primary);transform:rotate(90deg);display:inline-block;vertical-align:middle}
+.cmp-section-toggle.collapsed .pa-collapse-chevron{transform:rotate(0deg)}
 .pa-section{margin-bottom:20px}
 .pa-section:last-child{margin-bottom:0}
 .pa-section-header{font-size:12px;font-weight:600;color:var(--pa-theme-dark);padding:8px 12px;background:var(--pa-theme-light);border:1px solid var(--pa-border);display:flex;align-items:center;justify-content:space-between}
@@ -944,9 +962,8 @@ tr:hover td{background:var(--pa-surface-hover)}
 
             <div class="plan-section-hdr">Flavors <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
             <div class="plan-section-body">
-              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Each flavor owns its pay measures, payout tables, bonuses, and tether.</p>
+              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Each flavor owns its pay measures, payout tables, bonuses, and tether. Select a flavor tab to edit it.</p>
               <div id="builder-flavors-container"></div>
-              <div class="measure-actions"><button class="btn btn-sm" type="button" id="builder-add-flavor-btn" onclick="addBuilderFlavor()"><i class="ti ti-plus"></i> Add flavor</button></div>
             </div>
 
             <div class="plan-section-hdr">Key Policies</div>
@@ -2600,14 +2617,16 @@ function renderApprovalScreen(){
   }else{
     actions=`<div style="font-size:12px;color:var(--muted)">No actions — ${VERSION_STATUS_LABELS[v.status]||v.status}.</div>`;
   }
+  if(activeApprovalFlavor>=(v.content?.flavors||[]).length)activeApprovalFlavor=0;
   let rvHtml='';
   if(v.approvalStage==='release_validation'&&isComp){
     rvHtml=`<div style="margin-bottom:12px">
       <div style="font-size:12px;font-weight:600;margin-bottom:6px">Release validation <span style="font-weight:400;color:var(--muted)">— set new-hire guarantee (per flavor) &amp; plan-mechanics type (per measure) before releasing</span></div>
-      ${(v.content?.flavors||[]).map((fl,fi)=>`<div style="border:1px solid var(--pa-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:8px">
+      ${flavorTabsHtml(v.content.flavors,activeApprovalFlavor,'approval',{dotFn:fl=>fl.newHireGuarantee?'ok':'warn'})}
+      ${(v.content?.flavors||[]).map((fl,fi)=>`<div class="pa-pivot-panel ${fi===activeApprovalFlavor?'active':''}" id="approval-flavorpanel-${fi}" role="tabpanel"><div style="border:1px solid var(--pa-border);border-radius:var(--radius);padding:8px 10px">
         <div class="plan-kv-row"><span class="k">Flavor ${fl.flavorLabel}${fl.role?' · '+escapeCompareHtml(fl.role):''} — new hire guarantee</span><select class="form-select" onchange="setReleaseValidationGuarantee('${v.versionId}',${fi},this.value)">${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>
         ${(fl.measures||[]).map((m,mi)=>`<div class="plan-kv-row"><span class="k">${escapeCompareHtml(m.description||('Measure '+(mi+1)))} — mechanics type</span><select class="form-select" onchange="setReleaseValidationMechType('${v.versionId}',${fi},${mi},this.value)"><option value="" ${!m.mechType?'selected':''}>Select…</option>${PLAN_MECH_TYPES.map(t=>`<option value="${escapeCompareHtml(t)}" ${t===m.mechType?'selected':''}>${escapeCompareHtml(t)}</option>`).join('')}</select></div>`).join('')}
-      </div>`).join('')}
+      </div></div>`).join('')}
     </div>`;
   }
   // Per-flavor review panel (review stages) — approve/needs-rework each flavor; plan advance is gated on all approved.
@@ -2618,10 +2637,11 @@ function renderApprovalScreen(){
     frHtml=`<div style="margin-bottom:12px">
       <div style="font-size:12px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">Flavor review <span class="badge ${sumCls}">${sum.label}</span></div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Approve each flavor, or send one back for rework — the plan can't advance until every flavor is approved.</div>
+      ${flavorTabsHtml(v.content.flavors,activeApprovalFlavor,'approval',{dotFn:fl=>{const st=fl.reviewStatus||'pending';return st==='approved'?'ok':(st==='needs_rework'?'bad':'warn');}})}
       ${(v.content?.flavors||[]).map((fl,fi)=>{
         const st=fl.reviewStatus||'pending';
         const bcls=st==='approved'?'badge-approved':(st==='needs_rework'?'badge-rejected':'badge-draft');
-        return `<div style="border:1px solid var(--pa-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:8px">
+        return `<div class="pa-pivot-panel ${fi===activeApprovalFlavor?'active':''}" id="approval-flavorpanel-${fi}" role="tabpanel"><div style="border:1px solid var(--pa-border);border-radius:var(--radius);padding:8px 10px">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <span style="font-size:12px;font-weight:500">Flavor ${fl.flavorLabel}${fl.role?' · '+escapeCompareHtml(fl.role):''}</span>
             <span class="badge ${bcls}">${FLAVOR_REVIEW_LABELS[st]}</span>
@@ -2631,7 +2651,7 @@ function renderApprovalScreen(){
             <button class="btn btn-sm" style="background:#FCEBEB;border-color:#E24B4A;color:#A32D2D" onclick="setFlavorReviewStatus('${v.versionId}',${fi},'needs_rework')"><i class="ti ti-arrow-back-up"></i> Needs rework</button>
           </div>
           ${st==='needs_rework'?`<textarea class="form-textarea" placeholder="What needs rework? (note to author)" oninput="setFlavorReviewNote('${v.versionId}',${fi},this.value)" style="width:100%;min-height:40px;margin-top:6px;resize:vertical">${escapeCompareHtml(fl.reviewNote||'')}</textarea>`:''}
-        </div>`;}).join('')}
+        </div></div>`;}).join('')}
     </div>`;
   }
   document.getElementById('approval-actions-panel').innerHTML=rvHtml+frHtml+actions;
@@ -2947,15 +2967,45 @@ function populateBuilderFromVersion(v){
   loadBuilderPlanNote(v.flavorId);
 }
 
+/* ── Reusable UI: flavor tab strip + collapsible section (shared by builder & approval) ── */
+let activeBuilderFlavor=0, activeApprovalFlavor=0;
+function flavorTabsHtml(flavors,activeIdx,prefix,opts){
+  opts=opts||{};
+  const tabs=flavors.map((fl,fi)=>{
+    const dot=opts.dotFn?`<span class="flavor-dot ${opts.dotFn(fl,fi)}"></span>`:'';
+    const sub=opts.subFn?`<span class="flavor-tab-sub">${opts.subFn(fl,fi)}</span>`:'';
+    return `<button type="button" class="pa-pivot-tab flavor-tab ${fi===activeIdx?'active':''}" data-flavortab="${prefix}-${fi}" onclick="switchFlavorTab('${prefix}',${fi})">${dot}Flavor ${escapeCompareHtml(fl.flavorLabel||String.fromCharCode(65+fi))}${sub}</button>`;
+  }).join('');
+  const add=opts.addOnclick?`<button type="button" class="pa-pivot-tab flavor-tab-add" onclick="${opts.addOnclick}" title="Add flavor"><i class="ti ti-plus"></i> Add</button>`:'';
+  return `<div class="pa-pivot flavor-pivot" role="tablist">${tabs}${add}</div>`;
+}
+function switchFlavorTab(prefix,idx){
+  if(prefix==='builder')activeBuilderFlavor=idx; else if(prefix==='approval')activeApprovalFlavor=idx;
+  document.querySelectorAll(`[data-flavortab^="${prefix}-"]`).forEach(t=>t.classList.toggle('active',t.dataset.flavortab===`${prefix}-${idx}`));
+  document.querySelectorAll(`[id^="${prefix}-flavorpanel-"]`).forEach(p=>p.classList.toggle('active',p.id===`${prefix}-flavorpanel-${idx}`));
+}
+function collapsibleHtml(id,title,bodyHtml,opts){
+  opts=opts||{};
+  const badge=opts.badge?`<span class="pa-collapse-badge">${opts.badge}</span>`:'';
+  return `<div class="pa-collapse ${opts.open?'open':''}" id="${id}">
+    <div class="pa-collapse-hdr" onclick="toggleCollapse('${id}')"><i class="ti ti-chevron-right pa-collapse-chevron"></i><span class="pa-collapse-title">${title}</span>${badge}</div>
+    <div class="pa-collapse-body">${bodyHtml}</div>
+  </div>`;
+}
+function toggleCollapse(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+function builderFlavorDot(fl){return Math.round(flavorVctSum(fl))===100?'ok':'bad';}
 function renderBuilderFlavors(){
   const cont=document.getElementById('builder-flavors-container');
   if(!cont||!builderWorkingContent)return;
   const editable=builderMeasuresEditable;
+  const flavors=builderWorkingContent.flavors;
+  if(activeBuilderFlavor>=flavors.length)activeBuilderFlavor=Math.max(0,flavors.length-1);
   sharedPayoutSlots=new Set();builderPayoutSlotIndex={};
-  cont.innerHTML=builderWorkingContent.flavors.map((fl,fi)=>renderBuilderFlavorBlock(fl,fi,editable)).join('');
-  // Fill each flavor's own payout-table & bonus editors (containers created in the flavor block).
-  builderWorkingContent.flavors.forEach((fl,fi)=>{renderBuilderFlavorPayouts(fi);renderBuilderFlavorBonuses(fi);});
-  const addBtn=document.getElementById('builder-add-flavor-btn');if(addBtn)addBtn.style.display=editable?'inline-flex':'none';
+  const tabs=flavorTabsHtml(flavors,activeBuilderFlavor,'builder',{dotFn:builderFlavorDot,addOnclick:editable?'addBuilderFlavor()':null});
+  const panels=flavors.map((fl,fi)=>`<div class="pa-pivot-panel ${fi===activeBuilderFlavor?'active':''}" id="builder-flavorpanel-${fi}" role="tabpanel">${renderBuilderFlavorBlock(fl,fi,editable)}</div>`).join('');
+  cont.innerHTML=tabs+panels;
+  // Fill each flavor's own payout-table & bonus editors (containers created in the flavor block; hidden panels are still in the DOM).
+  flavors.forEach((fl,fi)=>{renderBuilderFlavorPayouts(fi);renderBuilderFlavorBonuses(fi);});
 }
 function flavorVctSum(fl){return (fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);}
 function flavorVctSumBadge(fi){
@@ -2982,18 +3032,17 @@ function renderBuilderFlavorBlock(fl,fi,editable){
         <input class="form-input" type="number" min="0" max="100" value="${fl.payMixVar==null?'':fl.payMixVar}" oninput="onBuilderFlavorField(${fi},'payMixVar',this.value)" ${editable?'':'readonly'}>
       </div></div>
     </div>
-    <table class="payout-tier-table builder-measure-table" style="margin-top:8px;width:100%">
-      <thead><tr><th style="min-width:280px">Performance Measure(s)</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    ${editable?`<div style="padding:10px 14px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
-    <div class="flavor-config-sub" style="padding:4px 14px 12px">
-      <div class="plan-section-hdr" style="margin-top:8px">Payout tables</div>
-      <div id="builder-flavor-${fi}-payouts"></div>
-      <div class="plan-section-hdr" style="margin-top:12px">Bonus</div>
-      <div id="builder-flavor-${fi}-bonuses"></div>
-      <div class="plan-section-hdr" style="margin-top:12px">Tether</div>
-      <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorTether(${fi},this.value)" placeholder="Tether description (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.tether||'').replace(/</g,'&lt;')}</textarea></div>
+    <div style="padding:10px 12px 4px">
+    ${collapsibleHtml(`bfl-${fi}-measures`,'Pay measures',
+      `<table class="payout-tier-table builder-measure-table" style="width:100%">
+        <thead><tr><th style="min-width:280px">Performance Measure(s)</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${editable?`<div style="padding:10px 0 0"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button></div>`:''}`,
+      {open:true,badge:`${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%`})}
+    ${collapsibleHtml(`bfl-${fi}-payouts`,'Payout tables',`<div id="builder-flavor-${fi}-payouts"></div>`,{badge:`${(fl.payoutTables||[]).length} table${(fl.payoutTables||[]).length===1?'':'s'}`})}
+    ${collapsibleHtml(`bfl-${fi}-bonuses`,'Bonuses',`<div id="builder-flavor-${fi}-bonuses"></div>`,{badge:`${(fl.bonuses||[]).length} bonus${(fl.bonuses||[]).length===1?'':'es'}`})}
+    ${collapsibleHtml(`bfl-${fi}-tether`,'Tether',`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorTether(${fi},this.value)" placeholder="Tether description (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.tether||'').replace(/</g,'&lt;')}</textarea></div>`,{badge:(fl.tether||'').trim()?'set':'—'})}
     </div>
   </div>`;
 }
@@ -5126,16 +5175,22 @@ function buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap}={}){
   let html='';
   let currentSection='';
   let rowCount=0;
+  let sectionCollapsed=false;   // progressive disclosure: Plan info + first flavor open, rest collapsed
+  let flavorSeen=0;
   diffs.forEach(d=>{
     if(!shouldIncludeCompareRow(d))return;
     if(d.section!==currentSection){
       currentSection=d.section;
-      html+=`<tr class="pa-section-row"><td colspan="3">${escapeCompareHtml(currentSection)}</td></tr>`;
+      const isFlavor=/^Flavor\b/.test(currentSection||'');
+      if(isFlavor)flavorSeen++;
+      sectionCollapsed=isFlavor&&flavorSeen>1;
+      html+=`<tr class="pa-section-row cmp-section-toggle ${sectionCollapsed?'collapsed':''}" onclick="toggleCompareSection(this)"><td colspan="3"><i class="ti ti-chevron-right pa-collapse-chevron"></i>${escapeCompareHtml(currentSection)}</td></tr>`;
     }
+    const hidden=sectionCollapsed?' style="display:none"':'';
     if(/[Pp]ayoutTable\d+$/.test(d.key||'')){
       const ptL=parsePayoutData(leftSnap&&leftSnap.fields&&leftSnap.fields[d.key+'Data']);
       const ptR=parsePayoutData(rightSnap&&rightSnap.fields&&rightSnap.fields[d.key+'Data']);
-      html+=`<tr data-section="${escapeCompareHtml(d.section)}" data-type="${d.type}">
+      html+=`<tr data-section="${escapeCompareHtml(d.section)}" data-type="${d.type}"${hidden}>
       <td><span class="pa-field-name">${escapeCompareHtml(d.label)}</span></td>
       <td>${renderSinglePayoutTable(ptL)}</td>
       <td>${renderSinglePayoutTable(ptR)}</td>
@@ -5146,7 +5201,7 @@ function buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap}={}){
     const leftClass=getCompareRowCellClass(d.type,'left');
     const rightClass=getCompareRowCellClass(d.type,'right');
     const deltaHtml=d.delta&&d.type==='mod'?` <span style="font-size:10px;color:#835C00;font-weight:600">(${escapeCompareHtml(d.delta)})</span>`:'';
-    html+=`<tr data-section="${escapeCompareHtml(d.section)}" data-type="${d.type}">
+    html+=`<tr data-section="${escapeCompareHtml(d.section)}" data-type="${d.type}"${hidden}>
       <td><span class="pa-field-name">${escapeCompareHtml(d.label)}</span></td>
       <td class="${leftClass}">${formatCompareCellValue(d.left,d.type,'left')}</td>
       <td class="${rightClass}">${formatCompareCellValue(d.right,d.type,'right')}${deltaHtml}</td>
@@ -5154,6 +5209,15 @@ function buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap}={}){
     rowCount++;
   });
   return {html,rowCount};
+}
+/* Collapse/expand a compare section by walking sibling rows until the next section header. */
+function toggleCompareSection(hdr){
+  const collapsed=hdr.classList.toggle('collapsed');
+  let tr=hdr.nextElementSibling;
+  while(tr&&!tr.classList.contains('cmp-section-toggle')){
+    tr.style.display=collapsed?'none':'';
+    tr=tr.nextElementSibling;
+  }
 }
 
 function buildCompareTableShell(leftSnap,rightSnap,diffs,options={}){

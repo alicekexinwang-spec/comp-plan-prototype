@@ -3,7 +3,24 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — flavor-owned config + per-flavor review status (branch `feature/comp-plan-flavorconfig`)
+## Latest change — scannable layout: flavor tabs + collapsible sections (branch `feature/comp-plan-flavorconfig`)
+Replaced the "all flavors + all tables stacked in one long column" layout with two reusable components
+applied across the three key screens (Power-Apps-canvas style: simple, flat, limited nesting):
+- **Shared:** `flavorTabsHtml`/`switchFlavorTab` (on existing `.pa-pivot`) + `collapsibleHtml`/`toggleCollapse`
+  (new `.pa-collapse`). Active flavor kept in `activeBuilderFlavor`/`activeApprovalFlavor`.
+- **Builder:** flavors are now **tabs** (one at a time; all panels stay in the DOM hidden so payout-slot
+  hydration is untouched); within a flavor, Pay measures open, Payout/Bonus/Tether collapsed. "Add flavor"
+  moved into the tab strip.
+- **Approval:** per-flavor review + release-validation panels are tabbed per flavor.
+- **Compare:** each Flavor section is a collapsible row-group (`toggleCompareSection`); Plan info + first
+  flavor open, rest collapsed.
+
+Display/layout only — no data-model or logic change. Verified on webui2 (no console errors): builder 3
+tabs + collapsibles, cross-flavor payout edits persist, validate=0; approval review tabbed, derived
+summary updates on approve; compare sections collapse/expand, diff counts intact. **Committed on
+`feature/comp-plan-flavorconfig`.**
+
+## Earlier change — flavor-owned config + per-flavor review status (branch `feature/comp-plan-flavorconfig`)
 Re-based this branch onto HEAD `1f40271`, then two phases:
 - **Phase 1 — full per-flavor ownership.** Moved `bonuses`, `tether`, and `payoutTables` from
   `planMeta`/version-level down into each **flavor** (`content.payoutTables` and `planMeta.bonuses`/`.tether`

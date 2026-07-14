@@ -173,6 +173,19 @@ include only the minimum user-facing information needed to understand and use th
   `formatAttainmentRange`).
 
 ## Conventions
+- **Layout — flavor tabs + collapsible sections (reused across Builder / Approval / Compare).** Two
+  shared components avoid stacking every flavor's tables in one long column: (1) a **flavor tab strip**
+  (`flavorTabsHtml(flavors,activeIdx,prefix,{dotFn,subFn,addOnclick})` + `switchFlavorTab(prefix,idx)`,
+  built on the existing `.pa-pivot` CSS; active index kept in `activeBuilderFlavor`/`activeApprovalFlavor`
+  so re-renders preserve selection) and (2) a **collapsible section** (`collapsibleHtml(id,title,body,
+  {open,badge})` + `toggleCollapse(id)`, `.pa-collapse`/`.pa-collapse.open>.pa-collapse-body`). **Builder**
+  (`renderBuilderFlavors`): flavors are tab panels (`#builder-flavorpanel-${fi}`) — **all rendered into the
+  DOM, inactive ones just hidden**, so per-flavor payout/bonus hydration + the flavor-encoded slot map keep
+  working; within a flavor (`renderBuilderFlavorBlock`) Pay measures is open, Payout tables/Bonuses/Tether
+  are collapsed. **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
+  are tabbed (`prefix='approval'`, `#approval-flavorpanel-${fi}`). **Compare** (`buildCompareTableBodyHtml`):
+  each Flavor section header row is a `.cmp-section-toggle` collapsing its sibling `<tr>`s
+  (`toggleCompareSection`) — Plan information + first flavor open, rest collapsed by default.
 - Builder is driven entirely by `version.content` via `builderWorkingContent`; edits persist on
   **Save** (`saveBuilderVersion`) — no auto-save. `validateVersionContent` (enforced only at
   **Submit**, not Save) requires plan name, per-flavor role, and 100% VCT per flavor.
