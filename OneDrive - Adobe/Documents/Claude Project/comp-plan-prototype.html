@@ -942,32 +942,11 @@ tr:hover td{background:var(--pa-surface-hover)}
               </div>
             </div>
 
-            <div class="builder-measures-payouts">
-              <div class="builder-col">
-                <div class="plan-section-hdr">Performance measures <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
-                <div class="plan-section-body">
-                  <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Set each flavor's pay measures (measure, VCT weight, performance &amp; payout period).</p>
-                  <div id="builder-flavors-container"></div>
-                  <div class="measure-actions"><button class="btn btn-sm" type="button" id="builder-add-flavor-btn" onclick="addBuilderFlavor()"><i class="ti ti-plus"></i> Add flavor</button></div>
-                </div>
-              </div>
-              <div class="builder-col">
-                <div class="plan-section-hdr">Payout tables <span style="font-weight:400;color:var(--pa-text-secondary);font-size:12px">— independent tables, shared across this version's flavors</span></div>
-                <div class="plan-section-body">
-                  <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Add payout tables independently of performance measures.</p>
-                  <div id="builder-payout-tables-container"></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="plan-section-hdr">Bonus</div>
+            <div class="plan-section-hdr">Flavors <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
             <div class="plan-section-body">
-              <div id="builder-bonus-container"></div>
-            </div>
-
-            <div class="plan-section-hdr">Tether</div>
-            <div class="plan-section-body">
-              <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" id="builder-tether" placeholder="Tether description (free text)" style="width:100%;min-height:60px;resize:vertical"></textarea></div>
+              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Each flavor owns its pay measures, payout tables, bonuses, and tether.</p>
+              <div id="builder-flavors-container"></div>
+              <div class="measure-actions"><button class="btn btn-sm" type="button" id="builder-add-flavor-btn" onclick="addBuilderFlavor()"><i class="ti ti-plus"></i> Add flavor</button></div>
             </div>
 
             <div class="plan-section-hdr">Key Policies</div>
@@ -2237,7 +2216,7 @@ function runPlanFlavorCompare(){
   const rightSnap=getSnapshot(rightKey)||getSnapshot(rightKey.replace('version|','proposal|'));
   if(!leftSnap||!rightSnap){container.innerHTML='';return;}
   const diffs=[];const changes=[];
-  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0),Math.max(Number(leftSnap.fields?.bonusCount)||0,Number(rightSnap.fields?.bonusCount)||0));
+  compareFieldMeta=buildCompareFieldMeta(compareFlavorShape(leftSnap,rightSnap));
   compareFieldMeta.forEach(meta=>{
     const d=diffField(leftSnap.fields[meta.key],rightSnap.fields[meta.key]);
     diffs.push({...meta,left:d.left,right:d.right,type:d.type});
@@ -2371,6 +2350,7 @@ function submitVersionById(versionId){
   if(errs.length){alert(`Cannot submit — fix these first:\n• ${errs.join('\n• ')}`);return;}
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   v.status='pending_review';v.approvalStage='first_review';v.submittedAt=now;v.updatedAt=now;
+  (v.content?.flavors||[]).forEach(fl=>{fl.reviewStatus='pending';fl.reviewNote='';}); // fresh per-flavor review on (re)submit
   approvalVersionId=versionId;
   addApprovalEvent(versionId,'submitted','Submitted for 1st Review.');
   addAuditEntry(pk,'Submitted for approval',`${v.flavorId} v${v.versionNumber} submitted for 1st Review.`,{versionId});
@@ -2383,7 +2363,7 @@ function submitCurrentVersion(){
   const v=getVersion(currentVersionId);
   if(v&&builderWorkingContent&&isVersionEditable(v)){
     const gv=id=>document.getElementById(id)?.value;
-    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:builderWorkingContent.planMeta.bonuses||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||builderWorkingContent.planMeta.designerNote||''};
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||builderWorkingContent.planMeta.designerNote||''};
     syncBuilderPayoutTablesFromDOM();
     v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   }
@@ -2398,6 +2378,12 @@ function advanceVersionStage(versionId){
   const pk=planKey(v.flavorId,v.fy);
   const idx=stageIndex(v.approvalStage);
   if(idx>=APPROVAL_STAGES.length-1)return; // already Completed
+  // Per-flavor review gate: at a review stage, every flavor must be approved before the plan can advance.
+  if(REVIEW_STAGES.includes(v.approvalStage)){
+    const notApproved=(v.content?.flavors||[]).filter(fl=>fl.reviewStatus!=='approved')
+      .map(fl=>`Flavor ${fl.flavorLabel}${fl.role?' ('+fl.role+')':''} — ${fl.reviewStatus==='needs_rework'?'needs rework':'not yet reviewed'}`);
+    if(notApproved.length){alert('Approve every flavor before advancing the plan:\n• '+notApproved.join('\n• '));return;}
+  }
   if(v.approvalStage==='release_validation'){
     const missNHG=(v.content?.flavors||[]).filter(fl=>!fl.newHireGuarantee).map(f=>'Flavor '+f.flavorLabel+' new-hire guarantee');
     const missMech=[];
@@ -2448,6 +2434,37 @@ function setReleaseValidationMechType(versionId,fi,mi,value){
   buildPlanSnapshots();buildCompareSelects();
   renderApprovalScreen();
 }
+/* Per-flavor review status (set by a reviewer at a review stage). Plan status is DERIVED from these. */
+const FLAVOR_REVIEW_LABELS={pending:'Not reviewed',approved:'Approved',needs_rework:'Needs rework'};
+function deriveFlavorReviewSummary(v){
+  const flavs=(v&&v.content&&v.content.flavors)||[];
+  const total=flavs.length;
+  const approved=flavs.filter(f=>f.reviewStatus==='approved').length;
+  const rework=flavs.filter(f=>f.reviewStatus==='needs_rework').length;
+  const pending=total-approved-rework;
+  let label;
+  if(!total)label='No flavors';
+  else if(rework)label=`${rework} flavor${rework===1?'':'s'} need${rework===1?'s':''} rework`;
+  else if(pending)label=`Review in progress · ${approved}/${total} approved`;
+  else label='All flavors approved';
+  return{total,approved,rework,pending,label};
+}
+function setFlavorReviewStatus(versionId,fi,status){
+  const v=getVersion(versionId);
+  const fl=v&&v.content&&v.content.flavors&&v.content.flavors[fi];
+  if(!fl)return;
+  fl.reviewStatus=status;
+  if(status!=='needs_rework')fl.reviewNote='';
+  v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  addApprovalEvent(versionId,status==='needs_rework'?'flavor_rework':'flavor_approved',`Flavor ${fl.flavorLabel} — ${FLAVOR_REVIEW_LABELS[status]||status}${fl.reviewNote?': '+fl.reviewNote:''}.`,currentReviewer().name);
+  buildPlanSnapshots();buildProposalTracker();
+  renderApprovalScreen();
+}
+function setFlavorReviewNote(versionId,fi,note){
+  const v=getVersion(versionId);
+  const fl=v&&v.content&&v.content.flavors&&v.content.flavors[fi];
+  if(fl)fl.reviewNote=note;
+}
 /* Withdraw — pull a version out of the approval queue (editable again). */
 function withdrawVersion(versionId){
   const v=getVersion(versionId);
@@ -2456,6 +2473,7 @@ function withdrawVersion(versionId){
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const note=document.getElementById('approval-comment-input')?.value||'';
   v.status='withdrawn';v.approvalStage='draft';v.isActivePublished=false;v.updatedAt=now;
+  (v.content?.flavors||[]).forEach(fl=>{fl.reviewStatus='pending';fl.reviewNote='';}); // reset per-flavor review on withdraw
   if(note)v.comments=note;
   const plan=getPlan(v.flavorId,v.fy);
   if(plan&&plan.activePublishedVersionId===versionId)plan.activePublishedVersionId=null;
@@ -2518,7 +2536,7 @@ function renderApprovalScreen(){
   const queue=currentReviewerQueue(rev);
   const qt=document.getElementById('approval-queue-title');if(qt)qt.textContent=`Pending ${rev.name}'s decision · ${rev.role}`;
   const qc=document.getElementById('approval-queue');
-  if(qc)qc.innerHTML=queue.length?`<table><thead><tr><th>Plan #</th><th>Plan Name</th><th>FY</th><th>Version</th><th>Stage</th><th>Submitted</th><th></th></tr></thead><tbody>${queue.map(q=>{const plan=getPlan(q.flavorId,q.fy);const sel=q.versionId===approvalVersionId?' style="background:var(--pa-theme-light)"':'';return `<tr${sel}><td style="font-weight:600">${escapeCompareHtml(q.flavorId)}</td><td>${escapeCompareHtml(plan?.planName||q.flavorId)}</td><td>${q.fy}</td><td>${escapeCompareHtml(q.label)}</td><td>${APPROVAL_STAGE_LABELS[q.approvalStage]||q.approvalStage}</td><td style="font-size:11px">${q.submittedAt||'—'}</td><td><button class="btn btn-sm" onclick="openApprovalReview('${q.versionId}')">Review</button></td></tr>`;}).join('')}</tbody></table>`:'<p style="font-size:12px;color:var(--pa-text-secondary);padding:12px">Nothing pending your decision.</p>';
+  if(qc)qc.innerHTML=queue.length?`<table><thead><tr><th>Plan #</th><th>Plan Name</th><th>FY</th><th>Version</th><th>Stage</th><th>Submitted</th><th></th></tr></thead><tbody>${queue.map(q=>{const plan=getPlan(q.flavorId,q.fy);const sel=q.versionId===approvalVersionId?' style="background:var(--pa-theme-light)"':'';return `<tr${sel}><td style="font-weight:600">${escapeCompareHtml(q.flavorId)}</td><td>${escapeCompareHtml(plan?.planName||q.flavorId)}</td><td>${q.fy}</td><td>${escapeCompareHtml(q.label)}</td><td>${APPROVAL_STAGE_LABELS[q.approvalStage]||q.approvalStage}${REVIEW_STAGES.includes(q.approvalStage)?`<div style="font-size:10px;color:var(--muted)">${escapeCompareHtml(deriveFlavorReviewSummary(q).label)}</div>`:''}</td><td style="font-size:11px">${q.submittedAt||'—'}</td><td><button class="btn btn-sm" onclick="openApprovalReview('${q.versionId}')">Review</button></td></tr>`;}).join('')}</tbody></table>`:'<p style="font-size:12px;color:var(--pa-text-secondary);padding:12px">Nothing pending your decision.</p>';
   // Detail — default to the first queue item if none selected / invalid
   let v=getVersion(approvalVersionId);
   if(!v&&queue.length){v=queue[0];approvalVersionId=v.versionId;}
@@ -2592,7 +2610,31 @@ function renderApprovalScreen(){
       </div>`).join('')}
     </div>`;
   }
-  document.getElementById('approval-actions-panel').innerHTML=rvHtml+actions;
+  // Per-flavor review panel (review stages) — approve/needs-rework each flavor; plan advance is gated on all approved.
+  let frHtml='';
+  if(REVIEW_STAGES.includes(v.approvalStage)){
+    const sum=deriveFlavorReviewSummary(v);
+    const sumCls=sum.rework?'badge-rejected':(sum.pending?'badge-review':'badge-approved');
+    frHtml=`<div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">Flavor review <span class="badge ${sumCls}">${sum.label}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Approve each flavor, or send one back for rework — the plan can't advance until every flavor is approved.</div>
+      ${(v.content?.flavors||[]).map((fl,fi)=>{
+        const st=fl.reviewStatus||'pending';
+        const bcls=st==='approved'?'badge-approved':(st==='needs_rework'?'badge-rejected':'badge-draft');
+        return `<div style="border:1px solid var(--pa-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12px;font-weight:500">Flavor ${fl.flavorLabel}${fl.role?' · '+escapeCompareHtml(fl.role):''}</span>
+            <span class="badge ${bcls}">${FLAVOR_REVIEW_LABELS[st]}</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <button class="btn btn-sm" style="background:#EAF3DE;border-color:#639922;color:#3B6D11" onclick="setFlavorReviewStatus('${v.versionId}',${fi},'approved')"><i class="ti ti-check"></i> Approve</button>
+            <button class="btn btn-sm" style="background:#FCEBEB;border-color:#E24B4A;color:#A32D2D" onclick="setFlavorReviewStatus('${v.versionId}',${fi},'needs_rework')"><i class="ti ti-arrow-back-up"></i> Needs rework</button>
+          </div>
+          ${st==='needs_rework'?`<textarea class="form-textarea" placeholder="What needs rework? (note to author)" oninput="setFlavorReviewNote('${v.versionId}',${fi},this.value)" style="width:100%;min-height:40px;margin-top:6px;resize:vertical">${escapeCompareHtml(fl.reviewNote||'')}</textarea>`:''}
+        </div>`;}).join('')}
+    </div>`;
+  }
+  document.getElementById('approval-actions-panel').innerHTML=rvHtml+frHtml+actions;
 
   const events=getApprovalEventsForVersion(v.versionId);
   document.getElementById('approval-comment-history').innerHTML=events.filter(e=>e.note).map(e=>`
@@ -2604,8 +2646,11 @@ function renderApprovalScreen(){
     return`<div class="audit-item"><div class="audit-dot" style="background:${colors[e.action]||'gray'}"></div><div style="font-size:12px;font-weight:500">${e.action.replace(/_/g,' ')}</div><div class="audit-meta">${e.actor} · ${e.timestamp}</div></div>`;
   }).join('');
 
+  const frSum=deriveFlavorReviewSummary(v);
+  const frSumCls=frSum.rework?'badge-rejected':(frSum.pending?'badge-review':'badge-approved');
   document.getElementById('approval-signoff-tbody').innerHTML=`
-    <tr><td>Current stage</td><td>${APPROVAL_STAGE_LABELS[v.approvalStage]||'—'}</td><td><span class="badge ${withdrawn?'badge-rejected':(v.status==='published'?'badge-published':'badge-review')}">${VERSION_STATUS_LABELS[v.status]||v.status}</span></td><td style="font-size:11px">${v.updatedAt||'—'}</td></tr>`;
+    <tr><td>Current stage</td><td>${APPROVAL_STAGE_LABELS[v.approvalStage]||'—'}</td><td><span class="badge ${withdrawn?'badge-rejected':(v.status==='published'?'badge-published':'badge-review')}">${VERSION_STATUS_LABELS[v.status]||v.status}</span></td><td style="font-size:11px">${v.updatedAt||'—'}</td></tr>
+    <tr><td>Flavor review</td><td colspan="2"><span class="badge ${frSumCls}">${frSum.label}</span></td><td style="font-size:11px">${frSum.approved}/${frSum.total} approved</td></tr>`;
 }
 
 function filterProposalTracker(){
@@ -2636,7 +2681,7 @@ function buildProposalTracker(){
       <td><strong>${v.label}</strong><div style="font-size:10px;color:var(--muted)">${v.description||'—'}</div></td>
       <td><span class="plan-fy-chip" style="font-size:10px;padding:2px 8px;background:#E6F1FB;color:#0C447C;border-radius:4px;font-weight:600">${v.fy}</span></td>
       <td>${versionBadgeHtml(v.status)}</td>
-      <td style="font-size:11px">${APPROVAL_STAGE_LABELS[v.approvalStage]||'—'}</td>
+      <td style="font-size:11px">${APPROVAL_STAGE_LABELS[v.approvalStage]||'—'}${REVIEW_STAGES.includes(v.approvalStage)?`<div style="font-size:10px;color:var(--muted)">${escapeCompareHtml(deriveFlavorReviewSummary(v).label)}</div>`:''}</td>
       <td style="font-size:11px">${v.submittedAt||'—'}</td>
       <td>${v.isActivePublished?`<span class="badge badge-published">v${v.versionNumber}</span>`:'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
       <td style="font-size:11px;color:var(--muted)">${v.updatedAt}</td>
@@ -2890,7 +2935,6 @@ function populateBuilderFromVersion(v){
   const plan=getPlan(planId,v.fy);
   const setVal=(id,val)=>{const el=document.getElementById(id);if(el&&val!=null)el.value=val;};
   setVal('builder-plan-name',pm.planName);
-  setVal('builder-tether',pm.tether);
   setVal('builder-key-policies',pm.keyPolicies);
   document.getElementById('builder-plan-id').value=planId;
   // Title: FY · Plan ID · Plan Name · vN · Status
@@ -2900,8 +2944,6 @@ function populateBuilderFromVersion(v){
   const statusBadge=document.getElementById('builder-status-badge');if(statusBadge)statusBadge.textContent=VERSION_STATUS_LABELS[v.status]||v.status;
   const hint=document.getElementById('builder-version-hint');if(hint)hint.textContent=builderMeasuresEditable?'':'— locked (create a revision to edit)';
   renderBuilderFlavors();
-  renderBuilderPayoutTables();
-  renderBuilderBonuses();
   loadBuilderPlanNote(v.flavorId);
 }
 
@@ -2909,7 +2951,10 @@ function renderBuilderFlavors(){
   const cont=document.getElementById('builder-flavors-container');
   if(!cont||!builderWorkingContent)return;
   const editable=builderMeasuresEditable;
+  sharedPayoutSlots=new Set();builderPayoutSlotIndex={};
   cont.innerHTML=builderWorkingContent.flavors.map((fl,fi)=>renderBuilderFlavorBlock(fl,fi,editable)).join('');
+  // Fill each flavor's own payout-table & bonus editors (containers created in the flavor block).
+  builderWorkingContent.flavors.forEach((fl,fi)=>{renderBuilderFlavorPayouts(fi);renderBuilderFlavorBonuses(fi);});
   const addBtn=document.getElementById('builder-add-flavor-btn');if(addBtn)addBtn.style.display=editable?'inline-flex':'none';
 }
 function flavorVctSum(fl){return (fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);}
@@ -2942,8 +2987,17 @@ function renderBuilderFlavorBlock(fl,fi,editable){
       <tbody>${rows}</tbody>
     </table>
     ${editable?`<div style="padding:10px 14px"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button> <span style="font-size:10px;color:var(--pa-text-secondary)">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>`:''}
+    <div class="flavor-config-sub" style="padding:4px 14px 12px">
+      <div class="plan-section-hdr" style="margin-top:8px">Payout tables</div>
+      <div id="builder-flavor-${fi}-payouts"></div>
+      <div class="plan-section-hdr" style="margin-top:12px">Bonus</div>
+      <div id="builder-flavor-${fi}-bonuses"></div>
+      <div class="plan-section-hdr" style="margin-top:12px">Tether</div>
+      <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorTether(${fi},this.value)" placeholder="Tether description (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.tether||'').replace(/</g,'&lt;')}</textarea></div>
+    </div>
   </div>`;
 }
+function onBuilderFlavorTether(fi,val){const fl=builderWorkingContent.flavors[fi];if(fl)fl.tether=val;}
 function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   const canRemove=editable&&builderWorkingContent.flavors[fi].measures.length>1;
   const dis=editable?'':'disabled';
@@ -2952,7 +3006,7 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
     <td><div class="xpcr-cell"><input class="form-input" value="${(m.vct||'').replace(/%/g,'')}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderVctInput(${fi},${mi},this)" style="width:44px" placeholder="e.g. 50"><span class="pct-suffix">%</span></div></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
-    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'payoutTableId',this.value)"><option value="" ${!m.payoutTableId?'selected':''}>Select…</option>${(builderWorkingContent.payoutTables||[]).map((pt,pi)=>`<option value="${pt.id}" ${pt.id===m.payoutTableId?'selected':''}>${escapeCompareHtml(pt.title||('Payout table '+(pi+1)))}</option>`).join('')}</select></td>
+    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'payoutTableId',this.value)"><option value="" ${!m.payoutTableId?'selected':''}>Select…</option>${((builderWorkingContent.flavors[fi]&&builderWorkingContent.flavors[fi].payoutTables)||[]).map((pt,pi)=>`<option value="${pt.id}" ${pt.id===m.payoutTableId?'selected':''}>${escapeCompareHtml(pt.title||('Payout table '+(pi+1)))}</option>`).join('')}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
   </tr>`;
 }
@@ -2969,29 +3023,32 @@ function addBuilderFlavor(){
   if(builderWorkingContent.flavors.length>=MAX_BUILDER_FLAVORS){alert(`Maximum ${MAX_BUILDER_FLAVORS} flavors per comp plan.`);return;}
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}]});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''});
   renderBuilderFlavors();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();}
 
-function renderBuilderPayoutTables(){
-  const cont=document.getElementById('builder-payout-tables-container');
+/* Payout slot encodes flavor + table index: slot = 1000 + fi*100 + i. */
+function payoutSlotFor(fi,i){return 1000+fi*100+i;}
+function flavorPayoutTables(fi){const fl=builderWorkingContent&&builderWorkingContent.flavors[fi];if(!fl)return[];if(!Array.isArray(fl.payoutTables))fl.payoutTables=[];return fl.payoutTables;}
+function renderBuilderFlavorPayouts(fi){
+  const cont=document.getElementById(`builder-flavor-${fi}-payouts`);
   if(!cont||!builderWorkingContent)return;
-  if(!Array.isArray(builderWorkingContent.payoutTables))builderWorkingContent.payoutTables=[];
-  const tables=builderWorkingContent.payoutTables;
-  sharedPayoutSlots=new Set();builderPayoutSlotIndex={};
+  const tables=flavorPayoutTables(fi);
+  // Refresh only this flavor's slot entries (leave other flavors' entries intact).
+  Object.keys(builderPayoutSlotIndex).forEach(s=>{if(builderPayoutSlotIndex[s]&&builderPayoutSlotIndex[s].fi===fi){delete builderPayoutSlotIndex[s];sharedPayoutSlots.delete(+s);}});
   const editable=builderMeasuresEditable;
-  const addBtn=editable?`<div class="measure-actions"><button class="btn btn-sm" type="button" onclick="addBuilderPayoutTable()"><i class="ti ti-plus"></i> Add payout table</button></div>`:'';
+  const addBtn=editable?`<div class="measure-actions"><button class="btn btn-sm" type="button" onclick="addBuilderPayoutTable(${fi})"><i class="ti ti-plus"></i> Add payout table</button></div>`:'';
   if(!tables.length){cont.innerHTML=`<p style="font-size:11px;color:var(--pa-text-secondary)">No payout tables yet.</p>${addBtn}`;return;}
   const PAYOUT_TYPE_OPTIONS=[['quota_band','Quota band + attainment tier'],['target_pct','Target % based'],['attainment_only','Attainment tier only']];
   cont.innerHTML=tables.map((pt,i)=>{
-    const slot=1000+i;sharedPayoutSlots.add(slot);builderPayoutSlotIndex[slot]=i;
-    const titleField=`<input class="form-input" id="builder-p${slot}-title" value="${(pt.title||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderPayoutTitle(${i},this.value)" placeholder="Payout table ${i+1}" style="max-width:280px;font-weight:600">`;
+    const slot=payoutSlotFor(fi,i);sharedPayoutSlots.add(slot);builderPayoutSlotIndex[slot]={fi,idx:i};
+    const titleField=`<input class="form-input" id="builder-p${slot}-title" value="${(pt.title||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderPayoutTitle(${slot},this.value)" placeholder="Payout table ${i+1}" style="max-width:280px;font-weight:600">`;
     const typeSel=`<select class="form-select" id="builder-p${slot}-type" ${editable?'':'disabled'} onchange="onPayoutTypeChange(${slot},this.value)" style="min-width:220px"><option value="" ${!pt.type?'selected':''}>Select type…</option>${PAYOUT_TYPE_OPTIONS.map(([v,l])=>`<option value="${v}" ${v===pt.type?'selected':''}>${l}</option>`).join('')}</select>`;
     const mcrField=pt.type==='attainment_only'?`<span class="pf"><label>MCR</label><input class="form-input" id="builder-p${slot}-mcr" value="${(pt.mcr||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} placeholder="e.g. 7%" style="width:100px"></span>`:'';
     const bandSetField=pt.type==='quota_band'?`<span class="pf pf-wide"><label>Quota band set</label>${quotaBandSets.length?`<select class="form-select" id="builder-p${slot}-bandset" ${editable?'':'disabled'} onchange="onQuotaBandSetChange(${slot},this.value)" style="min-width:200px"><option value="" ${!pt.bandSetId?'selected':''}>Select quota band set…</option>${quotaBandSets.map(s=>`<option value="${s.id}" ${s.id===pt.bandSetId?'selected':''}>${escapeCompareHtml(s.name)}</option>`).join('')}</select>`:`<span style="font-size:11px;color:var(--pa-text-secondary)">No band sets — create one in Configuration → Quota Band Sets</span>`}</span>`:'';
     return `<div class="measure-payout-unit" style="margin-bottom:16px">
-      <div class="payout-linked-hdr" style="justify-content:space-between;gap:8px"><span style="display:flex;align-items:center;gap:6px;flex:1"><i class="ti ti-table"></i> ${titleField}</span>${editable?`<button type="button" class="measure-remove-btn" onclick="removeBuilderPayoutTable(${i})"><i class="ti ti-trash" style="font-size:11px"></i> Remove payout table</button>`:''}</div>
+      <div class="payout-linked-hdr" style="justify-content:space-between;gap:8px"><span style="display:flex;align-items:center;gap:6px;flex:1"><i class="ti ti-table"></i> ${titleField}</span>${editable?`<button type="button" class="measure-remove-btn" onclick="removeBuilderPayoutTable(${slot})"><i class="ti ti-trash" style="font-size:11px"></i> Remove payout table</button>`:''}</div>
       <div class="payout-options-bar">
         <span class="pf pf-wide"><label>Payout type</label>${typeSel}</span>
         <span class="pf"><label>Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
@@ -3004,14 +3061,15 @@ function renderBuilderPayoutTables(){
       <div style="padding:10px 14px 0"><textarea class="form-textarea" id="builder-p${slot}-note" ${editable?'':'readonly'} placeholder="Optional — explain this payout table" style="width:100%;min-height:48px;resize:vertical">${(pt.note||'').replace(/</g,'&lt;')}</textarea></div>
     </div>`;
   }).join('')+addBtn;
-  tables.forEach((pt,i)=>renderPayoutTableEditor(1000+i,pt));
+  tables.forEach((pt,i)=>renderPayoutTableEditor(payoutSlotFor(fi,i),pt));
 }
 function payoutTableForSlot(slot){
-  const idx=builderPayoutSlotIndex[slot];if(idx==null)return null;
-  const prev=builderWorkingContent.payoutTables[idx]||{};
+  const ref=builderPayoutSlotIndex[slot];if(ref==null)return null;
+  const list=flavorPayoutTables(ref.fi);
+  const prev=list[ref.idx]||{};
   const cur=collectPayoutTable(slot);
   cur.id=prev.id||payoutUid();cur.title=prev.title||cur.title||'';
-  return {idx,cur};
+  return {fi:ref.fi,idx:ref.idx,cur};
 }
 function onPayoutTypeChange(slot,type){
   const r=payoutTableForSlot(slot);if(!r)return;const cur=r.cur;
@@ -3024,23 +3082,23 @@ function onPayoutTypeChange(slot,type){
   }else{
     if(!cur.thresholds.length)cur.thresholds=[createEmptyBand()];
   }
-  builderWorkingContent.payoutTables[r.idx]=cur;
-  renderBuilderPayoutTables();
+  builderWorkingContent.flavors[r.fi].payoutTables[r.idx]=cur;
+  renderBuilderFlavorPayouts(r.fi);
 }
 function addPayoutBand(slot){
   if(!builderMeasuresEditable)return;
   const r=payoutTableForSlot(slot);if(!r)return;
   r.cur.thresholds.push(createEmptyBand());
-  builderWorkingContent.payoutTables[r.idx]=r.cur;
-  renderBuilderPayoutTables();
+  builderWorkingContent.flavors[r.fi].payoutTables[r.idx]=r.cur;
+  renderBuilderFlavorPayouts(r.fi);
 }
 function removePayoutBand(slot,thIdx){
   if(!builderMeasuresEditable)return;
   const r=payoutTableForSlot(slot);if(!r)return;
   if(r.cur.thresholds.length<=1)return;
   r.cur.thresholds.splice(thIdx,1);
-  builderWorkingContent.payoutTables[r.idx]=r.cur;
-  renderBuilderPayoutTables();
+  builderWorkingContent.flavors[r.fi].payoutTables[r.idx]=r.cur;
+  renderBuilderFlavorPayouts(r.fi);
 }
 function onQuotaBandSetChange(slot,setId){
   if(!builderMeasuresEditable)return;
@@ -3052,8 +3110,8 @@ function onQuotaBandSetChange(slot,setId){
     let prev=0;
     cur.thresholds=bounds.map((b,idx)=>{const to=(b===''||b==null)?null:Number(b);const label=boundsRangeLabel(prev,to,'',true);if(to!=null)prev=to;return{id:payoutUid(),label,description:(set&&set.descriptions&&set.descriptions[idx])||'',mcr:null,tierSetId:'',tiers:[]};});
   }else cur.thresholds=[];
-  builderWorkingContent.payoutTables[r.idx]=cur;
-  renderBuilderPayoutTables();
+  builderWorkingContent.flavors[r.fi].payoutTables[r.idx]=cur;
+  renderBuilderFlavorPayouts(r.fi);
 }
 function setBandTierSet(slot,thIdx,setId){
   if(!builderMeasuresEditable)return;
@@ -3064,68 +3122,71 @@ function setBandTierSet(slot,thIdx,setId){
     const set=findTierSet(setId);
     band.tiers=((set&&set.bounds.length)?set.bounds:['']).map(b=>({id:payoutUid(),attainmentFrom:0,attainmentTo:(b===''||b==null)?null:Number(b),xPCR:'',vctAtMax:'',mcr:null}));
   }else band.tiers=[];
-  builderWorkingContent.payoutTables[r.idx]=cur;
-  renderBuilderPayoutTables();
+  builderWorkingContent.flavors[r.fi].payoutTables[r.idx]=cur;
+  renderBuilderFlavorPayouts(r.fi);
 }
-function addBuilderPayoutTable(){
+function addBuilderPayoutTable(fi){
   if(!builderMeasuresEditable)return;
   syncBuilderPayoutTablesFromDOM();
-  builderWorkingContent.payoutTables.push(Object.assign({id:payoutUid(),title:''},blankPayoutTable()));
-  renderBuilderPayoutTables();renderBuilderFlavors();
+  flavorPayoutTables(fi).push(Object.assign({id:payoutUid(),title:''},blankPayoutTable()));
+  renderBuilderFlavors();
 }
-function removeBuilderPayoutTable(idx){
+function removeBuilderPayoutTable(slot){
   if(!builderMeasuresEditable)return;
+  const ref=builderPayoutSlotIndex[slot];if(!ref)return;
   syncBuilderPayoutTablesFromDOM();
-  const rid=builderWorkingContent.payoutTables[idx]&&builderWorkingContent.payoutTables[idx].id;
-  builderWorkingContent.payoutTables.splice(idx,1);
-  if(rid)(builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId===rid)m.payoutTableId='';}));
-  renderBuilderPayoutTables();renderBuilderFlavors();
+  const list=flavorPayoutTables(ref.fi);
+  const rid=list[ref.idx]&&list[ref.idx].id;
+  list.splice(ref.idx,1);
+  // Only measures on this flavor could link to this flavor's table.
+  if(rid)(builderWorkingContent.flavors[ref.fi].measures||[]).forEach(m=>{if(m.payoutTableId===rid)m.payoutTableId='';});
+  renderBuilderFlavors();
 }
-function setBuilderPayoutTitle(idx,val){const pt=builderWorkingContent.payoutTables[idx];if(pt)pt.title=val;}
+function setBuilderPayoutTitle(slot,val){const ref=builderPayoutSlotIndex[slot];if(!ref)return;const pt=flavorPayoutTables(ref.fi)[ref.idx];if(pt)pt.title=val;}
 const MAX_BUILDER_BONUSES=5;
-function renderBuilderBonuses(){
-  const cont=document.getElementById('builder-bonus-container');
+function flavorBonuses(fi){const fl=builderWorkingContent&&builderWorkingContent.flavors[fi];if(!fl)return[];if(!Array.isArray(fl.bonuses))fl.bonuses=[];return fl.bonuses;}
+function renderBuilderFlavorBonuses(fi){
+  const cont=document.getElementById(`builder-flavor-${fi}-bonuses`);
   if(!cont||!builderWorkingContent)return;
-  const pm=builderWorkingContent.planMeta||(builderWorkingContent.planMeta={});
-  if(!Array.isArray(pm.bonuses))pm.bonuses=[];
+  const bonuses=flavorBonuses(fi);
   const editable=builderMeasuresEditable;
-  const addBtn=editable&&pm.bonuses.length<MAX_BUILDER_BONUSES?`<div class="measure-actions"><button class="btn btn-sm" type="button" onclick="addBuilderBonus()"><i class="ti ti-plus"></i> Add bonus</button></div>`:'';
-  if(!pm.bonuses.length){cont.innerHTML=`<p style="font-size:11px;color:var(--pa-text-secondary)">No bonus.</p>${addBtn}`;return;}
-  cont.innerHTML=pm.bonuses.map((b,i)=>{
-    const typeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="setBuilderBonusField(${i},'type',this.value)"><option value="" ${!b.type?'selected':''}>Select bonus type…</option>${BONUS_TYPE_OPTIONS.map(o=>`<option value="${escHtml(o)}" ${o===b.type?'selected':''}>${escHtml(o)}</option>`).join('')}</select>`;
+  const addBtn=editable&&bonuses.length<MAX_BUILDER_BONUSES?`<div class="measure-actions"><button class="btn btn-sm" type="button" onclick="addBuilderBonus(${fi})"><i class="ti ti-plus"></i> Add bonus</button></div>`:'';
+  if(!bonuses.length){cont.innerHTML=`<p style="font-size:11px;color:var(--pa-text-secondary)">No bonus.</p>${addBtn}`;return;}
+  cont.innerHTML=bonuses.map((b,i)=>{
+    const typeSel=`<select class="form-select" ${editable?'':'disabled'} onchange="setBuilderBonusField(${fi},${i},'type',this.value)"><option value="" ${!b.type?'selected':''}>Select bonus type…</option>${BONUS_TYPE_OPTIONS.map(o=>`<option value="${escHtml(o)}" ${o===b.type?'selected':''}>${escHtml(o)}</option>`).join('')}</select>`;
     return `<div class="measure-payout-unit" style="margin-bottom:12px">
-      <div class="payout-linked-hdr" style="justify-content:space-between;gap:8px"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-gift"></i> Bonus ${i+1}</span>${editable?`<button type="button" class="measure-remove-btn" onclick="removeBuilderBonus(${i})"><i class="ti ti-trash" style="font-size:11px"></i> Remove</button>`:''}</div>
+      <div class="payout-linked-hdr" style="justify-content:space-between;gap:8px"><span style="display:flex;align-items:center;gap:6px"><i class="ti ti-gift"></i> Bonus ${i+1}</span>${editable?`<button type="button" class="measure-remove-btn" onclick="removeBuilderBonus(${fi},${i})"><i class="ti ti-trash" style="font-size:11px"></i> Remove</button>`:''}</div>
       <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
         <div class="plan-kv-row"><span class="k">Bonus type</span>${typeSel}</div>
-        <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Payout details</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="setBuilderBonusField(${i},'payoutDetails',this.value)" placeholder="Payout details (free text)" style="width:100%;min-height:48px;resize:vertical">${(b.payoutDetails||'').replace(/</g,'&lt;')}</textarea></div>
-        <div class="plan-kv-row"><span class="k">Maximum payout</span><input class="form-input" value="${(b.maxPayout||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderBonusField(${i},'maxPayout',this.value)" placeholder="e.g. 200% of OTC"></div>
+        <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Payout details</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="setBuilderBonusField(${fi},${i},'payoutDetails',this.value)" placeholder="Payout details (free text)" style="width:100%;min-height:48px;resize:vertical">${(b.payoutDetails||'').replace(/</g,'&lt;')}</textarea></div>
+        <div class="plan-kv-row"><span class="k">Maximum payout</span><input class="form-input" value="${(b.maxPayout||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderBonusField(${fi},${i},'maxPayout',this.value)" placeholder="e.g. 200% of OTC"></div>
       </div>
     </div>`;
   }).join('')+addBtn;
 }
-function addBuilderBonus(){
+function addBuilderBonus(fi){
   if(!builderMeasuresEditable)return;
-  const pm=builderWorkingContent.planMeta||(builderWorkingContent.planMeta={});
-  if(!Array.isArray(pm.bonuses))pm.bonuses=[];
-  if(pm.bonuses.length>=MAX_BUILDER_BONUSES){alert(`Maximum ${MAX_BUILDER_BONUSES} bonuses.`);return;}
-  pm.bonuses.push({type:'',payoutDetails:'',maxPayout:''});
-  renderBuilderBonuses();
+  const bonuses=flavorBonuses(fi);
+  if(bonuses.length>=MAX_BUILDER_BONUSES){alert(`Maximum ${MAX_BUILDER_BONUSES} bonuses.`);return;}
+  bonuses.push({type:'',payoutDetails:'',maxPayout:''});
+  renderBuilderFlavorBonuses(fi);
 }
-function removeBuilderBonus(i){
+function removeBuilderBonus(fi,i){
   if(!builderMeasuresEditable)return;
-  builderWorkingContent.planMeta.bonuses.splice(i,1);
-  renderBuilderBonuses();
+  flavorBonuses(fi).splice(i,1);
+  renderBuilderFlavorBonuses(fi);
 }
-function setBuilderBonusField(i,field,val){const b=builderWorkingContent.planMeta.bonuses?.[i];if(b)b[field]=val;}
+function setBuilderBonusField(fi,i,field,val){const b=flavorBonuses(fi)[i];if(b)b[field]=val;}
 function syncBuilderPayoutTablesFromDOM(){
-  if(!builderWorkingContent||!Array.isArray(builderWorkingContent.payoutTables))return;
+  if(!builderWorkingContent)return;
   Object.keys(builderPayoutSlotIndex).forEach(slot=>{
     if(!document.getElementById(`builder-p${slot}-table`))return;
-    const idx=builderPayoutSlotIndex[slot];
-    const prev=builderWorkingContent.payoutTables[idx]||{};
+    const ref=builderPayoutSlotIndex[slot];if(!ref)return;
+    const list=flavorPayoutTables(ref.fi);
+    const prev=list[ref.idx]||{};
     const cur=collectPayoutTable(parseInt(slot,10));
     cur.id=prev.id||payoutUid();
-    builderWorkingContent.payoutTables[idx]=cur;
+    list[ref.idx]=cur;
   });
 }
 function reconcilePlanFlavors(pk,flavors){
@@ -3151,16 +3212,16 @@ function validateVersionContent(content){
     const sum=(fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);
     if(Math.round(sum)!==100)errs.push(`Flavor ${fl.flavorLabel} pay measures total ${sum%1===0?sum:sum.toFixed(1)}% (must be 100%).`);
     if((fl.measures||[]).length>MAX_BUILDER_MEASURES)errs.push(`Flavor ${fl.flavorLabel} has more than ${MAX_BUILDER_MEASURES} pay measures.`);
-  });
-  // Pay measure ↔ payout table linking: every measure links to an existing table; every table ≥1 measure.
-  const tableIds=new Set((content.payoutTables||[]).map(t=>t.id));
-  const linkedTableIds=new Set();
-  (content.flavors||[]).forEach(fl=>(fl.measures||[]).forEach((m,i)=>{
-    if(!m.payoutTableId||!tableIds.has(m.payoutTableId))errs.push(`Flavor ${fl.flavorLabel} — pay measure "${m.description||('Measure '+(i+1))}" has no payout table linked.`);
-    else linkedTableIds.add(m.payoutTableId);
-  }));
-  (content.payoutTables||[]).forEach((t,i)=>{
-    if(!linkedTableIds.has(t.id))errs.push(`Payout table "${t.title||('#'+(i+1))}" has no pay measure linked.`);
+    // Pay measure ↔ payout table linking is intra-flavor: every measure links to a table ON THIS FLAVOR; every table ≥1 measure.
+    const tableIds=new Set((fl.payoutTables||[]).map(t=>t.id));
+    const linkedTableIds=new Set();
+    (fl.measures||[]).forEach((m,i)=>{
+      if(!m.payoutTableId||!tableIds.has(m.payoutTableId))errs.push(`Flavor ${fl.flavorLabel} — pay measure "${m.description||('Measure '+(i+1))}" has no payout table linked.`);
+      else linkedTableIds.add(m.payoutTableId);
+    });
+    (fl.payoutTables||[]).forEach((t,i)=>{
+      if(!linkedTableIds.has(t.id))errs.push(`Flavor ${fl.flavorLabel} — payout table "${t.title||('#'+(i+1))}" has no pay measure linked.`);
+    });
   });
   return errs;
 }
@@ -3170,7 +3231,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)&&v.versionId!==reviewerEditVersionId){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.bonuses)||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote)||''};
+  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote)||''};
   syncBuilderPayoutTablesFromDOM();
   v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -3203,20 +3264,15 @@ let builderMeasuresEditable=false;
 const COMPARE_BASE_META=[
   {key:'planId',label:'Plan #',section:'Plan information'},
   {key:'planName',label:'Plan Name',section:'Plan information'},
-  {key:'tether',label:'Tether',section:'Tether'},
 ];
 
-function buildCompareFieldMeta(payoutCount,bonusCount,flavors){
-  const n=Math.max(0,payoutCount==null?0:payoutCount|0);
-  const bn=Math.max(0,bonusCount==null?0:bonusCount|0);
+// Full per-flavor ownership: payout tables, bonuses, and tether are folded into each Flavor section.
+function buildCompareFieldMeta(flavors){
   const flavs=Array.isArray(flavors)?flavors:[];
   const meta=[...COMPARE_BASE_META];
-  const insertAt=meta.findIndex(m=>m.key==='tether');
-  const extra=[];
-  // Per-flavor sections (grouped by flavor label).
-  flavs.forEach(({label:L,measureCount})=>{
+  flavs.forEach(({label:L,measureCount,payoutCount,bonusCount})=>{
     const sec=`Flavor ${L}`;
-    extra.push(
+    meta.push(
       {key:`flavor${L}Role`,label:'Role',section:sec},
       {key:`flavor${L}HC`,label:'HC',section:sec,hc:true},
       {key:`flavor${L}PayMixBase`,label:'Paymix · Base',section:sec},
@@ -3224,33 +3280,33 @@ function buildCompareFieldMeta(payoutCount,bonusCount,flavors){
       {key:`flavor${L}NHG`,label:'New hire guarantee',section:sec},
     );
     for(let i=1;i<=Math.max(0,measureCount|0);i++){
-      extra.push(
+      meta.push(
         {key:`flavor${L}Measure${i}Name`,label:`Measure ${i}`,section:sec},
         {key:`flavor${L}Measure${i}Vct`,label:`Measure ${i} · VCT Wt%`,section:sec},
         {key:`flavor${L}Measure${i}PerfPd`,label:`Measure ${i} · Perf Pd`,section:sec},
         {key:`flavor${L}Measure${i}PayFreq`,label:`Measure ${i} · Pay Freq`,section:sec},
       );
     }
+    for(let i=1;i<=Math.max(0,payoutCount|0);i++){
+      meta.push(
+        {key:`flavor${L}PayoutTable${i}Title`,label:`Payout table ${i} · Title`,section:sec},
+        {key:`flavor${L}PayoutTable${i}`,label:`Payout table ${i}`,section:sec},
+        {key:`flavor${L}PayoutTable${i}Cap`,label:`Payout table ${i} · Cap note`,section:sec},
+      );
+    }
+    for(let i=1;i<=Math.max(0,bonusCount|0);i++){
+      meta.push(
+        {key:`flavor${L}Bonus${i}Type`,label:`Bonus ${i} · Type`,section:sec},
+        {key:`flavor${L}Bonus${i}Details`,label:`Bonus ${i} · Payout details`,section:sec},
+        {key:`flavor${L}Bonus${i}Max`,label:`Bonus ${i} · Maximum payout`,section:sec},
+      );
+    }
+    meta.push({key:`flavor${L}Tether`,label:'Tether',section:sec});
   });
-  for(let i=1;i<=n;i++){
-    extra.push(
-      {key:`payoutTable${i}Title`,label:'Title',section:`Payout table ${i}`},
-      {key:`payoutTable${i}`,label:'Payout table',section:`Payout table ${i}`},
-      {key:`payoutTable${i}Cap`,label:'Cap note',section:`Payout table ${i}`},
-    );
-  }
-  for(let i=1;i<=bn;i++){
-    extra.push(
-      {key:`bonus${i}Type`,label:'Type',section:`Bonus ${i}`},
-      {key:`bonus${i}Details`,label:'Payout details',section:`Bonus ${i}`},
-      {key:`bonus${i}Max`,label:'Maximum payout',section:`Bonus ${i}`},
-    );
-  }
-  meta.splice(insertAt,0,...extra);
   return meta;
 }
 
-let compareFieldMeta=buildCompareFieldMeta(0,0,[]);
+let compareFieldMeta=buildCompareFieldMeta([]);
 
 const planFieldTemplates={
   'H01.A':{
@@ -4157,9 +4213,8 @@ function blankVersionContent(pk){
   const plan=getPlan(planId,fy);
   const f0=getFlavorsForPlan(pk)[0];
   return{
-    planMeta:{planName:plan?.planName||planId,bonuses:[],tether:'',keyPolicies:''},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}]}],
-    payoutTables:[],
+    planMeta:{planName:plan?.planName||planId,keyPolicies:''},
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''}],
   };
 }
 /* ── Seed payout-table builders (config-set driven, so tables carry real bandSetId/tierSetId
@@ -4311,51 +4366,59 @@ function seedVersionContent(){
     if(!sc){ver.content=blankVersionContent(pk);ver.content.planMeta.planName=plan?.planName||planId;return;}
     const contentFlavors=getFlavorsForPlan(pk).map(f=>{
       const fd=sc.flavors[f.flavorLabel]||sc.flavors.A||{measures:[]};
+      // Full per-flavor ownership: each flavor gets its own tether, bonuses, and payout tables
+      // (fresh payouts() call per flavor so each flavor's tables carry unique payoutUid ids).
       return{flavorId:f.flavorId,flavorLabel:f.flavorLabel,flavorName:f.flavorName||f.role,role:f.role,
         headcount:(fd.headcount!=null?fd.headcount:''),payMixBase:(fd.payMixBase!=null?fd.payMixBase:''),payMixVar:(fd.payMixVar!=null?fd.payMixVar:''),
-        newHireGuarantee:fd.newHireGuarantee||'No',measures:clone(fd.measures||[])};
+        newHireGuarantee:fd.newHireGuarantee||'No',measures:clone(fd.measures||[]),
+        tether:sc.tether||'N/A',bonuses:clone(sc.bonuses||[]),payoutTables:sc.payouts?sc.payouts():[],
+        reviewStatus:'pending',reviewNote:''};
     });
     ver.content={
-      planMeta:{planName:plan?.planName||planId,bonuses:clone(sc.bonuses||[]),tether:sc.tether||'N/A',keyPolicies:''},
+      planMeta:{planName:plan?.planName||planId,keyPolicies:''},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
-      payoutTables:sc.payouts?sc.payouts():[],
     };
   });
   // Per-version demo diffs for A01 FY27 (keep 100% VCT) so version-to-version compare shows changes.
   const setA=(v,measures,tether,topXpcr)=>{
     if(!v||!v.content)return;
-    if(v.content.flavors[0])v.content.flavors[0].measures=measures;
-    v.content.planMeta.tether=tether;
-    const pt=v.content.payoutTables[0];
+    const fl=v.content.flavors[0];if(!fl)return;
+    fl.measures=measures;
+    fl.tether=tether;
+    const pt=(fl.payoutTables||[])[0];
     if(pt)pt.thresholds.forEach(b=>{const t=b.tiers[b.tiers.length-1];if(t)t.xPCR=topXpcr;});
   };
   setA(getVersion('ver-A01-FY27-2'),[mkMeasure('Net New ARR','55%','Annual','Quarterly'),mkMeasure('Renewal ARR','25%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 85%',2.25);
   setA(getVersion('ver-A01-FY27-3'),[mkMeasure('Net New ARR','60%','Annual','Quarterly'),mkMeasure('Renewal ARR','20%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 90%',2.5);
-  // Final pass: link each measure to a payout table (per linkByTitle, else the first table).
+  // Final pass: link each measure to a payout table ON ITS OWN FLAVOR (per linkByTitle, else the flavor's first table).
   planVersions.forEach(ver=>{
     const c=ver.content;if(!c)return;
-    const tables=c.payoutTables||[];
     const linkMap=SEED_CONTENT[planKey(ver.flavorId,ver.fy)]?.linkByTitle||null;
-    const tableIdForMeasure=desc=>{
-      if(linkMap){const hit=tables.find(t=>(linkMap[t.title]||[]).includes(desc));if(hit)return hit.id;}
-      return tables[0]?tables[0].id:'';
-    };
-    (c.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{m.payoutTableId=tableIdForMeasure(m.description);if(m.mechType==null)m.mechType='';}));
+    (c.flavors||[]).forEach(fl=>{
+      const tables=fl.payoutTables||[];
+      const tableIdForMeasure=desc=>{
+        if(linkMap){const hit=tables.find(t=>(linkMap[t.title]||[]).includes(desc));if(hit)return hit.id;}
+        return tables[0]?tables[0].id:'';
+      };
+      (fl.measures||[]).forEach(m=>{m.payoutTableId=tableIdForMeasure(m.description);if(m.mechType==null)m.mechType='';});
+      // Per-flavor ownership: keep only the payout tables this flavor's measures actually use.
+      const used=new Set((fl.measures||[]).map(m=>m.payoutTableId).filter(Boolean));
+      fl.payoutTables=tables.filter(t=>used.has(t.id));
+    });
   });
 }
 /* Build the field-shape that compareFieldMeta/diffField consume, from a version's content.
    Compare is plan/version-level: plan/version-level fields once, then per-flavor fields
    keyed by flavor label (flavor${L}…). */
-function buildFieldsFromContentVersion(planId,fy,planMeta,flavors,payoutTables){
+function buildFieldsFromContentVersion(planId,fy,planMeta,flavors){
   const hasVal=x=>x!=null&&x!=='';
   const flavs=Array.isArray(flavors)?flavors:[];
   const fields={
     planId,
     planName:planMeta.planName,
-    tether:planMeta.tether||'N/A',
     flavorLabels:flavs.map(f=>f.flavorLabel),
   };
-  // Per-flavor fields, keyed by flavor label.
+  // Full per-flavor ownership: all config (measures, payout tables, bonuses, tether) keyed by flavor label.
   flavs.forEach(fl=>{
     const L=fl.flavorLabel;
     const hc=fl.headcount,pmb=fl.payMixBase,pmv=fl.payMixVar;
@@ -4373,26 +4436,28 @@ function buildFieldsFromContentVersion(planId,fy,planMeta,flavors,payoutTables){
       fields[`flavor${L}Measure${n}PayFreq`]=m.pay||'Quarterly';
     });
     fields[`flavor${L}MeasureCount`]=measures.length;
+    // Payout tables (per flavor).
+    const pts=Array.isArray(fl.payoutTables)?fl.payoutTables:[];
+    pts.forEach((pt,i)=>{
+      const n=i+1;
+      fields[`flavor${L}PayoutTable${n}Title`]=hasVal(pt.title)?pt.title:`Payout table ${n}`;
+      fields[`flavor${L}PayoutTable${n}`]=payoutStructureSummary(pt);
+      fields[`flavor${L}PayoutTable${n}Data`]=JSON.stringify(pt);
+      fields[`flavor${L}PayoutTable${n}Cap`]=hasVal(pt.globalVctCap)?pt.globalVctCap:'—';
+    });
+    fields[`flavor${L}PayoutCount`]=pts.length;
+    // Bonuses (per flavor).
+    const bonuses=Array.isArray(fl.bonuses)?fl.bonuses:[];
+    bonuses.forEach((b,i)=>{
+      const n=i+1;
+      fields[`flavor${L}Bonus${n}Type`]=hasVal(b.type)?b.type:'—';
+      fields[`flavor${L}Bonus${n}Details`]=hasVal(b.payoutDetails)?b.payoutDetails:'—';
+      fields[`flavor${L}Bonus${n}Max`]=hasVal(b.maxPayout)?b.maxPayout:'—';
+    });
+    fields[`flavor${L}BonusCount`]=bonuses.length;
+    // Tether (per flavor).
+    fields[`flavor${L}Tether`]=hasVal(fl.tether)?fl.tether:'N/A';
   });
-  // Payout tables — independent array, positional by index (shared across flavors).
-  const pts=Array.isArray(payoutTables)?payoutTables:[];
-  pts.forEach((pt,i)=>{
-    const n=i+1;
-    fields[`payoutTable${n}Title`]=hasVal(pt.title)?pt.title:`Payout table ${n}`;
-    fields[`payoutTable${n}`]=payoutStructureSummary(pt);
-    fields[`payoutTable${n}Data`]=JSON.stringify(pt);
-    fields[`payoutTable${n}Cap`]=hasVal(pt.globalVctCap)?pt.globalVctCap:'—';
-  });
-  fields.payoutTableCount=pts.length;
-  // Bonuses — version-level list, positional.
-  const bonuses=Array.isArray(planMeta.bonuses)?planMeta.bonuses:[];
-  bonuses.forEach((b,i)=>{
-    const n=i+1;
-    fields[`bonus${n}Type`]=hasVal(b.type)?b.type:'—';
-    fields[`bonus${n}Details`]=hasVal(b.payoutDetails)?b.payoutDetails:'—';
-    fields[`bonus${n}Max`]=hasVal(b.maxPayout)?b.maxPayout:'—';
-  });
-  fields.bonusCount=bonuses.length;
   return fields;
 }
 
@@ -4405,7 +4470,7 @@ function buildPlanSnapshots(){
     const content=ver.content||blankVersionContent(planKey(planId,ver.fy));
     const flavs=content.flavors||[];
     const p={id:planId,name:plan?.planName||planId,role:flavs.map(f=>f.role).filter(Boolean).join(' / '),fy:ver.fy,status:ver.status,ver:ver.versionNumber+'.0'};
-    const fields=buildFieldsFromContentVersion(planId,ver.fy,content.planMeta||{},flavs,content.payoutTables||[]);
+    const fields=buildFieldsFromContentVersion(planId,ver.fy,content.planMeta||{},flavs);
     const snap=makeSnapshot(p,ver.fy,String(ver.versionNumber),statusMap[ver.status]||'draft',{},{
       key:`version|${ver.versionId}`,
       fields,
@@ -5067,7 +5132,7 @@ function buildCompareTableBodyHtml(diffs,{leftSnap,rightSnap}={}){
       currentSection=d.section;
       html+=`<tr class="pa-section-row"><td colspan="3">${escapeCompareHtml(currentSection)}</td></tr>`;
     }
-    if(/^payoutTable\d+$/.test(d.key||'')){
+    if(/[Pp]ayoutTable\d+$/.test(d.key||'')){
       const ptL=parsePayoutData(leftSnap&&leftSnap.fields&&leftSnap.fields[d.key+'Data']);
       const ptR=parsePayoutData(rightSnap&&rightSnap.fields&&rightSnap.fields[d.key+'Data']);
       html+=`<tr data-section="${escapeCompareHtml(d.section)}" data-type="${d.type}">
@@ -5192,7 +5257,8 @@ function formatCompareColumnLabel(snap,side){
 function compareFlavorShape(a,b){
   const labels=[];
   [a,b].forEach(s=>((s&&s.fields&&s.fields.flavorLabels)||[]).forEach(L=>{if(!labels.includes(L))labels.push(L);}));
-  return labels.map(L=>({label:L,measureCount:Math.max(Number(a?.fields?.[`flavor${L}MeasureCount`])||0,Number(b?.fields?.[`flavor${L}MeasureCount`])||0)}));
+  const mx=(k)=>Math.max(Number(a?.fields?.[k])||0,Number(b?.fields?.[k])||0);
+  return labels.map(L=>({label:L,measureCount:mx(`flavor${L}MeasureCount`),payoutCount:mx(`flavor${L}PayoutCount`),bonusCount:mx(`flavor${L}BonusCount`)}));
 }
 function computeHeadcountDelta(left,right){
   const l=parseInt(left),r=parseInt(right);
@@ -5364,7 +5430,7 @@ function runComparison(){
 
   const diffs=[];
   const changes=[];
-  compareFieldMeta=buildCompareFieldMeta(Math.max(Number(leftSnap.fields?.payoutTableCount)||0,Number(rightSnap.fields?.payoutTableCount)||0),Math.max(Number(leftSnap.fields?.bonusCount)||0,Number(rightSnap.fields?.bonusCount)||0),compareFlavorShape(leftSnap,rightSnap));
+  compareFieldMeta=buildCompareFieldMeta(compareFlavorShape(leftSnap,rightSnap));
   compareFieldMeta.forEach(meta=>{
     const leftVal=leftSnap.fields[meta.key];
     const rightVal=rightSnap.fields[meta.key];
@@ -5506,8 +5572,8 @@ function renderRoleView(){
         hc:(fl.headcount!=null&&fl.headcount!=='')?fl.headcount:'—',
         payMix:(fl.payMixBase!=null&&fl.payMixBase!==''&&fl.payMixVar!=null&&fl.payMixVar!=='')?`${fl.payMixBase} / ${fl.payMixVar}`:'—',
         measures:fl.measures||[],
-        bonus:roleBonusSummary(c.planMeta&&c.planMeta.bonuses),
-        tether:(c.planMeta&&c.planMeta.tether)||'—',
+        bonus:roleBonusSummary(fl.bonuses),
+        tether:fl.tether||'—',
         owner:plan?.owner||'—',
       });
     });

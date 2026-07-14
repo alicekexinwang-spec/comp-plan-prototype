@@ -3,7 +3,32 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — reviewer-scoped approval queue + view-as toggle + release validation (uncommitted)
+## Latest change — flavor-owned config + per-flavor review status (branch `feature/comp-plan-flavorconfig`)
+Re-based this branch onto HEAD `1f40271`, then two phases:
+- **Phase 1 — full per-flavor ownership.** Moved `bonuses`, `tether`, and `payoutTables` from
+  `planMeta`/version-level down into each **flavor** (`content.payoutTables` and `planMeta.bonuses`/`.tether`
+  removed; `planMeta` = `{planName,keyPolicies,designerNote}`). Measures link to a payout table **on their own
+  flavor**. Builder renders per-flavor payout/bonus/tether editors with a **flavor-encoded slot map**
+  (`payoutSlotFor(fi,i)=1000+fi*100+i`, `builderPayoutSlotIndex[slot]={fi,idx}`; new
+  `renderBuilderFlavorPayouts`/`renderBuilderFlavorBonuses`, `onBuilderFlavorTether`). `validateVersionContent`
+  checks measure↔table linking **per flavor**. Compare folds payout/bonus/tether into each Flavor section
+  (`buildFieldsFromContentVersion` per-flavor keys `flavor${L}PayoutTable${n}*`/`Bonus${n}*`/`Tether`;
+  `buildCompareFieldMeta(flavors)`; `compareFlavorShape` carries payout/bonus counts). Role View reads
+  `fl.bonuses`/`fl.tether`. Seed clones plan-level config into each flavor (unique payout ids) and **prunes
+  each flavor's tables to only those its measures use** (so per-flavor validation passes).
+- **Phase 2 — per-flavor review + derived plan status.** Each flavor has `reviewStatus`
+  (`pending`/`approved`/`needs_rework`) + `reviewNote`. Review stages show a per-flavor Approve / Needs-rework
+  panel (`setFlavorReviewStatus`/`setFlavorReviewNote`). Plan status is **derived** (`deriveFlavorReviewSummary`)
+  and shown in the approval detail, reviewer queue, and proposal tracker. `advanceVersionStage` is **gated** at
+  review stages until every flavor is approved; `submitVersionById`/`withdrawVersion` reset statuses to pending.
+
+Verified on webui2 (no console errors): all 11 seeded versions `validateVersionContent()==[]`; builder
+per-flavor add/edit/remove + save round-trip; Compare renders per-flavor sections + matrices; Role View
+per-flavor bonus/tether; review panel + gate (blocks on needs-rework/pending, advances when all approved) +
+submit/withdraw reset. See `CLAUDE.md` for the updated model. **Committed on `feature/comp-plan-flavorconfig`
+(off `master`); not on PR #1.**
+
+## Earlier change — reviewer-scoped approval queue + view-as toggle + release validation (committed 1f40271)
 Approvals screen rebuilt: a **"view as reviewer" toggle** (`REVIEWERS` — Susan L./Val R./Elena M./Comp
 Design Team, each mapped to stages; `currentReviewerId`) + a **reviewer-scoped queue** (versions at that
 reviewer's stage) + the version detail. Review stages (1st/2nd/Exec) allow **Approve / Edit / Withdraw**;
