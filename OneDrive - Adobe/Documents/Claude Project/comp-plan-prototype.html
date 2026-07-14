@@ -690,7 +690,7 @@ tr:hover td{background:var(--pa-surface-hover)}
     <div class="sidebar-section">
       <div class="sidebar-label">Workflow</div>
       <div class="nav-item" onclick="showScreen('approval')"><i class="ti ti-circle-check"></i> Approvals <span class="nav-badge">5</span></div>
-      <div class="nav-item" onclick="showScreen('tracker')"><i class="ti ti-list-check"></i> Version Tracker</div>
+      <div class="nav-item" onclick="showScreen('tracker')"><i class="ti ti-list-check"></i> Proposal Tracker</div>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Setup</div>
@@ -832,7 +832,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Plan #</th><th>Plan Name</th><th>FY</th><th>Status</th><th>Published Version</th><th>Versions</th><th>Created</th><th>Last updated</th><th>Owner</th><th>Actions</th>
+              <th>Plan #</th><th>Plan Name</th><th>FY</th><th>Status</th><th>Published Version</th><th>Proposals</th><th>Created</th><th>Last updated</th><th>Owner</th><th>Actions</th>
             </tr></thead>
             <tbody id="lib-tbody"></tbody>
           </table>
@@ -845,7 +845,7 @@ tr:hover td{background:var(--pa-surface-hover)}
           <button class="btn btn-sm" onclick="showScreen('library')" title="Back"><i class="ti ti-arrow-left"></i></button>
           <div class="pa-command-bar-title" id="plan-detail-title">A01.A · SOLUTION ARCHITECT</div>
           <div class="pa-command-bar-actions">
-            <button class="btn btn-primary btn-sm" onclick="openCreateRevisionModal()"><i class="ti ti-plus"></i> New version</button>
+            <button class="btn btn-primary btn-sm" onclick="openCreateRevisionModal()"><i class="ti ti-plus"></i> New proposal</button>
           </div>
         </div>
 
@@ -862,7 +862,7 @@ tr:hover td{background:var(--pa-surface-hover)}
 
         <div class="pa-form-card pa-plan-content-card">
           <div class="pa-pivot" id="plan-detail-tabs" role="tablist">
-            <button type="button" class="pa-pivot-tab plan-tab active" data-tab="versions" onclick="switchPlanTab('versions')" role="tab">Versions</button>
+            <button type="button" class="pa-pivot-tab plan-tab active" data-tab="versions" onclick="switchPlanTab('versions')" role="tab">Proposals</button>
             <button type="button" class="pa-pivot-tab plan-tab" data-tab="approval" onclick="switchPlanTab('approval')" role="tab">Approval history</button>
             <button type="button" class="pa-pivot-tab plan-tab" data-tab="documents" onclick="switchPlanTab('documents')" role="tab">Documents</button>
           </div>
@@ -905,12 +905,12 @@ tr:hover td{background:var(--pa-surface-hover)}
             <div class="builder-entry-card" onclick="openCreatePlanModal()">
               <div class="builder-entry-icon" style="background:#F1EFE8;color:#444441"><i class="ti ti-file-plus"></i></div>
               <div class="builder-entry-label">Create from scratch</div>
-              <div class="builder-entry-desc">New # creates a plan; an existing # adds a version.</div>
+              <div class="builder-entry-desc">New # creates a plan; an existing # adds a proposal.</div>
             </div>
             <div class="builder-entry-card" onclick="openClonePlanModal()">
               <div class="builder-entry-icon" style="background:#EAF3DE;color:#3B6D11"><i class="ti ti-copy"></i></div>
-              <div class="builder-entry-label">Clone from existing plan + version</div>
-              <div class="builder-entry-desc">Copy a plan version into a new or existing plan.</div>
+              <div class="builder-entry-label">Clone from existing plan + proposal</div>
+              <div class="builder-entry-desc">Copy a plan proposal into a new or existing plan.</div>
             </div>
           </div>
         </div>
@@ -918,7 +918,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="page-header">
           <div><div class="page-title" id="builder-title">Plan Builder</div></div>
           <div class="btn-group">
-            <button class="btn btn-sm" onclick="openPlanDetail(currentPlanKey)"><i class="ti ti-layout-list"></i> All versions</button>
+            <button class="btn btn-sm" onclick="openPlanDetail(currentPlanKey)"><i class="ti ti-layout-list"></i> All proposals</button>
             <button class="btn btn-sm" onclick="saveBuilderVersion()"><i class="ti ti-device-floppy"></i> Save draft</button>
             <button class="btn btn-sm" onclick="enterPlanBuilder()"><i class="ti ti-plus"></i> New plan</button>
             <button class="btn btn-primary btn-sm" id="builder-header-submit" onclick="submitCurrentVersion()"><i class="ti ti-send"></i> Submit for Approval</button>
@@ -968,7 +968,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         <div class="page-header">
           <div>
             <div class="page-title">Compare Plans</div>
-            <div class="page-subtitle" id="compare-subtitle">Pick any two plans to compare — any plan, version, or fiscal year</div>
+            <div class="page-subtitle" id="compare-subtitle">Pick any two plans to compare — any plan, proposal, or fiscal year</div>
           </div>
           <div class="btn-group">
             <button class="btn btn-sm" id="compare-clear-btn" onclick="clearCompareSelection()" style="display:none"><i class="ti ti-refresh"></i> Start over</button>
@@ -991,9 +991,9 @@ tr:hover td{background:var(--pa-surface-hover)}
                 <span class="compare-slot-clear" id="compare-clear-left" style="display:none" onclick="clearCompareSide('left')"><i class="ti ti-x" style="font-size:10px"></i> Clear</span>
               </div>
               <select class="form-select" id="compare-left-select" onchange="selectComparePlanFromSelect('left',this.value)">
-                <option value="">Select a plan version…</option>
+                <option value="">Select a proposal…</option>
               </select>
-              <div class="compare-slot-empty" id="compare-empty-left"><i class="ti ti-file"></i><span>Choose a plan version</span></div>
+              <div class="compare-slot-empty" id="compare-empty-left"><i class="ti ti-file"></i><span>Choose a proposal</span></div>
               <div class="compare-slot-summary" id="compare-summary-left"></div>
             </div>
             <div class="compare-slot" id="compare-slot-right">
@@ -1002,9 +1002,9 @@ tr:hover td{background:var(--pa-surface-hover)}
                 <span class="compare-slot-clear" id="compare-clear-right" style="display:none" onclick="clearCompareSide('right')"><i class="ti ti-x" style="font-size:10px"></i> Clear</span>
               </div>
               <select class="form-select" id="compare-right-select" onchange="selectComparePlanFromSelect('right',this.value)">
-                <option value="">Select a plan version…</option>
+                <option value="">Select a proposal…</option>
               </select>
-              <div class="compare-slot-empty" id="compare-empty-right"><i class="ti ti-file"></i><span>Choose a plan version</span></div>
+              <div class="compare-slot-empty" id="compare-empty-right"><i class="ti ti-file"></i><span>Choose a proposal</span></div>
               <div class="compare-slot-summary" id="compare-summary-right"></div>
             </div>
           </div>
@@ -1034,7 +1034,7 @@ tr:hover td{background:var(--pa-surface-hover)}
                     <tbody id="compare-grid-body"></tbody>
                   </table>
                 </div>
-                <div class="pa-compare-footer" id="compare-grid-footer">Select two versions to compare</div>
+                <div class="pa-compare-footer" id="compare-grid-footer">Select two proposals to compare</div>
               </div>
             </div>
             <div>
@@ -1074,9 +1074,9 @@ tr:hover td{background:var(--pa-surface-hover)}
       <!-- SCREEN 6: APPROVAL -->
       <div id="screen-approval" class="screen">
         <div class="page-header">
-          <div><div class="page-title" id="approval-page-title">Approval Review — Draft v2</div><div class="page-subtitle" id="approval-page-subtitle">H01.A · Digital Experience AE · Submitted Jun 11, 2026</div></div>
+          <div><div class="page-title" id="approval-page-title">Approval Review — Proposal 2</div><div class="page-subtitle" id="approval-page-subtitle">H01.A · Digital Experience AE · Submitted Jun 11, 2026</div></div>
           <div class="btn-group">
-            <button class="btn btn-sm" onclick="openComparePlatform('approval')"><i class="ti ti-columns"></i> Compare Versions</button>
+            <button class="btn btn-sm" onclick="openComparePlatform('approval')"><i class="ti ti-columns"></i> Compare Proposals</button>
             <button class="btn btn-sm" onclick="showScreen('document')"><i class="ti ti-file-text"></i> View document</button>
           </div>
         </div>
@@ -1087,7 +1087,7 @@ tr:hover td{background:var(--pa-surface-hover)}
         </div>
         <div class="compare-prompt" style="margin-bottom:14px">
           <i class="ti ti-info-circle"></i>
-          <div id="approval-context-text">Reviewing <strong id="approval-version-name">Draft v2</strong> against the <strong>published version</strong> (<span id="approval-published-label">v1</span>).</div>
+          <div id="approval-context-text">Reviewing <strong id="approval-version-name">Proposal 2</strong> against the <strong>published version</strong> (<span id="approval-published-label">v1</span>).</div>
         </div>
         <div class="approval-stage-track" id="approval-stage-track"></div>
         <div class="two-col">
@@ -1101,7 +1101,7 @@ tr:hover td{background:var(--pa-surface-hover)}
               <div id="approval-actions-panel"></div>
               <textarea class="form-textarea" id="approval-comment-input" style="width:100%;min-height:70px;margin-top:12px" placeholder="Add approval comments or feedback…"></textarea>
               <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-                <button class="btn btn-sm" onclick="openComparePlatform('approval')"><i class="ti ti-columns"></i> Compare Versions</button>
+                <button class="btn btn-sm" onclick="openComparePlatform('approval')"><i class="ti ti-columns"></i> Compare Proposals</button>
               </div>
             </div>
             <div class="card">
@@ -1128,23 +1128,23 @@ tr:hover td{background:var(--pa-surface-hover)}
       <!-- SCREEN 7: TRACKER -->
       <div id="screen-tracker" class="screen">
         <div class="page-header">
-          <div><div class="page-title">Version Tracker</div><div class="page-subtitle">All versions by comp plan · designer &amp; approval view</div></div>
+          <div><div class="page-title">Proposal Tracker</div><div class="page-subtitle">All proposals by comp plan · designer &amp; approval view</div></div>
           <div class="btn-group">
             <button class="btn btn-sm"><i class="ti ti-download"></i> Export</button>
             <button class="btn btn-sm"><i class="ti ti-refresh"></i> Refresh</button>
           </div>
         </div>
         <div class="filter-bar" id="tracker-filters">
-          <input class="search-input" id="tracker-search" placeholder="Search comp plan or version…" type="search" oninput="filterProposalTracker()">
+          <input class="search-input" id="tracker-search" placeholder="Search comp plan or proposal…" type="search" oninput="filterProposalTracker()">
           <select class="filter-select" id="tracker-fy-filter" onchange="filterProposalTracker()"><option value="">All fiscal years</option><option value="FY27">FY27</option><option value="FY26">FY26</option></select>
-          <select class="filter-select" id="tracker-status-filter" onchange="filterProposalTracker()"><option value="">All version statuses</option><option value="draft">Draft</option><option value="in_review">In Review</option><option value="submitted">Submitted for Approval</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="rescinded">Rescinded</option><option value="published">Published</option><option value="archived">Archived</option></select>
+          <select class="filter-select" id="tracker-status-filter" onchange="filterProposalTracker()"><option value="">All proposal statuses</option><option value="draft">Draft</option><option value="in_review">In Review</option><option value="submitted">Submitted for Approval</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="rescinded">Rescinded</option><option value="published">Published</option><option value="archived">Archived</option></select>
           <select class="filter-select" id="tracker-approval-filter" onchange="filterProposalTracker()"><option value="">All approval stages</option><option value="pending">Pending Susan review</option><option value="approved">Susan approved</option><option value="seo">SEO review</option><option value="published">Published</option></select>
           <button class="btn btn-sm" onclick="showScreen('audit')"><i class="ti ti-history"></i> Change log</button>
         </div>
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Plan</th><th>Version</th><th>FY</th><th>Status</th><th>Approval stage</th><th>Submitted</th><th>Published</th><th>Updated</th><th>Actions</th>
+              <th>Plan</th><th>Proposal</th><th>FY</th><th>Status</th><th>Approval stage</th><th>Submitted</th><th>Published</th><th>Updated</th><th>Actions</th>
             </tr></thead>
             <tbody id="tracker-tbody"></tbody>
           </table>
@@ -1325,14 +1325,14 @@ BONUS_THRESHOLD=0.75</div></div>
               <div class="audit-item"><div class="audit-dot" style="background:#534AB7"></div><div style="font-size:12px;font-weight:500">Plan cloned from H02.A (CXO Specialist)</div><div class="audit-meta">Val Reyes · Jun 12, 2026, 10:15 AM · New draft H11.A v1.0</div><div class="audit-change">Fields carried: role, pay mix, performance measures, payout tables, bonus/tether settings · Plan ID &amp; name set to new values</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Performance measures added</div><div class="audit-meta">Melissa Chen · Jun 3, 9:45 AM</div><div class="audit-change">ARR New Business 60%, ARR Renewal 25%, Strategic Products 15%</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Payout table configured</div><div class="audit-meta">Melissa Chen · Jun 4, 2:10 PM</div><div class="audit-change">150%+ multiplier set to 1.80x · Incentive cap 250%</div></div>
-              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Draft v1.0 saved</div><div class="audit-meta">Melissa Chen · Jun 5, 4:45 PM</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Proposal 1 saved</div><div class="audit-meta">Melissa Chen · Jun 5, 4:45 PM</div></div>
               <div class="audit-item"><div class="audit-dot blue"></div><div style="font-size:12px;font-weight:500">Submitted for approval (v1.0)</div><div class="audit-meta">Melissa Chen · Jun 6, 10:00 AM</div></div>
               <div class="audit-item"><div class="audit-dot" style="background:#E24B4A"></div><div style="font-size:12px;font-weight:500">Returned for revision</div><div class="audit-meta">Susan L. · Jun 7, 2:30 PM</div><div class="audit-change" style="border-left-color:#E24B4A">"Increase 150%+ multiplier to 2.00x. Add renewal tether. Remove cap at top tier."</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">VCT weights modified</div><div class="audit-meta">Melissa Chen · Jun 9, 11:15 AM</div><div class="audit-change">ARR New Business: 60% → 50% · Strategic Products: 15% → 20%</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Payout frequency changed</div><div class="audit-meta">Melissa Chen · Jun 9, 11:18 AM</div><div class="audit-change">Monthly → Quarterly · Aligns with deal cycle feedback</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Renewal tether added</div><div class="audit-meta">Val Reyes · Jun 10, 3:00 PM</div><div class="audit-change">Threshold: 80% · Applies to all measures</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Incentive cap removed (150%+ tier)</div><div class="audit-meta">Melissa Chen · Jun 11, 11:00 AM</div><div class="audit-change">Cap 250% removed → Uncapped · Multiplier 1.80x → 2.00x</div></div>
-              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Draft v2.1 saved</div><div class="audit-meta">Melissa Chen · Jun 11, 11:20 AM</div></div>
+              <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Proposal 2 saved</div><div class="audit-meta">Melissa Chen · Jun 11, 11:20 AM</div></div>
               <div class="audit-item"><div class="audit-dot blue"></div><div style="font-size:12px;font-weight:500">Submitted for approval (v2.1)</div><div class="audit-meta">Melissa Chen · Jun 11, 11:22 AM</div></div>
             </div>
           </div>
@@ -1499,7 +1499,7 @@ BONUS_THRESHOLD=0.75</div></div>
       <button class="modal-close" onclick="closeCreatePlanModal()" aria-label="Close"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">New Comp Plan # = new plan; existing # = new version.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">New Comp Plan # = new plan; existing # = new proposal.</p>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Comp Plan # *</label><input class="form-input" id="new-plan-id" placeholder="e.g. A11" oninput="onNewPlanIdInput()"><p style="font-size:10px;color:var(--muted);margin-top:4px" id="new-plan-id-hint">Letter(s) followed by a number, e.g. A11.</p></div>
         <div class="form-group"><label class="form-label">Fiscal year</label><select class="form-select" id="new-plan-fy" onchange="onNewPlanIdInput()"><option selected>FY27</option><option>FY26</option></select></div>
@@ -1510,9 +1510,9 @@ BONUS_THRESHOLD=0.75</div></div>
       <div id="new-plan-versionfields" style="display:none">
         <div class="form-row">
           <div class="form-group"><label class="form-label">Comp Plan Name</label><input class="form-input" id="new-plan-existing-name" readonly></div>
-          <div class="form-group"><label class="form-label">New version</label><input class="form-input" id="new-plan-next-version" readonly></div>
+          <div class="form-group"><label class="form-label">New proposal</label><input class="form-input" id="new-plan-next-version" readonly></div>
         </div>
-        <p style="font-size:11px;color:var(--muted);margin-top:2px">A new blank version will be created — build its content in the plan builder.</p>
+        <p style="font-size:11px;color:var(--muted);margin-top:2px">A new blank proposal will be created — build its content in the plan builder.</p>
       </div>
     </div>
     <div class="modal-footer">
@@ -1533,10 +1533,10 @@ BONUS_THRESHOLD=0.75</div></div>
       <button class="modal-close" onclick="closeDuplicatePlanModal()"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Clone a source plan + version into a target plan.</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Clone a source plan + proposal into a target plan.</p>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Source plan</label><select class="form-select" id="dup-source-plan" onchange="onDupSourcePlanChange()"></select></div>
-        <div class="form-group"><label class="form-label">Source version to copy</label><select class="form-select" id="dup-source-version"></select></div>
+        <div class="form-group"><label class="form-label">Source proposal to copy</label><select class="form-select" id="dup-source-version"></select></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Target Comp Plan # *</label><input class="form-input" id="dup-plan-id" placeholder="e.g. A01 (same) or A20 (new)" oninput="onCloneTargetInput()"><p style="font-size:10px;color:var(--muted);margin-top:4px" id="dup-target-hint"></p></div>
@@ -1564,9 +1564,9 @@ BONUS_THRESHOLD=0.75</div></div>
       <div class="form-group">
         <label class="form-label">Duplicate from</label>
         <select class="form-select" id="revision-duplicate-from">
-          <option value="">Blank draft (new version number)</option>
+          <option value="">Blank draft (new proposal number)</option>
         </select>
-        <p style="font-size:11px;color:var(--muted);margin-top:6px">Copy from any published, draft, or prior version.</p>
+        <p style="font-size:11px;color:var(--muted);margin-top:6px">Copy from any published, draft, or prior proposal.</p>
       </div>
     </div>
     <div class="modal-footer">
@@ -1586,7 +1586,7 @@ const screens={
   plan:{title:'Compensation Plan'},
   multi:{title:'Role View'},
   approval:{title:'Approval Review'},
-  tracker:{title:'Version Tracker'},
+  tracker:{title:'Proposal Tracker'},
   mechanics:{title:'Plan Mechanics — H01.A'},
   document:{title:'Plan Document — H01.A v2.1'},
   audit:{title:'Audit & Version History — H01.A'},
@@ -1842,34 +1842,34 @@ const planFlavors=[
 
 /* Plan versions — anchored to planId (one approval chain per plan, covering all flavors). */
 let planVersions=[
-  {versionId:'ver-A01-FY26-1',flavorId:'A01',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Oct 1, 2025',updatedAt:'Oct 12, 2025',submittedAt:'Oct 8, 2025',approvedAt:'Oct 10, 2025',publishedAt:'Oct 12, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'FY26 baseline',description:'FY26 approved baseline',approvalStage:'completed',isActivePublished:false},
-  {versionId:'ver-A01-FY27-1',flavorId:'A01',fy:'FY27',versionNumber:1,label:'Draft v1',status:'draft',sourceVersionId:'ver-A01-FY26-1',createdBy:'Melissa C.',createdAt:'Jun 3, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'FY26 structure carry-forward',approvalStage:'draft',isActivePublished:false},
-  {versionId:'ver-A01-FY27-2',flavorId:'A01',fy:'FY27',versionNumber:2,label:'Draft v2',status:'pending_review',sourceVersionId:'ver-A01-FY27-1',createdBy:'Melissa C.',createdAt:'Jun 8, 2026',updatedAt:'Jun 11, 2026',submittedAt:'Jun 11, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Quarterly payout & renewal tether',approvalStage:'first_review',isActivePublished:false},
-  {versionId:'ver-A01-FY27-3',flavorId:'A01',fy:'FY27',versionNumber:3,label:'Draft v3',status:'draft',sourceVersionId:'ver-A01-FY27-1',createdBy:'Val R.',createdAt:'Jun 10, 2026',updatedAt:'Jun 10, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Higher 150%+ accelerators',approvalStage:'draft',isActivePublished:false},
-  {versionId:'ver-B01-FY26-1',flavorId:'B01',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 20, 2025',submittedAt:'Oct 12, 2025',approvedAt:'Oct 18, 2025',publishedAt:'Oct 20, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 renewal & field plan',approvalStage:'completed',isActivePublished:false},
-  {versionId:'ver-B01-FY27-1',flavorId:'B01',fy:'FY27',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:'ver-B01-FY26-1',createdBy:'Val R.',createdAt:'Jun 1, 2026',updatedAt:'Jun 9, 2026',submittedAt:'Jun 5, 2026',approvedAt:'Jun 8, 2026',publishedAt:'Jun 9, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Renewal & field FY27 plan',approvalStage:'completed',isActivePublished:true},
-  {versionId:'ver-S08-FY26-1',flavorId:'S08',fy:'FY26',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 28, 2025',submittedAt:'Oct 20, 2025',approvedAt:'Oct 25, 2025',publishedAt:'Oct 28, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 business plan',approvalStage:'completed',isActivePublished:false},
-  {versionId:'ver-S08-FY27-1',flavorId:'S08',fy:'FY27',versionNumber:1,label:'Published v1',status:'published',sourceVersionId:'ver-S08-FY26-1',createdBy:'Val R.',createdAt:'May 20, 2026',updatedAt:'Jun 5, 2026',submittedAt:'Jun 3, 2026',approvedAt:'Jun 4, 2026',publishedAt:'Jun 5, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Business-focused plan',approvalStage:'completed',isActivePublished:true},
-  {versionId:'ver-S02-FY27-1',flavorId:'S02',fy:'FY27',versionNumber:1,label:'Draft v1',status:'approved',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'May 28, 2026',updatedAt:'Jun 10, 2026',submittedAt:'Jun 8, 2026',approvedAt:'Jun 10, 2026',publishedAt:null,rescindedAt:null,approvedBy:'Susan L.',publishedBy:null,comments:'Approved pending SEO',description:'Customer success baseline FY27',approvalStage:'release_validation',isActivePublished:false},
-  {versionId:'ver-T04-FY27-1',flavorId:'T04',fy:'FY27',versionNumber:1,label:'Draft v1',status:'withdrawn',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 2, 2026',submittedAt:'Jun 2, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'Increase 150%+ multiplier to 2.00x. Add renewal tether.',description:'Digital sales revision',approvalStage:'draft',isActivePublished:false},
-  {versionId:'ver-M01-FY27-1',flavorId:'M01',fy:'FY27',versionNumber:1,label:'Draft v1',status:'draft',sourceVersionId:null,createdBy:'Val R.',createdAt:'Jun 5, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Inside sales AE draft',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-A01-FY26-1',flavorId:'A01',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Oct 1, 2025',updatedAt:'Oct 12, 2025',submittedAt:'Oct 8, 2025',approvedAt:'Oct 10, 2025',publishedAt:'Oct 12, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'FY26 baseline',description:'FY26 approved baseline',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-A01-FY27-1',flavorId:'A01',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'draft',sourceVersionId:'ver-A01-FY26-1',createdBy:'Melissa C.',createdAt:'Jun 3, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'FY26 structure carry-forward',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-A01-FY27-2',flavorId:'A01',fy:'FY27',versionNumber:2,label:'Proposal 2',status:'pending_review',sourceVersionId:'ver-A01-FY27-1',createdBy:'Melissa C.',createdAt:'Jun 8, 2026',updatedAt:'Jun 11, 2026',submittedAt:'Jun 11, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Quarterly payout & renewal tether',approvalStage:'first_review',isActivePublished:false},
+  {versionId:'ver-A01-FY27-3',flavorId:'A01',fy:'FY27',versionNumber:3,label:'Proposal 3',status:'draft',sourceVersionId:'ver-A01-FY27-1',createdBy:'Val R.',createdAt:'Jun 10, 2026',updatedAt:'Jun 10, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Higher 150%+ accelerators',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-B01-FY26-1',flavorId:'B01',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 20, 2025',submittedAt:'Oct 12, 2025',approvedAt:'Oct 18, 2025',publishedAt:'Oct 20, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 renewal & field plan',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-B01-FY27-1',flavorId:'B01',fy:'FY27',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:'ver-B01-FY26-1',createdBy:'Val R.',createdAt:'Jun 1, 2026',updatedAt:'Jun 9, 2026',submittedAt:'Jun 5, 2026',approvedAt:'Jun 8, 2026',publishedAt:'Jun 9, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Renewal & field FY27 plan',approvalStage:'completed',isActivePublished:true},
+  {versionId:'ver-S08-FY26-1',flavorId:'S08',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 28, 2025',submittedAt:'Oct 20, 2025',approvedAt:'Oct 25, 2025',publishedAt:'Oct 28, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 business plan',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-S08-FY27-1',flavorId:'S08',fy:'FY27',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:'ver-S08-FY26-1',createdBy:'Val R.',createdAt:'May 20, 2026',updatedAt:'Jun 5, 2026',submittedAt:'Jun 3, 2026',approvedAt:'Jun 4, 2026',publishedAt:'Jun 5, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Business-focused plan',approvalStage:'completed',isActivePublished:true},
+  {versionId:'ver-S02-FY27-1',flavorId:'S02',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'approved',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'May 28, 2026',updatedAt:'Jun 10, 2026',submittedAt:'Jun 8, 2026',approvedAt:'Jun 10, 2026',publishedAt:null,rescindedAt:null,approvedBy:'Susan L.',publishedBy:null,comments:'Approved pending SEO',description:'Customer success baseline FY27',approvalStage:'release_validation',isActivePublished:false},
+  {versionId:'ver-T04-FY27-1',flavorId:'T04',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'withdrawn',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 2, 2026',submittedAt:'Jun 2, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'Increase 150%+ multiplier to 2.00x. Add renewal tether.',description:'Digital sales revision',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-M01-FY27-1',flavorId:'M01',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'draft',sourceVersionId:null,createdBy:'Val R.',createdAt:'Jun 5, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Inside sales AE draft',approvalStage:'draft',isActivePublished:false},
 ];
 
 let approvalEvents=[
-  {eventId:'evt-1',versionId:'ver-A01-FY27-2',action:'submitted',actor:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',note:'Draft v2 submitted for Susan review.'},
-  {eventId:'evt-2',versionId:'ver-B01-FY27-1',action:'published',actor:'Susan L.',timestamp:'Jun 9, 2026 9:10 AM',note:'Published v1 — all flavors.'},
-  {eventId:'evt-4',versionId:'ver-S08-FY27-1',action:'published',actor:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',note:'Published v1 from approved draft.'},
-  {eventId:'evt-5',versionId:'ver-A01-FY27-3',action:'created',actor:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',note:'Draft v3 created for internal design review.'},
+  {eventId:'evt-1',versionId:'ver-A01-FY27-2',action:'submitted',actor:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',note:'Proposal 2 submitted for Susan review.'},
+  {eventId:'evt-2',versionId:'ver-B01-FY27-1',action:'published',actor:'Susan L.',timestamp:'Jun 9, 2026 9:10 AM',note:'Version v1 — all flavors.'},
+  {eventId:'evt-4',versionId:'ver-S08-FY27-1',action:'published',actor:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',note:'Version v1 from approved draft.'},
+  {eventId:'evt-5',versionId:'ver-A01-FY27-3',action:'created',actor:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',note:'Proposal 3 created for internal design review.'},
   {eventId:'evt-6',versionId:'ver-T04-FY27-1',action:'rejected',actor:'Susan L.',timestamp:'Jun 2, 2026 2:30 PM',note:'Increase 150%+ multiplier to 2.00x. Add renewal tether.'},
   {eventId:'evt-7',versionId:'ver-S02-FY27-1',action:'approved',actor:'Susan L.',timestamp:'Jun 10, 2026 3:00 PM',note:'Susan approved — awaiting SEO review.'},
   {eventId:'evt-8',versionId:'ver-B01-FY27-1',action:'seo_approved',actor:'SEO Team',timestamp:'Jun 9, 2026 9:00 AM',note:'Mechanics validated.'},
 ];
 
 let auditLog=[
-  {id:'aud-1',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-2',action:'Submitted for approval',user:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',detail:'Draft v2 submitted to Susan L.'},
-  {id:'aud-2',planId:'B01',fy:'FY27',versionId:'ver-B01-FY27-1',action:'Published final version',user:'Susan L.',timestamp:'Jun 9, 2026 9:10 AM',detail:'Published v1 — all flavors.'},
-  {id:'aud-4',planId:'S08',fy:'FY27',versionId:'ver-S08-FY27-1',action:'Published final version',user:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',detail:'Published v1.'},
-  {id:'aud-5',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-3',action:'Revision created',user:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',detail:'Draft v3 — higher accelerators variant.'},
+  {id:'aud-1',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-2',action:'Submitted for approval',user:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',detail:'Proposal 2 submitted to Susan L.'},
+  {id:'aud-2',planId:'B01',fy:'FY27',versionId:'ver-B01-FY27-1',action:'Published final version',user:'Susan L.',timestamp:'Jun 9, 2026 9:10 AM',detail:'Version v1 — all flavors.'},
+  {id:'aud-4',planId:'S08',fy:'FY27',versionId:'ver-S08-FY27-1',action:'Published final version',user:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',detail:'Version v1.'},
+  {id:'aud-5',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-3',action:'Revision created',user:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',detail:'Proposal 3 — higher accelerators variant.'},
 ];
 
 /* Legacy aliases for compare/builder compatibility */
@@ -1972,7 +1972,7 @@ function versionBadgeHtml(status){
 function proposalBadgeHtml(status){return versionBadgeHtml(status);}
 
 function isVersionEditable(v){return v&&EDITABLE_STATUSES.includes(v.status);}
-function formatVersionLabel(v){return v?`${v.status==='published'?'Published':'Draft'} v${v.versionNumber}`:'';}
+function formatVersionLabel(v){return v?(v.status==='published'?`Version v${v.versionNumber}`:`Proposal ${v.versionNumber}`):'';}
 
 function addApprovalEvent(versionId,action,note,actor){
   approvalEvents.unshift({eventId:'evt-'+Date.now(),versionId,action,actor:actor||'Melissa C.',timestamp:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}),note});
@@ -2034,7 +2034,7 @@ function renderVersionGalleryRow(v,planKey){
   const queueChip=isQueue?`<span class="badge badge-review" style="margin-left:6px">In approval queue · ${APPROVAL_STAGE_LABELS[v.approvalStage]||''}</span>`:'';
   const statusHtml=`<div class="pa-gallery-status">${versionBadgeHtml(v.status)}${isPublishedActive?'<span class="badge badge-current-plan">Active</span>':''}</div>`;
   return`<tr class="pa-gallery-row ${isPublishedActive?'row-published':''} ${isQueue?'row-pending':''}" ${isQueue?'style="background:#FFF8E6"':''}>
-    <td class="col-version"><div class="pa-gallery-primary">${v.flavorId} v${v.versionNumber}${queueChip}</div></td>
+    <td class="col-version"><div class="pa-gallery-primary">${v.flavorId} ${formatVersionLabel(v)}${queueChip}</div></td>
     <td class="col-status">${statusHtml}</td>
     <td class="col-updated" style="font-size:11px;color:var(--pa-text-secondary)">${v.updatedAt||v.createdAt||'—'}</td>
     <td class="col-owner" style="font-size:11px;color:var(--pa-text-secondary)">${v.createdBy||'—'}</td>
@@ -2053,7 +2053,7 @@ function renderPlanVersionsTable(planKey){
     const bq=['pending_review','approved'].includes(b.status)?0:1;
     return aq!==bq?aq-bq:b.versionNumber-a.versionNumber;
   });
-  list.innerHTML=renderVersionSection('All versions',items,planKey);
+  list.innerHTML=renderVersionSection('All proposals',items,planKey);
 }
 
 function renderVersionSection(title,items,planKey){
@@ -2062,7 +2062,7 @@ function renderVersionSection(title,items,planKey){
     <div class="pa-section-header">${title}<span class="pa-section-count">${items.length} item${items.length===1?'':'s'}</span></div>
     <div class="pa-table-wrap">
       <table class="pa-datatable pa-version-gallery">
-        <thead><tr><th class="col-version">Version</th><th class="col-status">Status</th><th class="col-updated">Last updated</th><th class="col-owner">Created by</th><th class="col-actions">Actions</th></tr></thead>
+        <thead><tr><th class="col-version">Proposal</th><th class="col-status">Status</th><th class="col-updated">Last updated</th><th class="col-owner">Created by</th><th class="col-actions">Actions</th></tr></thead>
         <tbody>${items.length?items.map(v=>renderVersionGalleryRow(v,planKey)).join(''):empty}</tbody>
       </table>
     </div>
@@ -2135,10 +2135,10 @@ function renderPlanDetail(planKey){
     <div class="pa-metric-tile">
       <div class="pa-metric-tile-label">Current approval status</div>
       <div class="pa-metric-tile-value" style="font-size:14px"><span class="badge ${approvalStatus.badge}">${approvalStatus.label}</span></div>
-      <div class="pa-metric-tile-sub">${pub?`Published v${pub.versionNumber} active downstream`:'No published version yet'}</div>
+      <div class="pa-metric-tile-sub">${pub?`Version v${pub.versionNumber} active downstream`:'No published version yet'}</div>
     </div>
     <div class="pa-metric-tile">
-      <div class="pa-metric-tile-label">Total versions</div>
+      <div class="pa-metric-tile-label">Total proposals</div>
       <div class="pa-metric-tile-value">${allVers.length}</div>
       <div class="pa-metric-tile-sub">${drafts.length} draft${drafts.length===1?'':'s'} · ${pending.length} pending</div>
     </div>`;
@@ -2172,7 +2172,7 @@ function renderPlanOutputTabs(planKey){
   const {planId,fy}=parsePlanKey(planKey);
   const docPrev=document.getElementById('plan-documents-preview');
   if(!pub){
-    if(docPrev)docPrev.innerHTML='<div class="pa-empty-state">Publish a version to generate plan documents.</div>';
+    if(docPrev)docPrev.innerHTML='<div class="pa-empty-state">Publish a proposal to generate plan documents.</div>';
     return;
   }
   if(docPrev)docPrev.innerHTML=`
@@ -2180,7 +2180,7 @@ function renderPlanOutputTabs(planKey){
       <thead><tr><th>Document</th><th>Source version</th><th>Generated</th><th>Status</th><th class="col-actions">Actions</th></tr></thead>
       <tbody><tr>
         <td><div class="pa-gallery-primary">${planId} ${fy} Plan Document</div></td>
-        <td>Published v${pub.versionNumber}</td>
+        <td>Version v${pub.versionNumber}</td>
         <td style="font-size:11px;color:var(--pa-text-secondary)">${pub.publishedAt}</td>
         <td><span class="badge badge-published">Ready</span></td>
         <td class="col-actions"><button class="btn btn-sm" onclick="showScreen('document')"><i class="ti ti-download"></i> Open</button></td>
@@ -2198,7 +2198,7 @@ function populatePlanCompareSelects(){
   vers.forEach(v=>{(v.content?.flavors||[]).forEach(fl=>{opts.push({key:`version|${v.versionId}|${fl.flavorId}`,label:`${v.label} · Flavor ${fl.flavorLabel} · ${VERSION_STATUS_LABELS[v.status]}`});});});
   const html=opts.map(o=>`<option value="${o.key}">${o.label}</option>`).join('');
   leftSel.innerHTML=html;rightSel.innerHTML=html;
-  if(!opts.length){document.getElementById('plan-compare-results').innerHTML='<div class="pa-empty-state">No versions to compare yet</div>';return;}
+  if(!opts.length){document.getElementById('plan-compare-results').innerHTML='<div class="pa-empty-state">No proposals to compare yet</div>';return;}
   const pub=getPublishedVersion(currentPlanKey);
   const leftDefault=(pub&&opts.find(o=>o.key.includes(`|${pub.versionId}|`)))||opts[0];
   leftSel.value=leftDefault.key;
@@ -2250,8 +2250,8 @@ function closeCreateProposalModal(){closeCreateRevisionModal();}
 function populateRevisionDuplicateSelect(planKey){
   const sel=document.getElementById('revision-duplicate-from');
   const pub=getPublishedVersion(planKey);
-  let opts='<option value="">Start blank (new version number)</option>';
-  if(pub)opts+=`<option value="version:${pub.versionId}">Published v${pub.versionNumber} (current)</option>`;
+  let opts='<option value="">Start blank (new proposal number)</option>';
+  if(pub)opts+=`<option value="version:${pub.versionId}">Version v${pub.versionNumber} (current)</option>`;
   getVersionsForFlavor(planKey).forEach(v=>{if(v.versionId!==pub?.versionId)opts+=`<option value="version:${v.versionId}">${v.label} · ${VERSION_STATUS_LABELS[v.status]}</option>`;});
   sel.innerHTML=opts;
 }
@@ -2263,7 +2263,7 @@ function createVersionRecord(planKey,opts={}){
   const id=nextVersionId(planId,fy,num);
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const v={
-    versionId:id,flavorId:planId,fy,versionNumber:num,label:`Draft v${num}`,status:'draft',
+    versionId:id,flavorId:planId,fy,versionNumber:num,label:`Proposal ${num}`,status:'draft',
     sourceVersionId:opts.sourceVersionId||null,createdBy:'Melissa C.',createdAt:now,updatedAt:now,
     submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,
     comments:'',description:opts.description||`Revision v${num}`,approvalStage:'draft',isActivePublished:false,
@@ -2272,7 +2272,7 @@ function createVersionRecord(planKey,opts={}){
   const src=opts.sourceVersionId?getVersion(opts.sourceVersionId):null;
   v.content=src&&src.content?JSON.parse(JSON.stringify(src.content)):blankVersionContent(planKey);
   planVersions.push(v);
-  addApprovalEvent(id,'created',opts.description||`Draft v${num} created.`);
+  addApprovalEvent(id,'created',opts.description||`Proposal ${num} created.`);
   addAuditEntry(planKey,'Revision created',`${v.label} created.`,{versionId:id});
   syncLegacyFromVersions();
   buildPlanSnapshots();buildCompareSelects();buildProposalTracker();
@@ -2285,7 +2285,7 @@ function confirmCreateRevision(){
   const dup=document.getElementById('revision-duplicate-from').value;
   let sourceVersionId=null;
   if(dup.startsWith('version:'))sourceVersionId=dup.split(':')[1];
-  const v=createVersionRecord(planKeyVal,{sourceVersionId,description:notes||`Draft v${nextVersionNumber(planKeyVal)}`});
+  const v=createVersionRecord(planKeyVal,{sourceVersionId,description:notes||`Proposal ${nextVersionNumber(planKeyVal)}`});
   closeCreateRevisionModal();
   openVersionInBuilder(v.versionId);
 }
@@ -2317,7 +2317,7 @@ function updateBuilderSubmitState(planKey,v){
   if(headerSubmit)headerSubmit.style.display=canSubmit?'inline-flex':'none';
   const queueNote=document.getElementById('builder-approval-queue-note');
   if(queueNote){
-    if(otherPending.length&&isVersionEditable(v)){queueNote.style.display='flex';queueNote.textContent=`${otherPending[0].flavorId} v${otherPending[0].versionNumber} is in the approval queue — only one version can be in approval at a time.`;}
+    if(otherPending.length&&isVersionEditable(v)){queueNote.style.display='flex';queueNote.textContent=`${otherPending[0].flavorId} ${formatVersionLabel(otherPending[0])} is in the approval queue — only one proposal can be in approval at a time.`;}
     else queueNote.style.display='none';
   }
 }
@@ -2345,7 +2345,7 @@ function submitVersionById(versionId){
   const pk=planKey(v.flavorId,v.fy);
   // Only one version per comp plan may be in the approval queue at a time.
   const inQueue=getPendingApprovalVersions(pk).filter(x=>x.versionId!==versionId);
-  if(inQueue.length){alert(`${inQueue[0].flavorId} v${inQueue[0].versionNumber} is already in the approval queue for ${v.flavorId} · ${v.fy}. Only one version can be in approval at a time — advance or withdraw it first.`);return;}
+  if(inQueue.length){alert(`${inQueue[0].flavorId} ${formatVersionLabel(inQueue[0])} is already in the approval queue for ${v.flavorId} · ${v.fy}. Only one proposal can be in approval at a time — advance or withdraw it first.`);return;}
   const errs=v.content?validateVersionContent(v.content):[];
   if(errs.length){alert(`Cannot submit — fix these first:\n• ${errs.join('\n• ')}`);return;}
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -2353,9 +2353,9 @@ function submitVersionById(versionId){
   (v.content?.flavors||[]).forEach(fl=>{fl.reviewStatus='pending';fl.reviewNote='';}); // fresh per-flavor review on (re)submit
   approvalVersionId=versionId;
   addApprovalEvent(versionId,'submitted','Submitted for 1st Review.');
-  addAuditEntry(pk,'Submitted for approval',`${v.flavorId} v${v.versionNumber} submitted for 1st Review.`,{versionId});
+  addAuditEntry(pk,'Submitted for approval',`${v.flavorId} ${formatVersionLabel(v)} submitted for 1st Review.`,{versionId});
   refreshAfterVersionChange(pk);
-  alert(`${v.flavorId} v${v.versionNumber} submitted — now at 1st Review.`);
+  alert(`${v.flavorId} ${formatVersionLabel(v)} submitted — now at 1st Review.`);
 }
 function submitProposalById(id){submitVersionById(id);}
 function submitCurrentVersion(){
@@ -2404,14 +2404,14 @@ function advanceVersionStage(versionId){
     const prevPub=getPublishedVersion(pk);
     if(prevPub&&prevPub.versionId!==versionId)prevPub.isActivePublished=false;
     planVersions.forEach(x=>{if(x.flavorId===v.flavorId&&x.fy===v.fy)x.isActivePublished=false;});
-    v.isActivePublished=true;v.publishedAt=now;v.publishedBy=actor;
+    v.isActivePublished=true;v.publishedAt=now;v.publishedBy=actor;v.label=`Version v${v.versionNumber}`;
     const plan=getPlan(v.flavorId,v.fy);if(plan)plan.activePublishedVersionId=versionId;
     getFlavorsForPlan(pk).forEach(f=>{const leg=plans.find(p=>p.id===f.flavorId&&p.fy===f.fiscalYear);if(leg){leg.status='published';leg.ver=String(v.versionNumber)+'.0';}});
-    addApprovalEvent(versionId,'published',note||`Completed — ${v.flavorId} v${v.versionNumber} is now the active published version.`,actor);
-    addAuditEntry(pk,'Published',`${v.flavorId} v${v.versionNumber} reached Completed and is published.`,{versionId});
+    addApprovalEvent(versionId,'published',note||`Completed — ${v.flavorId} ${formatVersionLabel(v)} is now the active published version.`,actor);
+    addAuditEntry(pk,'Published',`${v.flavorId} ${formatVersionLabel(v)} reached Completed and is published.`,{versionId});
   }else{
     addApprovalEvent(versionId,'advanced',note||`Advanced to ${APPROVAL_STAGE_LABELS[nextStage]}.`,actor);
-    addAuditEntry(pk,'Advanced stage',`${v.flavorId} v${v.versionNumber} → ${APPROVAL_STAGE_LABELS[nextStage]}.`,{versionId});
+    addAuditEntry(pk,'Advanced stage',`${v.flavorId} ${formatVersionLabel(v)} → ${APPROVAL_STAGE_LABELS[nextStage]}.`,{versionId});
   }
   refreshAfterVersionChange(pk);
 }
@@ -2477,8 +2477,8 @@ function withdrawVersion(versionId){
   if(note)v.comments=note;
   const plan=getPlan(v.flavorId,v.fy);
   if(plan&&plan.activePublishedVersionId===versionId)plan.activePublishedVersionId=null;
-  addApprovalEvent(versionId,'withdrawn',note||`${v.flavorId} v${v.versionNumber} withdrawn from approval.`,currentReviewer().name);
-  addAuditEntry(pk,'Withdrawn',`${v.flavorId} v${v.versionNumber} withdrawn.`,{versionId});
+  addApprovalEvent(versionId,'withdrawn',note||`${v.flavorId} ${formatVersionLabel(v)} withdrawn from approval.`,currentReviewer().name);
+  addAuditEntry(pk,'Withdrawn',`${v.flavorId} ${formatVersionLabel(v)} withdrawn.`,{versionId});
   refreshAfterVersionChange(pk);
 }
 /* Aliases for existing callers. */
@@ -2536,7 +2536,7 @@ function renderApprovalScreen(){
   const queue=currentReviewerQueue(rev);
   const qt=document.getElementById('approval-queue-title');if(qt)qt.textContent=`Pending ${rev.name}'s decision · ${rev.role}`;
   const qc=document.getElementById('approval-queue');
-  if(qc)qc.innerHTML=queue.length?`<table><thead><tr><th>Plan #</th><th>Plan Name</th><th>FY</th><th>Version</th><th>Stage</th><th>Submitted</th><th></th></tr></thead><tbody>${queue.map(q=>{const plan=getPlan(q.flavorId,q.fy);const sel=q.versionId===approvalVersionId?' style="background:var(--pa-theme-light)"':'';return `<tr${sel}><td style="font-weight:600">${escapeCompareHtml(q.flavorId)}</td><td>${escapeCompareHtml(plan?.planName||q.flavorId)}</td><td>${q.fy}</td><td>${escapeCompareHtml(q.label)}</td><td>${APPROVAL_STAGE_LABELS[q.approvalStage]||q.approvalStage}${REVIEW_STAGES.includes(q.approvalStage)?`<div style="font-size:10px;color:var(--muted)">${escapeCompareHtml(deriveFlavorReviewSummary(q).label)}</div>`:''}</td><td style="font-size:11px">${q.submittedAt||'—'}</td><td><button class="btn btn-sm" onclick="openApprovalReview('${q.versionId}')">Review</button></td></tr>`;}).join('')}</tbody></table>`:'<p style="font-size:12px;color:var(--pa-text-secondary);padding:12px">Nothing pending your decision.</p>';
+  if(qc)qc.innerHTML=queue.length?`<table><thead><tr><th>Plan #</th><th>Plan Name</th><th>FY</th><th>Proposal</th><th>Stage</th><th>Submitted</th><th></th></tr></thead><tbody>${queue.map(q=>{const plan=getPlan(q.flavorId,q.fy);const sel=q.versionId===approvalVersionId?' style="background:var(--pa-theme-light)"':'';return `<tr${sel}><td style="font-weight:600">${escapeCompareHtml(q.flavorId)}</td><td>${escapeCompareHtml(plan?.planName||q.flavorId)}</td><td>${q.fy}</td><td>${escapeCompareHtml(q.label)}</td><td>${APPROVAL_STAGE_LABELS[q.approvalStage]||q.approvalStage}${REVIEW_STAGES.includes(q.approvalStage)?`<div style="font-size:10px;color:var(--muted)">${escapeCompareHtml(deriveFlavorReviewSummary(q).label)}</div>`:''}</td><td style="font-size:11px">${q.submittedAt||'—'}</td><td><button class="btn btn-sm" onclick="openApprovalReview('${q.versionId}')">Review</button></td></tr>`;}).join('')}</tbody></table>`:'<p style="font-size:12px;color:var(--pa-text-secondary);padding:12px">Nothing pending your decision.</p>';
   // Detail — default to the first queue item if none selected / invalid
   let v=getVersion(approvalVersionId);
   if(!v&&queue.length){v=queue[0];approvalVersionId=v.versionId;}
@@ -2551,7 +2551,7 @@ function renderApprovalScreen(){
   document.getElementById('approval-page-title').textContent=`Approval Review — ${v.label}`;
   document.getElementById('approval-page-subtitle').textContent=`${getPlan(v.flavorId,v.fy)?.planName||v.flavorId} · ${getFlavorsForPlan(pk).map(f=>f.flavorLabel).join('/')} flavors · Submitted ${v.submittedAt||'—'}`;
   document.getElementById('approval-version-name').textContent=v.label;
-  document.getElementById('approval-published-label').textContent=pub?`Published v${pub.versionNumber}`:'none yet';
+  document.getElementById('approval-published-label').textContent=pub?`Version v${pub.versionNumber}`:'none yet';
 
   const currentIdx=stageIndex(v.approvalStage);
   const withdrawn=v.status==='withdrawn';
@@ -2812,8 +2812,8 @@ function createPlanNext(){
   planFlavors.push({flavorId:firstFlavorId,planId:id,flavorLabel:'A',flavorName:name,role,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active'});
   plans.push({id:firstFlavorId,name,role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:'Melissa C.',approval:'none'});
   const pk=planKey(id,fy);
-  const v=createVersionRecord(pk,{description:'Initial design — Draft v1'});
-  addAuditEntry(pk,'Comp plan created',`${id} · ${fy} created with Draft v1 (flavor A).`,{versionId:v.versionId});
+  const v=createVersionRecord(pk,{description:'Initial design — Proposal 1'});
+  addAuditEntry(pk,'Comp plan created',`${id} · ${fy} created with Proposal 1 (flavor A).`,{versionId:v.versionId});
   closeCreatePlanModal();
   openVersionInBuilder(v.versionId);
 }
@@ -2939,7 +2939,7 @@ function populateBuilderFromVersion(v){
   document.getElementById('builder-plan-id').value=planId;
   // Title: FY · Plan ID · Plan Name · vN · Status
   const titleEl=document.getElementById('builder-title');
-  if(titleEl)titleEl.textContent=`${v.fy} · ${planId} · ${plan?.planName||pm.planName||planId} · v${v.versionNumber} · ${VERSION_STATUS_LABELS[v.status]||v.status}`;
+  if(titleEl)titleEl.textContent=`${v.fy} · ${planId} · ${plan?.planName||pm.planName||planId} · ${formatVersionLabel(v)} · ${VERSION_STATUS_LABELS[v.status]||v.status}`;
   const fyChip=document.getElementById('builder-fy-chip');if(fyChip)fyChip.textContent=v.fy;
   const statusBadge=document.getElementById('builder-status-badge');if(statusBadge)statusBadge.textContent=VERSION_STATUS_LABELS[v.status]||v.status;
   const hint=document.getElementById('builder-version-hint');if(hint)hint.textContent=builderMeasuresEditable?'':'— locked (create a revision to edit)';
@@ -4951,7 +4951,7 @@ function buildCompareSelects(){
   ['left','right'].forEach(side=>{
     const sel=document.getElementById('compare-'+side+'-select');
     if(!sel)return;
-    const placeholder='Select a plan version…';
+    const placeholder='Select a proposal…';
     sel.innerHTML=`<option value="">${placeholder}</option>${options}`;
   });
 }
@@ -5244,7 +5244,7 @@ function renderChangeSummary(changes){
 
 function formatCompareColumnLabel(snap,side){
   let title=snap.name;
-  if(snap.isCurrentPlan)title=`Published v${snap.revisionNumber}`;
+  if(snap.isCurrentPlan)title=`Version v${snap.revisionNumber}`;
   else if(snap.proposalId){
     const v=getVersion(snap.proposalId);
     title=v?.label||snap.proposalName||snap.name;
@@ -5355,7 +5355,7 @@ function clearCompareSelection(){
   const body=document.getElementById('compare-grid-body');
   if(body)body.innerHTML='';
   const footer=document.getElementById('compare-grid-footer');
-  if(footer)footer.textContent='Select two versions to compare';
+  if(footer)footer.textContent='Select two proposals to compare';
   const results=document.getElementById('compare-results');
   if(results)results.classList.remove('visible');
   const exportBtn=document.getElementById('compare-export-btn');
@@ -5365,7 +5365,7 @@ function clearCompareSelection(){
   const identical=document.getElementById('compare-identical-banner');
   if(identical)identical.style.display='none';
   const subtitle=document.getElementById('compare-subtitle');
-  if(subtitle)subtitle.textContent='Pick any two plans to compare — any plan, version, or fiscal year';
+  if(subtitle)subtitle.textContent='Pick any two plans to compare — any plan, proposal, or fiscal year';
   renderChangeSummary([]);
 }
 
@@ -5392,7 +5392,7 @@ function updateCompareSubmitBtn(leftSnap,rightSnap){
   if(vid){
     const v=getVersion(vid);
     btn.style.display='inline-flex';
-    btn.title=`Send ${v.flavorId} v${v.versionNumber} for approval`;
+    btn.title=`Send ${v.flavorId} ${formatVersionLabel(v)} for approval`;
     btn.dataset.versionId=vid;
   }else{
     btn.style.display='none';
@@ -5418,7 +5418,7 @@ function runComparison(){
     if(leftSnap||rightSnap){
       document.getElementById('compare-subtitle').textContent='Select a second plan to compare';
     }else{
-      document.getElementById('compare-subtitle').textContent='Pick any two plans to compare — any plan, version, or fiscal year';
+      document.getElementById('compare-subtitle').textContent='Pick any two plans to compare — any plan, proposal, or fiscal year';
     }
     return;
   }
@@ -5609,7 +5609,7 @@ function renderRoleView(){
   const esc=escapeCompareHtml;
   // header (two rows) — Role is a column
   let head=`<thead><tr>`;
-  ['Plan #','Plan Name','Role','Flavor','FY','Version','HC','Pay / Mix'].forEach(h=>{head+=`<th rowspan="2">${h}</th>`;});
+  ['Plan #','Plan Name','Role','Flavor','FY','Proposal','HC','Pay / Mix'].forEach(h=>{head+=`<th rowspan="2">${h}</th>`;});
   for(let n=1;n<=maxN;n++)head+=`<th class="mg" colspan="4">Measure ${n}</th>`;
   head+=`<th rowspan="2">Bonus</th><th rowspan="2">Tether</th></tr><tr>`;
   for(let n=1;n<=maxN;n++)head+=`<th>Performance measure</th><th class="num">VCT Wt%</th><th>Performance period</th><th>Payout frequency</th>`;
