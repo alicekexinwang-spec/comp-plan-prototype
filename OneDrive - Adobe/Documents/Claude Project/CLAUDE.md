@@ -87,16 +87,20 @@ include only the minimum user-facing information needed to understand and use th
 - `version.content` (the real per-version store the builder reads/writes) =
   `{ planMeta{planName,keyPolicies,designerNote},
   flavors[{flavorId,flavorLabel,role,flavorName,headcount,payMixBase,payMixVar,newHireGuarantee,
-  measures[{description,vct,perf,pay,payoutTableId,mechType}],
+  measures[{description,value,vct,perf,pay,payoutTableId,mechType}],
   tether, bonuses[{type,payoutDetails,maxPayout}],
   payoutTables[{id,title,type,bandSetId,thresholds[{label,description,tierSetId,mcr,
   tiers[{attainmentFrom,attainmentTo,xPCR,vctAtMax,mcr}]}],mcr,note,globalVctCap,prorateVct,payCurveType,threshold}],
   reviewStatus, reviewNote}] }`.
   **FULL PER-FLAVOR OWNERSHIP:** measures, `tether`, `bonuses[]`, and `payoutTables[]` are all owned
   **per flavor** (no version-level `content.payoutTables` and no `planMeta.bonuses`/`.tether` — removed).
-  The free-text "Performance Measure(s)" (`description`) is the measure's name; each measure has a
-  **`payoutTableId`** linking it to exactly one payout table **on its own flavor** (chosen via a "Payout
-  table" dropdown on the measure row, scoped to that flavor's tables). **Submit**
+  The measure's `description` (name) + `value` are chosen from **config-driven dependent dropdowns** (see
+  Configuration: Performance Measures) — pick a measure, then a Value filtered to that measure's values
+  (changing the measure resets the value; `value` is optional, not submit-validated). Measures are labelled
+  **M1/M2/M3** by index. Each measure has a **`payoutTableId`** linking it to exactly one payout table **on
+  its own flavor** (chosen via a "Payout table" dropdown on the measure row, scoped to that flavor's tables),
+  and the builder shows that **linked table read-only inline** under the measure row
+  (`renderPayoutMatrixTables`). **Submit**
   (`validateVersionContent`) requires — **per flavor** — every measure to link to an existing table on
   that flavor and every one of that flavor's tables to have ≥1 measure linked. Measures carry no
   `measureId`/metric. Each flavor's `payoutTables` is added via a per-flavor **"Add payout table"** button;
@@ -161,8 +165,17 @@ include only the minimum user-facing information needed to understand and use th
   every flavor has one) — NOT at plan creation.
 
 ## Configuration (reusable sets)
-- Setup nav has two Config screens — **Quota Band Sets** and **Attainment Tier Sets** — backed by
-  `quotaBandSets` / `attainmentTierSets`, persisted to localStorage (`compplan_config_sets_v4`). Each
+- Setup nav has three Config screens — **Quota Band Sets**, **Attainment Tier Sets**, and **Performance
+  Measures** — backed by `quotaBandSets` / `attainmentTierSets` / `performanceMeasures`, persisted together
+  to localStorage (`compplan_config_sets_v4`; `performanceMeasures` is added gracefully to older stores).
+- **Performance Measures** (`config-measures`, `renderConfigMeasures`, `renderMeasureSetCard`): each entry
+  `{id,name,values:[str]}` — a measure name + its own value list. Feeds the measure row's **Measure**
+  dropdown (options = names) and the dependent **Value** dropdown (options = the chosen measure's `values`).
+  CRUD: `addPerformanceMeasure`/`deletePerformanceMeasure`/`setMeasureName`/`addMeasureValue`/
+  `removeMeasureValue`/`setMeasureValue`; lookup `findPerformanceMeasure(name)`. On the builder row
+  `onBuilderMeasureNameChange` resets the value when the measure changes.
+- Quota Band / Attainment Tier sets are backed by `quotaBandSets` / `attainmentTierSets`, persisted to
+  localStorage (`compplan_config_sets_v4`). Each
   set = `{id,name,bounds:[num]}` (band sets also carry a parallel `descriptions:[str]`); ranges
   auto-derive from the upper bounds. These feed the payout builder's set-driven construction, and a
   band's description shows on applied payout bands + in Compare. Range labels are **explicit about

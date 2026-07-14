@@ -3,7 +3,23 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — scannable layout: flavor tabs + collapsible sections (branch `feature/comp-plan-flavorconfig`)
+## Latest change — pay measures: config dropdowns + M# + inline linked payout (branch `feature/comp-plan-flavorconfig`)
+- **Global config `performanceMeasures`** (new Setup → Performance Measures screen; `{id,name,values:[str]}`)
+  persisted with the other config sets in `compplan_config_sets_v4` (added gracefully). CRUD mirrors the
+  band-set pattern (`renderConfigMeasures`/`renderMeasureSetCard`, `addPerformanceMeasure`, etc.).
+- **Measure model gains `value`.** The row's free-text name → a **Measure** dropdown (config names) + a
+  **dependent Value** dropdown (that measure's values; resets on measure change via
+  `onBuilderMeasureNameChange`). `value` optional (not submit-validated).
+- **M1/M2/M3** sequence badges on measure rows; "Measure n" → "M n" in Role View + Compare.
+- **Linked payout table shown read-only inline** under each measure row (`renderPayoutMatrixTables`).
+- Downstream: Compare adds `flavor${L}Measure${n}Value` + "M n · Value" rows; Role View appends value to
+  the measure cell + search.
+
+Verified on webui2 (no console errors): config seeded (6) + add/value persists across reload; builder
+dependent dropdowns + reset + inline matrix; all 11 versions `validateVersionContent`=0; save round-trips
+`value`; Compare/Role View labels. **Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — scannable layout: flavor tabs + collapsible sections (branch `feature/comp-plan-flavorconfig`)
 Replaced the "all flavors + all tables stacked in one long column" layout with two reusable components
 applied across the three key screens (Power-Apps-canvas style: simple, flat, limited nesting):
 - **Shared:** `flavorTabsHtml`/`switchFlavorTab` (on existing `.pa-pivot`) + `collapsibleHtml`/`toggleCollapse`

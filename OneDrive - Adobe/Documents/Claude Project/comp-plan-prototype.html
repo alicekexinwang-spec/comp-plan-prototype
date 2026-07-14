@@ -715,6 +715,7 @@ tr:hover td{background:var(--pa-surface-hover)}
       <div class="nav-item" onclick="showScreen('metric-definitions')"><i class="ti ti-ruler-measure"></i> Metric Definitions</div>
       <div class="nav-item" onclick="showScreen('config-bands')"><i class="ti ti-layout-rows"></i> Quota Band Sets</div>
       <div class="nav-item" onclick="showScreen('config-tiers')"><i class="ti ti-stairs"></i> Attainment Tier Sets</div>
+      <div class="nav-item" onclick="showScreen('config-measures')"><i class="ti ti-ruler-measure"></i> Performance Measures</div>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Outputs</div>
@@ -1465,6 +1466,18 @@ BONUS_THRESHOLD=0.75</div></div>
         <div id="config-tier-sets"></div>
       </div>
 
+      <div id="screen-config-measures" class="screen">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Performance Measures</div>
+            <div class="page-subtitle">Reusable performance measures and their values — the dependent dropdowns used on each pay measure in the Plan Builder</div>
+          </div>
+          <div class="btn-group"><button class="btn btn-primary btn-sm" type="button" onclick="addPerformanceMeasure()"><i class="ti ti-plus"></i> Add measure</button></div>
+        </div>
+        <div class="admin-banner"><i class="ti ti-lock"></i> Admin setup — each measure's name and value list feed the Measure / Value dropdowns on a flavor's pay measures.</div>
+        <div id="config-measure-list"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1610,7 +1623,8 @@ const screens={
   'metric-definitions':{title:'Metric Definitions'},
   'metric-components':{title:'Metric Components'},
   'config-bands':{title:'Quota Band Sets'},
-  'config-tiers':{title:'Attainment Tier Sets'}
+  'config-tiers':{title:'Attainment Tier Sets'},
+  'config-measures':{title:'Performance Measures'}
 };
 
 let currentPlanKey='A01|FY27';
@@ -1713,11 +1727,20 @@ const CONFIG_SETS_SEED={
     {name:'0–100%, >100–130%, >130%',bounds:['100','130','']},
     {name:'0–100%, >100%',bounds:['100','']},
     {name:'0–100%, >100–120%, >120%',bounds:['100','120','']}
+  ],
+  performanceMeasures:[
+    {name:'Net New ARR',values:['New Logo','Expansion','Total']},
+    {name:'Renewal ARR',values:['Gross','Net']},
+    {name:'Strategic Products',values:['Attach','Standalone']},
+    {name:'Pipeline Generation',values:['Sourced','Influenced']},
+    {name:'Net Revenue Retention',values:['Gross','Net']},
+    {name:'Customer Expansion',values:['Cross-sell','Upsell']}
   ]
 };
 let quotaBandSets=[];
 let attainmentTierSets=[];
-function persistConfigSets(){try{localStorage.setItem(CONFIG_SETS_STORAGE_KEY,JSON.stringify({quotaBandSets,attainmentTierSets}));}catch(e){}}
+let performanceMeasures=[];
+function persistConfigSets(){try{localStorage.setItem(CONFIG_SETS_STORAGE_KEY,JSON.stringify({quotaBandSets,attainmentTierSets,performanceMeasures}));}catch(e){}}
 function seedConfigSets(){
   let data=null;
   try{const raw=localStorage.getItem(CONFIG_SETS_STORAGE_KEY);if(raw)data=JSON.parse(raw);}catch(e){}
@@ -1730,9 +1753,13 @@ function seedConfigSets(){
     else{let prev=0;descriptions=bounds.map(b=>{const from=prev;const to=(b===''||b==null)?null:Number(b);const d=quotaBandDesc(from,to);if(to!=null)prev=to;return d;});}
     return{id:payoutUid(),name:s.name||'Untitled set',bounds,descriptions};
   };
+  const normMeasure=s=>({id:payoutUid(),name:s.name||'Untitled measure',values:(s.values||[]).slice()});
   quotaBandSets=(data.quotaBandSets||[]).map(normBand);
   attainmentTierSets=(data.attainmentTierSets||[]).map(normTier);
+  // Graceful add of a newer config array to existing v4 stores (no loss of band/tier sets).
+  performanceMeasures=((data.performanceMeasures&&data.performanceMeasures.length)?data.performanceMeasures:CONFIG_SETS_SEED.performanceMeasures).map(normMeasure);
 }
+function findPerformanceMeasure(name){return performanceMeasures.find(m=>m.name===name);}
 function quotaBandDesc(from,to){
   const lab=v=>{v=Number(v);return v>=1000?'$'+v.toLocaleString():'$'+v+' Million';};
   if(to===null||to===''||to==null)return '>='+lab(from)+' USD';
@@ -1816,6 +1843,33 @@ function refreshBoundsSetRanges(setId){
   let prev=0;
   set.bounds.forEach((b,i)=>{const from=prev;const to=(b===''||b==null)?null:Number(b);if(cells[i])cells[i].textContent=boundsRangeLabel(from,to,unit,kind==='band');if(to!=null)prev=to;});
 }
+/* ── Config: Performance Measures (user-defined measure names, each with its own value list) ── */
+function renderMeasureSetCard(m){
+  const rows=(m.values||[]).map((val,i)=>`<tr>
+      <td><input class="form-input" value="${(val||'').replace(/"/g,'&quot;')}" oninput="setMeasureValue('${m.id}',${i},this.value)" placeholder="Value" style="min-width:220px"></td>
+      <td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removeMeasureValue('${m.id}',${i})" title="Remove"><i class="ti ti-x"></i></button></td>
+    </tr>`).join('');
+  return `<div class="config-set-card" data-measure-id="${m.id}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <input class="form-input" value="${(m.name||'').replace(/"/g,'&quot;')}" oninput="setMeasureName('${m.id}',this.value)" placeholder="Performance measure name" style="font-weight:600;flex:1">
+      <button type="button" class="measure-remove-btn" onclick="deletePerformanceMeasure('${m.id}')" title="Delete measure"><i class="ti ti-trash" style="font-size:11px"></i></button>
+    </div>
+    <table class="payout-tier-table"><thead><tr><th>Value (for the dependent dropdown)</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="2" style="font-size:11px;color:var(--pa-text-secondary)">No values yet.</td></tr>'}</tbody></table>
+    <div style="margin-top:6px"><button type="button" class="btn btn-sm" onclick="addMeasureValue('${m.id}')"><i class="ti ti-plus"></i> Add value</button></div>
+  </div>`;
+}
+function renderConfigMeasures(){
+  const cont=document.getElementById('config-measure-list');
+  if(!cont)return;
+  cont.innerHTML=performanceMeasures.length?performanceMeasures.map(renderMeasureSetCard).join(''):'<p style="font-size:11px;color:var(--pa-text-secondary)">No performance measures yet. Click “Add measure”.</p>';
+}
+function findMeasureById(id){return performanceMeasures.find(m=>m.id===id);}
+function addPerformanceMeasure(){performanceMeasures.push({id:payoutUid(),name:'New measure',values:['']});persistConfigSets();renderConfigMeasures();}
+function deletePerformanceMeasure(id){performanceMeasures=performanceMeasures.filter(m=>m.id!==id);persistConfigSets();renderConfigMeasures();}
+function setMeasureName(id,v){const m=findMeasureById(id);if(m){m.name=v;persistConfigSets();}}
+function addMeasureValue(id){const m=findMeasureById(id);if(m){if(!Array.isArray(m.values))m.values=[];m.values.push('');persistConfigSets();renderConfigMeasures();}}
+function removeMeasureValue(id,i){const m=findMeasureById(id);if(m&&m.values){m.values.splice(i,1);persistConfigSets();renderConfigMeasures();}}
+function setMeasureValue(id,i,v){const m=findMeasureById(id);if(m&&m.values&&m.values[i]!=null){m.values[i]=v;persistConfigSets();}}
 
 /* ── Compensation Plan → Flavor → Version data model ──
    A Compensation Plan (compPlans, keyed by planId like 'A01') has a NAME and is approved
@@ -2741,6 +2795,7 @@ function showScreen(id){
   if(id==='multi')renderRoleView();
   if(id==='config-bands')renderConfigBandSets();
   if(id==='config-tiers')renderConfigTierSets();
+  if(id==='config-measures')renderConfigMeasures();
   if(id==='metric-definitions')renderMetricDefinitionsList();
   if(id==='metric-components'&&metricComponentsParentId)renderMetricComponentsPage();
   if(id==='approval')renderApprovalScreen();
@@ -2949,7 +3004,7 @@ function populateBuilderFromVersion(v){
   initBuilderDropdowns();
   const pk=planKey(v.flavorId,v.fy);
   builderWorkingContent=JSON.parse(JSON.stringify(v.content||blankVersionContent(pk)));
-  (builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId==null)m.payoutTableId='';if(m.mechType==null)m.mechType='';}));
+  (builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId==null)m.payoutTableId='';if(m.mechType==null)m.mechType='';if(m.value==null)m.value='';}));
   const pm=builderWorkingContent.planMeta||{};
   const {planId}=parsePlanKey(pk);
   const plan=getPlan(planId,v.fy);
@@ -3035,7 +3090,7 @@ function renderBuilderFlavorBlock(fl,fi,editable){
     <div style="padding:10px 12px 4px">
     ${collapsibleHtml(`bfl-${fi}-measures`,'Pay measures',
       `<table class="payout-tier-table builder-measure-table" style="width:100%">
-        <thead><tr><th style="min-width:280px">Performance Measure(s)</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:130px">Performance period</th><th style="min-width:130px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
+        <thead><tr><th style="width:38px">#</th><th style="min-width:170px">Performance measure</th><th style="min-width:120px">Value</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:120px">Performance period</th><th style="min-width:120px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       ${editable?`<div style="padding:10px 0 0"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button></div>`:''}`,
@@ -3048,31 +3103,51 @@ function renderBuilderFlavorBlock(fl,fi,editable){
 }
 function onBuilderFlavorTether(fi,val){const fl=builderWorkingContent.flavors[fi];if(fl)fl.tether=val;}
 function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
-  const canRemove=editable&&builderWorkingContent.flavors[fi].measures.length>1;
+  const fl=builderWorkingContent.flavors[fi];
+  const canRemove=editable&&fl.measures.length>1;
   const dis=editable?'':'disabled';
+  // Performance measure — dropdown from the global config (keep current value if not in the list).
+  const names=performanceMeasures.map(pm=>pm.name);
+  if(m.description&&!names.includes(m.description))names.unshift(m.description);
+  const measureSel=`<select class="form-select" ${dis} onchange="onBuilderMeasureNameChange(${fi},${mi},this.value)"><option value="" ${!m.description?'selected':''}>Select…</option>${names.map(n=>`<option value="${escapeCompareHtml(n)}" ${n===m.description?'selected':''}>${escapeCompareHtml(n)}</option>`).join('')}</select>`;
+  // Value — dependent dropdown from the chosen measure's value list.
+  const pmDef=findPerformanceMeasure(m.description);
+  let vals=(pmDef&&pmDef.values||[]).slice();
+  if(m.value&&!vals.includes(m.value))vals.unshift(m.value);
+  const valDis=dis||(!vals.length?'disabled':'');
+  const valueSel=`<select class="form-select" ${valDis} onchange="setBuilderFlavorMeasure(${fi},${mi},'value',this.value)"><option value="" ${!m.value?'selected':''}>${vals.length?'Select…':'—'}</option>${vals.map(v=>`<option value="${escapeCompareHtml(v)}" ${v===m.value?'selected':''}>${escapeCompareHtml(v)}</option>`).join('')}</select>`;
+  // Inline read-only preview of the linked payout table (#3).
+  const linked=((fl&&fl.payoutTables)||[]).find(pt=>pt.id===m.payoutTableId);
+  const preview=linked
+    ?`<div style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:4px">Linked payout table: <strong>${escapeCompareHtml(linked.title||'Untitled')}</strong></div>${renderPayoutMatrixTables(linked,'payout-matrix')}`
+    :`<div style="font-size:11px;color:var(--muted)"><i class="ti ti-link-off"></i> No payout table linked — choose one in the Payout table column.</div>`;
   return `<tr>
-    <td><input class="form-input" value="${(m.description||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} oninput="setBuilderFlavorMeasure(${fi},${mi},'description',this.value)" placeholder="Performance measure(s)" style="min-width:140px"></td>
+    <td><span class="badge badge-proposal" style="font-weight:600">M${mi+1}</span></td>
+    <td>${measureSel}</td>
+    <td>${valueSel}</td>
     <td><div class="xpcr-cell"><input class="form-input" value="${(m.vct||'').replace(/%/g,'')}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderVctInput(${fi},${mi},this)" style="width:44px" placeholder="e.g. 50"><span class="pct-suffix">%</span></div></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
-    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'payoutTableId',this.value)"><option value="" ${!m.payoutTableId?'selected':''}>Select…</option>${((builderWorkingContent.flavors[fi]&&builderWorkingContent.flavors[fi].payoutTables)||[]).map((pt,pi)=>`<option value="${pt.id}" ${pt.id===m.payoutTableId?'selected':''}>${escapeCompareHtml(pt.title||('Payout table '+(pi+1)))}</option>`).join('')}</select></td>
+    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'payoutTableId',this.value)"><option value="" ${!m.payoutTableId?'selected':''}>Select…</option>${((fl&&fl.payoutTables)||[]).map((pt,pi)=>`<option value="${pt.id}" ${pt.id===m.payoutTableId?'selected':''}>${escapeCompareHtml(pt.title||('Payout table '+(pi+1)))}</option>`).join('')}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
-  </tr>`;
+  </tr>
+  <tr class="measure-payout-inline"><td colspan="8" style="background:var(--pa-canvas);padding:8px 10px 12px">${preview}</td></tr>`;
 }
+function onBuilderMeasureNameChange(fi,mi,val){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(!m)return;m.description=val;m.value='';renderBuilderFlavors();}
 const MAX_BUILDER_FLAVORS=5;
 function onBuilderFlavorField(fi,field,v){if(builderWorkingContent.flavors[fi])builderWorkingContent.flavors[fi][field]=v;}
 function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-${fi}`);if(!el)return;const sum=flavorVctSum(builderWorkingContent.flavors[fi]);const ok=Math.round(sum)===100;el.textContent=`VCT total ${sum%1===0?sum:sum.toFixed(1)}%`;el.className=`badge ${ok?'badge-approved':'badge-rejected'}`;}
 function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
 function onBuilderVctInput(fi,mi,el){el.value=el.value.replace(/[^0-9.]/g,'');setBuilderFlavorMeasure(fi,mi,'vct',el.value?el.value+'%':'');recalcFlavorVctSum(fi);}
 function onBuilderCapInput(slot,el){el.value=el.value.replace(/[^0-9.]/g,'');syncPayoutVctCalcs(slot);}
-function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''});renderBuilderFlavors();}
+function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''});renderBuilderFlavors();}
 function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();}
 function addBuilderFlavor(){
   if(!builderMeasuresEditable)return;
   if(builderWorkingContent.flavors.length>=MAX_BUILDER_FLAVORS){alert(`Maximum ${MAX_BUILDER_FLAVORS} flavors per comp plan.`);return;}
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''});
   renderBuilderFlavors();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();}
@@ -3330,10 +3405,11 @@ function buildCompareFieldMeta(flavors){
     );
     for(let i=1;i<=Math.max(0,measureCount|0);i++){
       meta.push(
-        {key:`flavor${L}Measure${i}Name`,label:`Measure ${i}`,section:sec},
-        {key:`flavor${L}Measure${i}Vct`,label:`Measure ${i} · VCT Wt%`,section:sec},
-        {key:`flavor${L}Measure${i}PerfPd`,label:`Measure ${i} · Perf Pd`,section:sec},
-        {key:`flavor${L}Measure${i}PayFreq`,label:`Measure ${i} · Pay Freq`,section:sec},
+        {key:`flavor${L}Measure${i}Name`,label:`M${i}`,section:sec},
+        {key:`flavor${L}Measure${i}Value`,label:`M${i} · Value`,section:sec},
+        {key:`flavor${L}Measure${i}Vct`,label:`M${i} · VCT Wt%`,section:sec},
+        {key:`flavor${L}Measure${i}PerfPd`,label:`M${i} · Perf Pd`,section:sec},
+        {key:`flavor${L}Measure${i}PayFreq`,label:`M${i} · Pay Freq`,section:sec},
       );
     }
     for(let i=1;i<=Math.max(0,payoutCount|0);i++){
@@ -4263,7 +4339,7 @@ function blankVersionContent(pk){
   const f0=getFlavorsForPlan(pk)[0];
   return{
     planMeta:{planName:plan?.planName||planId,keyPolicies:''},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''}],
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''}],
   };
 }
 /* ── Seed payout-table builders (config-set driven, so tables carry real bandSetId/tierSetId
@@ -4312,7 +4388,7 @@ function seedTargetPctTable(title,bands,opts){
   return{id:payoutUid(),title,type:'target_pct',bandSetId:'',thresholds,
     mcr:'',note:'',globalVctCap:opts.cap||'',prorateVct:false,payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
 }
-function mkMeasure(description,vct,perf,pay){return{description,vct,perf,pay};}
+function mkMeasure(description,vct,perf,pay,value){return{description,value:value||'',vct,perf,pay};}
 
 /* Authored demo content, keyed by planKey (planId|fy). Measures total 100% VCT per flavor;
    payout tables are independent + config-set driven; bonuses seeded on A01 & S08. */
@@ -4480,6 +4556,7 @@ function buildFieldsFromContentVersion(planId,fy,planMeta,flavors){
     measures.forEach((m,i)=>{
       const n=i+1;
       fields[`flavor${L}Measure${n}Name`]=hasVal(m.description)?m.description:'—';
+      fields[`flavor${L}Measure${n}Value`]=hasVal(m.value)?m.value:'—';
       fields[`flavor${L}Measure${n}Vct`]=m.vct||'—';
       fields[`flavor${L}Measure${n}PerfPd`]=m.perf||'Annual';
       fields[`flavor${L}Measure${n}PayFreq`]=m.pay||'Quarterly';
@@ -5657,7 +5734,7 @@ function renderRoleView(){
     if(statusF&&r.status!==statusF)return false;
     if(ownerF&&r.owner!==ownerF)return false;
     if(q){
-      const hay=`${r.planId} ${r.planName} ${r.role} ${r.fy} ${r.verLabel} ${r.bonus} ${r.tether} ${(r.measures||[]).map(m=>(m.description||'')+' '+(m.vct||'')).join(' ')}`.toLowerCase();
+      const hay=`${r.planId} ${r.planName} ${r.role} ${r.fy} ${r.verLabel} ${r.bonus} ${r.tether} ${(r.measures||[]).map(m=>(m.description||'')+' '+(m.value||'')+' '+(m.vct||'')).join(' ')}`.toLowerCase();
       if(!hay.includes(q))return false;
     }
     return true;
@@ -5674,7 +5751,7 @@ function renderRoleView(){
   // header (two rows) — Role is a column
   let head=`<thead><tr>`;
   ['Plan #','Plan Name','Role','Flavor','FY','Proposal','HC','Pay / Mix'].forEach(h=>{head+=`<th rowspan="2">${h}</th>`;});
-  for(let n=1;n<=maxN;n++)head+=`<th class="mg" colspan="4">Measure ${n}</th>`;
+  for(let n=1;n<=maxN;n++)head+=`<th class="mg" colspan="4">M${n}</th>`;
   head+=`<th rowspan="2">Bonus</th><th rowspan="2">Tether</th></tr><tr>`;
   for(let n=1;n<=maxN;n++)head+=`<th>Performance measure</th><th class="num">VCT Wt%</th><th>Performance period</th><th>Payout frequency</th>`;
   head+=`</tr></thead>`;
@@ -5684,7 +5761,7 @@ function renderRoleView(){
     let cells=`<td style="font-weight:600"><span class="rv-link" onclick="openPlanDetail('${r.pk}')">${esc(r.planId)}</span></td><td><span class="rv-link" onclick="openPlanDetail('${r.pk}')">${esc(r.planName)}</span></td><td style="font-weight:500">${esc(r.role)}</td><td class="num">${esc(r.flavorLabel)}</td><td class="num">${esc(r.fy)}</td><td><span class="rv-link" onclick="openVersionInBuilder('${r.versionId}')">${esc(r.verLabel)}</span> · <span style="color:var(--pa-text-secondary)">${esc(VERSION_STATUS_LABELS[r.status]||r.status)}</span></td><td class="num">${esc(String(r.hc))}</td><td class="num">${esc(r.payMix)}</td>`;
     for(let n=0;n<maxN;n++){
       const m=r.measures[n];
-      if(m){cells+=`<td>${esc(m.description||'—')}</td><td class="num">${esc(m.vct||'—')}</td><td>${esc(m.perf||'—')}</td><td>${esc(m.pay||'—')}</td>`;}
+      if(m){cells+=`<td>${esc(m.description||'—')}${m.value?' · '+esc(m.value):''}</td><td class="num">${esc(m.vct||'—')}</td><td>${esc(m.perf||'—')}</td><td>${esc(m.pay||'—')}</td>`;}
       else{cells+=`<td>—</td><td class="num">—</td><td>—</td><td>—</td>`;}
     }
     cells+=`<td style="white-space:normal;max-width:220px">${esc(r.bonus)}</td><td style="white-space:normal;max-width:160px">${esc(r.tether)}</td>`;
