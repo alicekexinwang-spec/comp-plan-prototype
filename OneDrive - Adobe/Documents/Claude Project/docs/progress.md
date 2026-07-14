@@ -3,7 +3,20 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — quota-band range convention + Role View flavor column (uncommitted)
+## Latest change — reviewer-scoped approval queue + view-as toggle + release validation (uncommitted)
+Approvals screen rebuilt: a **"view as reviewer" toggle** (`REVIEWERS` — Susan L./Val R./Elena M./Comp
+Design Team, each mapped to stages; `currentReviewerId`) + a **reviewer-scoped queue** (versions at that
+reviewer's stage) + the version detail. Review stages (1st/2nd/Exec) allow **Approve / Edit / Withdraw**;
+**Edit is in-place** (`reviewerEditVersion` unlocks the builder for the pending version via
+`reviewerEditVersionId`; `openBuilder`/`saveBuilderVersion` honor it). **Release Validation** (Comp Design
+Team) captures per-flavor new-hire guarantee + per-measure **mechanics type** (`m.mechType` from
+`PLAN_MECH_TYPES`, `setReleaseValidationMechType`); **Release to downstream** (`advanceVersionStage`) is
+gated until all NHG + mechType set. Actor attribution uses `currentReviewer().name`. Verified on webui2
+(no console errors): toggle/queue counts, review actions, edit-in-place persists (version stays
+pending_review), release gate blocks then advances (→ Document Generation, attributed to Comp Design Team).
+**Not committed.**
+
+## Earlier change — quota-band range convention + Role View flavor column (committed bca1341)
 1. **Quota bands are now `[prev, to)`** (inclusive lower, exclusive upper — the boundary value belongs
    to the next/higher band): `< 1.5` / `≥ 1.5 – < 3.5` / `≥ 3.5`. Added a `lowerInclusive` param to
    `boundsRangeLabel` (passed true from the band config card + live update + `onQuotaBandSetChange` +

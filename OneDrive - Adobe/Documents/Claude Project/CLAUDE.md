@@ -111,6 +111,16 @@ include only the minimum user-facing information needed to understand and use th
   `draft, first_review, second_review, executive_review, release_validation, document_generation,
   payout_system_config, completed`. `statusFromStage()` derives status from stage; **only one
   version per plan may be in the approval queue at a time** (`getPendingApprovalVersions`).
+- **Approvals screen** (`renderApprovalScreen`) = a **"view as reviewer" toggle** + a reviewer-scoped
+  **queue** + the version detail. Reviewers are named people mapped to stages (`REVIEWERS`,
+  `currentReviewerId`): Susan L.→1st Review, Val R.→2nd Review, Elena M.→Executive, Comp Design Team→
+  Release Validation/Document Generation/Payout config. The queue lists versions at the current
+  reviewer's stage(s). At the **review stages** (`REVIEW_STAGES`) any reviewer can **Approve / Edit /
+  Withdraw**; **Edit is in-place** (`reviewerEditVersion` → builder editable via `reviewerEditVersionId`,
+  even though the version is locked). At **Release Validation** the Comp Design Team sets per-flavor
+  new-hire guarantee + per-measure **plan-mechanics type** (`m.mechType` from `PLAN_MECH_TYPES`,
+  `setReleaseValidationMechType`) then **Release to downstream** (`advanceVersionStage`, gated until all
+  NHG + all mechType are set). Approve/withdraw/publish are attributed to `currentReviewer().name`.
 - Payout **%VCT is stepped/marginal (tax-bracket): cumulative Σ(bracket width × xPCR), capped by
   the table Cap**; open-ended top tier shows `—`.
 - Numeric-entry inputs: **VCT Wt%** (measure row) and **Cap** (payout) are entered as digits with a

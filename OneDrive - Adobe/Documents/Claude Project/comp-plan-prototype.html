@@ -308,6 +308,13 @@ tr:hover td{background:var(--pa-surface-hover)}
 .roleview-table td.num,.roleview-table th.num{text-align:center}
 .rv-link{color:#185FA5;cursor:pointer}
 .rv-link:hover{text-decoration:underline}
+.approval-reviewer-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.reviewer-btn{border:1px solid var(--pa-border);background:var(--card-bg);border-radius:var(--radius);padding:8px 12px;cursor:pointer;text-align:left;min-width:150px}
+.reviewer-btn.active{border-color:var(--pa-theme-primary);background:var(--pa-theme-light)}
+.reviewer-btn .rb-name{font-size:12px;font-weight:600;color:var(--pa-text-primary)}
+.reviewer-btn .rb-role{font-size:10px;color:var(--pa-text-secondary)}
+.reviewer-btn .rb-count{float:right;font-size:10px;font-weight:700;background:var(--pa-theme-primary);color:#fff;border-radius:9px;padding:1px 7px}
+.reviewer-btn .rb-count.zero{background:var(--pa-border);color:var(--pa-text-secondary)}
 .payout-tier-table{width:100%;border-collapse:collapse;font-size:11px}
 .payout-tier-table th{padding:6px 8px;background:var(--pa-canvas);border:1px solid var(--pa-border);font-weight:600;text-align:left;white-space:nowrap}
 .payout-tier-table td{padding:3px 6px;border:1px solid var(--pa-border);vertical-align:middle}
@@ -1094,9 +1101,14 @@ tr:hover td{background:var(--pa-surface-hover)}
             <button class="btn btn-sm" onclick="showScreen('document')"><i class="ti ti-file-text"></i> View document</button>
           </div>
         </div>
+        <div class="approval-reviewer-bar" id="approval-reviewer-bar"></div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><div class="card-title" id="approval-queue-title">Approval queue</div></div>
+          <div class="table-wrap" id="approval-queue"></div>
+        </div>
         <div class="compare-prompt" style="margin-bottom:14px">
           <i class="ti ti-info-circle"></i>
-          <div id="approval-context-text">Reviewing <strong id="approval-version-name">Draft v2</strong> against the <strong>published version</strong> (<span id="approval-published-label">v1</span>). Susan approves first, then SEO reviews before publish.</div>
+          <div id="approval-context-text">Reviewing <strong id="approval-version-name">Draft v2</strong> against the <strong>published version</strong> (<span id="approval-published-label">v1</span>).</div>
         </div>
         <div class="approval-stage-track" id="approval-stage-track"></div>
         <div class="two-col">
@@ -1622,6 +1634,19 @@ const APPROVAL_STAGE_LABELS={
 const VALID_FYS=['FY26','FY27'];
 const EDITABLE_STATUSES=['draft','withdrawn'];
 const LOCKED_STATUSES=['pending_review','approved','published'];
+// Reviewer personas (named people mapped to approval stages) for the "view as reviewer" toggle.
+const REVIEW_STAGES=['first_review','second_review','executive_review'];
+const REVIEWERS=[
+  {id:'r1',name:'Susan L.',role:'1st Reviewer',stages:['first_review']},
+  {id:'r2',name:'Val R.',role:'2nd Reviewer',stages:['second_review']},
+  {id:'exec',name:'Elena M.',role:'Executive',stages:['executive_review']},
+  {id:'comp',name:'Comp Design Team',role:'Comp Design',stages:['release_validation','document_generation','payout_system_config']},
+];
+let currentReviewerId='r1';
+function currentReviewer(){return REVIEWERS.find(r=>r.id===currentReviewerId)||REVIEWERS[0];}
+// Pay-measure → plan-mechanics type vocabulary (captured at Release Validation).
+const PLAN_MECH_TYPES=['VCT Weight Measure','Linearity','Bonus','MBO','Tether'];
+let reviewerEditVersionId=null; // a review-stage version a reviewer is editing in place
 function stageIndex(stage){const i=APPROVAL_STAGES.indexOf(stage);return i<0?0:i;}
 /* Derive the coarse status from the fine-grained approval stage ("reviews, then ops"). */
 function statusFromStage(stage){
@@ -2287,10 +2312,12 @@ function confirmCreateRevision(){
 }
 function confirmCreateProposal(){confirmCreateRevision();}
 
-function openVersionInBuilder(versionId){
+function reviewerEditVersion(versionId){openVersionInBuilder(versionId,true);}
+function openVersionInBuilder(versionId,reviewerEdit){
   const v=getVersion(versionId);
   if(!v)return;
-  // Locked versions open read-only (builderMeasuresEditable=false) rather than being blocked.
+  // Locked versions open read-only unless a reviewer is editing this one in place.
+  reviewerEditVersionId=reviewerEdit?versionId:null;
   currentPlanKey=planKey(v.flavorId,v.fy);
   currentVersionId=versionId;
   currentDraftPlan={id:v.flavorId,name:getPlan(v.flavorId,v.fy)?.planName,versionId,fy:v.fy,status:v.status,designerNote:''};
@@ -2372,28 +2399,32 @@ function advanceVersionStage(versionId){
   const idx=stageIndex(v.approvalStage);
   if(idx>=APPROVAL_STAGES.length-1)return; // already Completed
   if(v.approvalStage==='release_validation'){
-    const missing=(v.content?.flavors||[]).filter(fl=>!fl.newHireGuarantee);
-    if(missing.length){alert('Enter the new hire guarantee for all flavors before completing Release Validation (missing: '+missing.map(f=>'Flavor '+f.flavorLabel).join(', ')+').');return;}
+    const missNHG=(v.content?.flavors||[]).filter(fl=>!fl.newHireGuarantee).map(f=>'Flavor '+f.flavorLabel+' new-hire guarantee');
+    const missMech=[];
+    (v.content?.flavors||[]).forEach(fl=>(fl.measures||[]).forEach((m,mi)=>{if(!m.mechType)missMech.push('Flavor '+fl.flavorLabel+' · '+(m.description||('Measure '+(mi+1)))+' mechanics type');}));
+    const missing=missNHG.concat(missMech);
+    if(missing.length){alert('Complete Release Validation before releasing downstream — missing:\n• '+missing.join('\n• '));return;}
   }
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const note=document.getElementById('approval-comment-input')?.value||'';
+  const actor=currentReviewer().name;
   const nextStage=APPROVAL_STAGES[idx+1];
   v.approvalStage=nextStage;
   v.status=statusFromStage(nextStage);
   v.updatedAt=now;
   if(note)v.comments=note;
-  if(v.status==='approved'&&!v.approvedAt){v.approvedAt=now;v.approvedBy='Susan L.';}
+  if(v.status==='approved'&&!v.approvedAt){v.approvedAt=now;v.approvedBy=actor;}
   if(nextStage==='completed'){
     const prevPub=getPublishedVersion(pk);
     if(prevPub&&prevPub.versionId!==versionId)prevPub.isActivePublished=false;
     planVersions.forEach(x=>{if(x.flavorId===v.flavorId&&x.fy===v.fy)x.isActivePublished=false;});
-    v.isActivePublished=true;v.publishedAt=now;v.publishedBy='Susan L.';
+    v.isActivePublished=true;v.publishedAt=now;v.publishedBy=actor;
     const plan=getPlan(v.flavorId,v.fy);if(plan)plan.activePublishedVersionId=versionId;
     getFlavorsForPlan(pk).forEach(f=>{const leg=plans.find(p=>p.id===f.flavorId&&p.fy===f.fiscalYear);if(leg){leg.status='published';leg.ver=String(v.versionNumber)+'.0';}});
-    addApprovalEvent(versionId,'published',note||`Completed — ${v.flavorId} v${v.versionNumber} is now the active published version.`,'Susan L.');
+    addApprovalEvent(versionId,'published',note||`Completed — ${v.flavorId} v${v.versionNumber} is now the active published version.`,actor);
     addAuditEntry(pk,'Published',`${v.flavorId} v${v.versionNumber} reached Completed and is published.`,{versionId});
   }else{
-    addApprovalEvent(versionId,'advanced',note||`Advanced to ${APPROVAL_STAGE_LABELS[nextStage]}.`,'Susan L.');
+    addApprovalEvent(versionId,'advanced',note||`Advanced to ${APPROVAL_STAGE_LABELS[nextStage]}.`,actor);
     addAuditEntry(pk,'Advanced stage',`${v.flavorId} v${v.versionNumber} → ${APPROVAL_STAGE_LABELS[nextStage]}.`,{versionId});
   }
   refreshAfterVersionChange(pk);
@@ -2403,6 +2434,16 @@ function setReleaseValidationGuarantee(versionId,fi,value){
   const v=getVersion(versionId);
   if(!v||!v.content||!v.content.flavors||!v.content.flavors[fi])return;
   v.content.flavors[fi].newHireGuarantee=value;
+  v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  buildPlanSnapshots();buildCompareSelects();
+  renderApprovalScreen();
+}
+/* Release-validation: capture per-measure plan-mechanics type. */
+function setReleaseValidationMechType(versionId,fi,mi,value){
+  const v=getVersion(versionId);
+  const m=v&&v.content&&v.content.flavors&&v.content.flavors[fi]&&v.content.flavors[fi].measures&&v.content.flavors[fi].measures[mi];
+  if(!m)return;
+  m.mechType=value;
   v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   buildPlanSnapshots();buildCompareSelects();
   renderApprovalScreen();
@@ -2418,7 +2459,7 @@ function withdrawVersion(versionId){
   if(note)v.comments=note;
   const plan=getPlan(v.flavorId,v.fy);
   if(plan&&plan.activePublishedVersionId===versionId)plan.activePublishedVersionId=null;
-  addApprovalEvent(versionId,'withdrawn',note||`${v.flavorId} v${v.versionNumber} withdrawn from approval.`,'Melissa C.');
+  addApprovalEvent(versionId,'withdrawn',note||`${v.flavorId} v${v.versionNumber} withdrawn from approval.`,currentReviewer().name);
   addAuditEntry(pk,'Withdrawn',`${v.flavorId} v${v.versionNumber} withdrawn.`,{versionId});
   refreshAfterVersionChange(pk);
 }
@@ -2466,9 +2507,27 @@ function openCompareCurrentVsDraft(){
 }
 function openCompareCurrentVsProposal(){openCompareCurrentVsDraft();}
 
+function currentReviewerQueue(rev){return planVersions.filter(v=>rev.stages.includes(v.approvalStage));}
+function setApprovalReviewer(id){currentReviewerId=id;renderApprovalScreen();}
+function openApprovalReview(versionId){approvalVersionId=versionId;renderApprovalScreen();}
 function renderApprovalScreen(){
-  const v=getVersion(approvalVersionId);
-  if(!v)return;
+  // Reviewer toggle bar (view-as) + reviewer-scoped queue
+  const bar=document.getElementById('approval-reviewer-bar');
+  if(bar)bar.innerHTML=REVIEWERS.map(r=>{const n=currentReviewerQueue(r).length;return `<div class="reviewer-btn ${r.id===currentReviewerId?'active':''}" onclick="setApprovalReviewer('${r.id}')"><span class="rb-count ${n?'':'zero'}">${n}</span><div class="rb-name">${escapeCompareHtml(r.name)}</div><div class="rb-role">${escapeCompareHtml(r.role)}</div></div>`;}).join('');
+  const rev=currentReviewer();
+  const queue=currentReviewerQueue(rev);
+  const qt=document.getElementById('approval-queue-title');if(qt)qt.textContent=`Pending ${rev.name}'s decision · ${rev.role}`;
+  const qc=document.getElementById('approval-queue');
+  if(qc)qc.innerHTML=queue.length?`<table><thead><tr><th>Plan #</th><th>Plan Name</th><th>FY</th><th>Version</th><th>Stage</th><th>Submitted</th><th></th></tr></thead><tbody>${queue.map(q=>{const plan=getPlan(q.flavorId,q.fy);const sel=q.versionId===approvalVersionId?' style="background:var(--pa-theme-light)"':'';return `<tr${sel}><td style="font-weight:600">${escapeCompareHtml(q.flavorId)}</td><td>${escapeCompareHtml(plan?.planName||q.flavorId)}</td><td>${q.fy}</td><td>${escapeCompareHtml(q.label)}</td><td>${APPROVAL_STAGE_LABELS[q.approvalStage]||q.approvalStage}</td><td style="font-size:11px">${q.submittedAt||'—'}</td><td><button class="btn btn-sm" onclick="openApprovalReview('${q.versionId}')">Review</button></td></tr>`;}).join('')}</tbody></table>`:'<p style="font-size:12px;color:var(--pa-text-secondary);padding:12px">Nothing pending your decision.</p>';
+  // Detail — default to the first queue item if none selected / invalid
+  let v=getVersion(approvalVersionId);
+  if(!v&&queue.length){v=queue[0];approvalVersionId=v.versionId;}
+  if(!v){
+    document.getElementById('approval-page-title').textContent='Approval Review';
+    document.getElementById('approval-page-subtitle').textContent='Select an item from your queue.';
+    ['approval-stage-track','approval-stages-list','approval-actions-panel','approval-comment-history','approval-status-timeline','approval-signoff-tbody'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+    return;
+  }
   const pk=planKey(v.flavorId,v.fy);
   const pub=getPublishedVersion(pk);
   document.getElementById('approval-page-title').textContent=`Approval Review — ${v.label}`;
@@ -2497,23 +2556,40 @@ function renderApprovalScreen(){
     </div>`;
   }).join('');
 
+  const gA='flex:1;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11;min-width:170px';
+  const rX='flex:1;justify-content:center;background:#FCEBEB;border-color:#E24B4A;color:#A32D2D;min-width:120px';
+  const isComp=currentReviewerId==='comp';
+  const nextStage=APPROVAL_STAGES[currentIdx+1];
   let actions='';
   if(isVersionEditable(v)){
     actions=`<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitVersionById('${v.versionId}')"><i class="ti ti-send"></i> Submit for approval</button>`;
-  }else if(['pending_review','approved'].includes(v.status)){
-    const nextStage=APPROVAL_STAGES[currentIdx+1];
+  }else if(REVIEW_STAGES.includes(v.approvalStage)){
     actions=`<div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" style="flex:1;justify-content:center;background:#EAF3DE;border-color:#639922;color:#3B6D11;min-width:180px" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Approve → ${APPROVAL_STAGE_LABELS[nextStage]}</button>
-      <button class="btn" style="flex:1;justify-content:center;background:#FCEBEB;border-color:#E24B4A;color:#A32D2D;min-width:140px" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
+      <button class="btn" style="${gA}" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Approve → ${APPROVAL_STAGE_LABELS[nextStage]}</button>
+      <button class="btn" style="flex:1;justify-content:center;min-width:110px" onclick="reviewerEditVersion('${v.versionId}')"><i class="ti ti-pencil"></i> Edit</button>
+      <button class="btn" style="${rX}" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
     </div>`;
+  }else if(v.approvalStage==='release_validation'){
+    actions=isComp?`<div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" style="${gA};min-width:200px" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-cloud-upload"></i> Release to downstream →</button>
+      <button class="btn" style="${rX}" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
+    </div>`:`<div style="font-size:12px;color:var(--muted)">Awaiting Comp Design Team — Release Validation. Switch reviewer to act.</div>`;
+  }else if(['document_generation','payout_system_config'].includes(v.approvalStage)){
+    actions=isComp?`<div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" style="${gA}" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Advance → ${APPROVAL_STAGE_LABELS[nextStage]}</button>
+      <button class="btn" style="${rX}" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
+    </div>`:`<div style="font-size:12px;color:var(--muted)">Awaiting Comp Design Team — ${APPROVAL_STAGE_LABELS[v.approvalStage]}. Switch reviewer to act.</div>`;
   }else{
     actions=`<div style="font-size:12px;color:var(--muted)">No actions — ${VERSION_STATUS_LABELS[v.status]||v.status}.</div>`;
   }
   let rvHtml='';
-  if(v.approvalStage==='release_validation'){
+  if(v.approvalStage==='release_validation'&&isComp){
     rvHtml=`<div style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;margin-bottom:6px">New hire guarantee <span style="font-weight:400;color:var(--muted)">— required to complete Release Validation</span></div>
-      ${(v.content?.flavors||[]).map((fl,fi)=>`<div class="plan-kv-row"><span class="k">Flavor ${fl.flavorLabel}${fl.role?' · '+escapeCompareHtml(fl.role):''}</span><select class="form-select" onchange="setReleaseValidationGuarantee('${v.versionId}',${fi},this.value)">${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>`).join('')}
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">Release validation <span style="font-weight:400;color:var(--muted)">— set new-hire guarantee (per flavor) &amp; plan-mechanics type (per measure) before releasing</span></div>
+      ${(v.content?.flavors||[]).map((fl,fi)=>`<div style="border:1px solid var(--pa-border);border-radius:var(--radius);padding:8px 10px;margin-bottom:8px">
+        <div class="plan-kv-row"><span class="k">Flavor ${fl.flavorLabel}${fl.role?' · '+escapeCompareHtml(fl.role):''} — new hire guarantee</span><select class="form-select" onchange="setReleaseValidationGuarantee('${v.versionId}',${fi},this.value)">${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>
+        ${(fl.measures||[]).map((m,mi)=>`<div class="plan-kv-row"><span class="k">${escapeCompareHtml(m.description||('Measure '+(mi+1)))} — mechanics type</span><select class="form-select" onchange="setReleaseValidationMechType('${v.versionId}',${fi},${mi},this.value)"><option value="" ${!m.mechType?'selected':''}>Select…</option>${PLAN_MECH_TYPES.map(t=>`<option value="${escapeCompareHtml(t)}" ${t===m.mechType?'selected':''}>${escapeCompareHtml(t)}</option>`).join('')}</select></div>`).join('')}
+      </div>`).join('')}
     </div>`;
   }
   document.getElementById('approval-actions-panel').innerHTML=rvHtml+actions;
@@ -2789,7 +2865,7 @@ function openBuilder(planId,isNew,fromClone,versionId){
   let v=versionId?getVersion(versionId):null;
   if(!v)v=getVersionsForFlavor(pk).find(x=>EDITABLE_STATUSES.includes(x.status))||getPublishedVersion(pk)||getVersionsForFlavor(pk)[0];
   currentVersionId=v?v.versionId:null;
-  builderMeasuresEditable=v?isVersionEditable(v):true;
+  builderMeasuresEditable=v?(isVersionEditable(v)||v.versionId===reviewerEditVersionId):true;
   if(v){
     if(!v.content)v.content=blankVersionContent(pk);
     populateBuilderFromVersion(v);
@@ -2808,7 +2884,7 @@ function populateBuilderFromVersion(v){
   initBuilderDropdowns();
   const pk=planKey(v.flavorId,v.fy);
   builderWorkingContent=JSON.parse(JSON.stringify(v.content||blankVersionContent(pk)));
-  (builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId==null)m.payoutTableId='';}));
+  (builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId==null)m.payoutTableId='';if(m.mechType==null)m.mechType='';}));
   const pm=builderWorkingContent.planMeta||{};
   const {planId}=parsePlanKey(pk);
   const plan=getPlan(planId,v.fy);
@@ -2886,14 +2962,14 @@ function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-
 function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
 function onBuilderVctInput(fi,mi,el){el.value=el.value.replace(/[^0-9.]/g,'');setBuilderFlavorMeasure(fi,mi,'vct',el.value?el.value+'%':'');recalcFlavorVctSum(fi);}
 function onBuilderCapInput(slot,el){el.value=el.value.replace(/[^0-9.]/g,'');syncPayoutVctCalcs(slot);}
-function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',vct:'',perf:'',pay:'',payoutTableId:''});renderBuilderFlavors();}
+function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''});renderBuilderFlavors();}
 function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();}
 function addBuilderFlavor(){
   if(!builderMeasuresEditable)return;
   if(builderWorkingContent.flavors.length>=MAX_BUILDER_FLAVORS){alert(`Maximum ${MAX_BUILDER_FLAVORS} flavors per comp plan.`);return;}
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:''}]});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}]});
   renderBuilderFlavors();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();}
@@ -3091,7 +3167,7 @@ function validateVersionContent(content){
 function saveBuilderVersion(){
   const v=getVersion(currentVersionId);
   if(!v||!builderWorkingContent){alert('No version open.');return;}
-  if(!isVersionEditable(v)){alert('This version is locked. Create a new revision to edit.');return;}
+  if(!isVersionEditable(v)&&v.versionId!==reviewerEditVersionId){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
   builderWorkingContent.planMeta={planName:gv('builder-plan-name'),bonuses:(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.bonuses)||[],tether:gv('builder-tether'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote)||''};
@@ -4082,7 +4158,7 @@ function blankVersionContent(pk){
   const f0=getFlavorsForPlan(pk)[0];
   return{
     planMeta:{planName:plan?.planName||planId,bonuses:[],tether:'',keyPolicies:''},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:''}]}],
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}]}],
     payoutTables:[],
   };
 }
@@ -4264,7 +4340,7 @@ function seedVersionContent(){
       if(linkMap){const hit=tables.find(t=>(linkMap[t.title]||[]).includes(desc));if(hit)return hit.id;}
       return tables[0]?tables[0].id:'';
     };
-    (c.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{m.payoutTableId=tableIdForMeasure(m.description);}));
+    (c.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{m.payoutTableId=tableIdForMeasure(m.description);if(m.mechType==null)m.mechType='';}));
   });
 }
 /* Build the field-shape that compareFieldMeta/diffField consume, from a version's content.
