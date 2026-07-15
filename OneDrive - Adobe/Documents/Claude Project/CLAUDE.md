@@ -85,15 +85,16 @@ include only the minimum user-facing information needed to understand and use th
   PLAN id** (historical naming). Each: `versionId` (`ver-A01-FY27-2`), `status`, `approvalStage`,
   timestamps, `isActivePublished`, and `content`.
 - `version.content` (the real per-version store the builder reads/writes) =
-  `{ planMeta{planName,keyPolicies,designerNote},
+  `{ planMeta{planName,designerNote},
   flavors[{flavorId,flavorLabel,role,flavorName,headcount,payMixBase,payMixVar,newHireGuarantee,
   measures[{description,value,vct,perf,pay,payoutTableId,mechType}],
   tether, bonuses[{type,payoutDetails,maxPayout}],
   payoutTables[{id,title,type,bandSetId,thresholds[{label,description,tierSetId,mcr,
   tiers[{attainmentFrom,attainmentTo,xPCR,vctAtMax,mcr}]}],mcr,note,globalVctCap,prorateVct,payCurveType,threshold}],
-  reviewStatus, reviewNote}] }`.
-  **FULL PER-FLAVOR OWNERSHIP:** measures, `tether`, `bonuses[]`, and `payoutTables[]` are all owned
-  **per flavor** (no version-level `content.payoutTables` and no `planMeta.bonuses`/`.tether` — removed).
+  keyPolicies, reviewStatus, reviewNote}] }`.
+  **FULL PER-FLAVOR OWNERSHIP:** measures, `tether`, `bonuses[]`, `payoutTables[]`, and `keyPolicies` are
+  all owned **per flavor** (no version-level `content.payoutTables`, no `planMeta.bonuses`/`.tether`, and
+  `keyPolicies` moved off `planMeta` — `planMeta` is just `{planName,designerNote}`).
   The measure's `description` is the **performance-measure value** (chosen from a config dropdown of the
   Performance Measures list); `value` holds the **system pay measure** auto-derived from that value's config
   mapping and shown **read-only** on the row (`systemPayMeasureFor`; changing the measure re-derives it,
@@ -194,8 +195,11 @@ include only the minimum user-facing information needed to understand and use th
   {open,badge})` + `toggleCollapse(id)`, `.pa-collapse`/`.pa-collapse.open>.pa-collapse-body`). **Builder**
   (`renderBuilderFlavors`): flavors are tab panels (`#builder-flavorpanel-${fi}`) — **all rendered into the
   DOM, inactive ones just hidden**, so per-flavor payout/bonus hydration + the flavor-encoded slot map keep
-  working; within a flavor (`renderBuilderFlavorBlock`) Pay measures is open, Payout tables/Bonuses/Tether
-  are collapsed. **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
+  working; within a flavor (`renderBuilderFlavorBlock`) **Pay measures and Payout tables sit side-by-side in
+  a 2-column grid** (`.builder-mp-grid`, `repeat(auto-fit,minmax(340px,1fr))`; measures table wrapped in an
+  `overflow-x:auto` scroller), both always visible, and **Bonuses / Tether / Key policies** are collapsibles
+  below. The measure row shows **no** payout preview — the payout tables live in the adjacent column, linked
+  via the row's Payout-table dropdown. **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
   are tabbed (`prefix='approval'`, `#approval-flavorpanel-${fi}`). **Compare** (`buildCompareTableBodyHtml`):
   each Flavor section header row is a `.cmp-section-toggle` collapsing its sibling `<tr>`s
   (`toggleCompareSection`) — Plan information + first flavor open, rest collapsed by default.

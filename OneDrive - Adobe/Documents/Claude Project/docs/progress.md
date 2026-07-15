@@ -3,7 +3,21 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — Performance Measures config = value → system pay-measure map (branch `feature/comp-plan-flavorconfig`)
+## Latest change — flavor-level key policies + builder measures/payouts side-by-side (branch `feature/comp-plan-flavorconfig`)
+- **Key policies → per flavor.** Removed `planMeta.keyPolicies` + the plan-level "Key Policies" section;
+  each flavor owns `keyPolicies` (seed/blank/add-flavor/normalizer), edited in a **Key policies** collapsible
+  in the flavor block. `planMeta` is now `{planName,designerNote}`.
+- **Builder layout:** Pay measures + Payout tables now sit **side by side** in a 2-column grid
+  (`.builder-mp-grid`, `auto-fit`/`minmax`; measures table in an `overflow-x:auto` scroller), both always
+  visible; Bonuses/Tether/Key policies stay collapsible below. **Removed** the per-measure read-only payout
+  matrix preview (payout tables are now in the adjacent column, linked via the row's dropdown).
+
+Verified on webui2 (no console errors): side-by-side grid + column headers; 0 inline previews; payout mount
+hydrates in the right column and across flavor tabs; per-flavor Key policies round-trips onto
+`content.flavors[fi].keyPolicies`; `planMeta`=`{planName,designerNote}`; all 11 versions
+`validateVersionContent`=0. **Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — Performance Measures config = value → system pay-measure map (branch `feature/comp-plan-flavorconfig`)
 Reworked the Performance Measures config from "measure name → its own value list" to a **flat list**: each
 entry `{id,value,systemPayMeasure}` maps one **performance-measure value** (editable, seeded with 17) to one
 **system pay measure** from the **fixed** `SYSTEM_PAY_MEASURES` constant (29 options). Config screen is now a

@@ -601,6 +601,9 @@ tr:hover td{background:var(--pa-surface-hover)}
 .pa-collapse-badge{margin-left:auto;font-weight:400;font-size:11px;color:var(--muted)}
 .pa-collapse-body{display:none;padding:10px 12px}
 .pa-collapse.open>.pa-collapse-body{display:block}
+.builder-mp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:8px}
+.builder-mp-col{min-width:0}
+.builder-mp-col .plan-section-hdr{margin-bottom:6px}
 .cmp-section-toggle{cursor:pointer;user-select:none}
 .cmp-section-toggle td{background:var(--pa-theme-light)}
 .cmp-section-toggle .pa-collapse-chevron{transition:transform .15s;font-size:13px;margin-right:6px;color:var(--pa-theme-primary);transform:rotate(90deg);display:inline-block;vertical-align:middle}
@@ -963,13 +966,8 @@ tr:hover td{background:var(--pa-surface-hover)}
 
             <div class="plan-section-hdr">Flavors <span id="builder-version-hint" style="font-weight:400;color:var(--pa-text-secondary);font-size:12px"></span></div>
             <div class="plan-section-body">
-              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Each flavor owns its pay measures, payout tables, bonuses, and tether. Select a flavor tab to edit it.</p>
+              <p style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:10px">Each flavor owns its pay measures, payout tables, bonuses, tether, and key policies. Select a flavor tab to edit it.</p>
               <div id="builder-flavors-container"></div>
-            </div>
-
-            <div class="plan-section-hdr">Key Policies</div>
-            <div class="plan-section-body">
-              <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Key policies</span><textarea class="form-textarea" id="builder-key-policies" placeholder="Key policies (free text)" style="width:100%;min-height:60px;resize:vertical"></textarea></div>
             </div>
 
             <div class="plan-section-hdr">Plan notes</div>
@@ -2441,7 +2439,7 @@ function submitCurrentVersion(){
   const v=getVersion(currentVersionId);
   if(v&&builderWorkingContent&&isVersionEditable(v)){
     const gv=id=>document.getElementById(id)?.value;
-    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||builderWorkingContent.planMeta.designerNote||''};
+    if(builderWorkingContent.planMeta)builderWorkingContent.planMeta={planName:gv('builder-plan-name'),designerNote:gv('builder-plan-notes')||builderWorkingContent.planMeta.designerNote||''};
     syncBuilderPayoutTablesFromDOM();
     v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   }
@@ -3011,13 +3009,12 @@ function populateBuilderFromVersion(v){
   initBuilderDropdowns();
   const pk=planKey(v.flavorId,v.fy);
   builderWorkingContent=JSON.parse(JSON.stringify(v.content||blankVersionContent(pk)));
-  (builderWorkingContent.flavors||[]).forEach(fl=>(fl.measures||[]).forEach(m=>{if(m.payoutTableId==null)m.payoutTableId='';if(m.mechType==null)m.mechType='';if(m.value==null)m.value='';}));
+  (builderWorkingContent.flavors||[]).forEach(fl=>{if(fl.keyPolicies==null)fl.keyPolicies='';(fl.measures||[]).forEach(m=>{if(m.payoutTableId==null)m.payoutTableId='';if(m.mechType==null)m.mechType='';if(m.value==null)m.value='';});});
   const pm=builderWorkingContent.planMeta||{};
   const {planId}=parsePlanKey(pk);
   const plan=getPlan(planId,v.fy);
   const setVal=(id,val)=>{const el=document.getElementById(id);if(el&&val!=null)el.value=val;};
   setVal('builder-plan-name',pm.planName);
-  setVal('builder-key-policies',pm.keyPolicies);
   document.getElementById('builder-plan-id').value=planId;
   // Title: FY · Plan ID · Plan Name · vN · Status
   const titleEl=document.getElementById('builder-title');
@@ -3095,16 +3092,25 @@ function renderBuilderFlavorBlock(fl,fi,editable){
       </div></div>
     </div>
     <div style="padding:10px 12px 4px">
-    ${collapsibleHtml(`bfl-${fi}-measures`,'Pay measures',
-      `<table class="payout-tier-table builder-measure-table" style="width:100%">
-        <thead><tr><th style="width:38px">#</th><th style="min-width:220px">Performance measure</th><th style="min-width:150px">System pay measure</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:120px">Performance period</th><th style="min-width:120px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      ${editable?`<div style="padding:10px 0 0"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button></div>`:''}`,
-      {open:true,badge:`${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%`})}
-    ${collapsibleHtml(`bfl-${fi}-payouts`,'Payout tables',`<div id="builder-flavor-${fi}-payouts"></div>`,{badge:`${(fl.payoutTables||[]).length} table${(fl.payoutTables||[]).length===1?'':'s'}`})}
+    <div class="builder-mp-grid">
+      <div class="builder-mp-col">
+        <div class="plan-section-hdr">Pay measures <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>
+        <div style="overflow-x:auto">
+        <table class="payout-tier-table builder-measure-table" style="width:100%;min-width:720px">
+          <thead><tr><th style="width:34px">#</th><th style="min-width:180px">Performance measure</th><th style="min-width:130px">System pay measure</th><th style="width:70px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:100px">Performance period</th><th style="min-width:100px">Payout frequency</th><th style="min-width:130px">Payout table</th><th style="width:30px"></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        </div>
+        ${editable?`<div style="padding:10px 0 0"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button></div>`:''}
+      </div>
+      <div class="builder-mp-col">
+        <div class="plan-section-hdr">Payout tables <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${(fl.payoutTables||[]).length} table${(fl.payoutTables||[]).length===1?'':'s'}</span></div>
+        <div id="builder-flavor-${fi}-payouts"></div>
+      </div>
+    </div>
     ${collapsibleHtml(`bfl-${fi}-bonuses`,'Bonuses',`<div id="builder-flavor-${fi}-bonuses"></div>`,{badge:`${(fl.bonuses||[]).length} bonus${(fl.bonuses||[]).length===1?'':'es'}`})}
     ${collapsibleHtml(`bfl-${fi}-tether`,'Tether',`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorTether(${fi},this.value)" placeholder="Tether description (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.tether||'').replace(/</g,'&lt;')}</textarea></div>`,{badge:(fl.tether||'').trim()?'set':'—'})}
+    ${collapsibleHtml(`bfl-${fi}-keypolicies`,'Key policies',`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">Key policies</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorField(${fi},'keyPolicies',this.value)" placeholder="Key policies (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.keyPolicies||'').replace(/</g,'&lt;')}</textarea></div>`,{badge:(fl.keyPolicies||'').trim()?'set':'—'})}
     </div>
   </div>`;
 }
@@ -3120,11 +3126,6 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   // System pay measure — auto-derived from the config mapping, shown read-only.
   const sysPay=m.value||systemPayMeasureFor(m.description);
   const valueCell=`<span style="font-size:11px;color:${sysPay?'var(--pa-text)':'var(--muted)'}">${sysPay?escapeCompareHtml(sysPay):'—'}</span>`;
-  // Inline read-only preview of the linked payout table (#3).
-  const linked=((fl&&fl.payoutTables)||[]).find(pt=>pt.id===m.payoutTableId);
-  const preview=linked
-    ?`<div style="font-size:11px;color:var(--pa-text-secondary);margin-bottom:4px">Linked payout table: <strong>${escapeCompareHtml(linked.title||'Untitled')}</strong></div>${renderPayoutMatrixTables(linked,'payout-matrix')}`
-    :`<div style="font-size:11px;color:var(--muted)"><i class="ti ti-link-off"></i> No payout table linked — choose one in the Payout table column.</div>`;
   return `<tr>
     <td><span class="badge badge-proposal" style="font-weight:600">M${mi+1}</span></td>
     <td>${measureSel}</td>
@@ -3134,8 +3135,7 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'payoutTableId',this.value)"><option value="" ${!m.payoutTableId?'selected':''}>Select…</option>${((fl&&fl.payoutTables)||[]).map((pt,pi)=>`<option value="${pt.id}" ${pt.id===m.payoutTableId?'selected':''}>${escapeCompareHtml(pt.title||('Payout table '+(pi+1)))}</option>`).join('')}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
-  </tr>
-  <tr class="measure-payout-inline"><td colspan="8" style="background:var(--pa-canvas);padding:8px 10px 12px">${preview}</td></tr>`;
+  </tr>`;
 }
 function onBuilderMeasureNameChange(fi,mi,val){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(!m)return;m.description=val;m.value=systemPayMeasureFor(val);renderBuilderFlavors();}
 const MAX_BUILDER_FLAVORS=5;
@@ -3151,7 +3151,7 @@ function addBuilderFlavor(){
   if(builderWorkingContent.flavors.length>=MAX_BUILDER_FLAVORS){alert(`Maximum ${MAX_BUILDER_FLAVORS} flavors per comp plan.`);return;}
   const {planId}=parsePlanKey(currentPlanKey);
   const nextLabel=String.fromCharCode(65+builderWorkingContent.flavors.length);
-  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''});
+  builderWorkingContent.flavors.push({flavorId:`${planId}.${nextLabel}`,flavorLabel:nextLabel,flavorName:`Flavor ${nextLabel}`,role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],keyPolicies:'',reviewStatus:'pending',reviewNote:''});
   renderBuilderFlavors();
 }
 function removeBuilderFlavor(fi){if(builderWorkingContent.flavors.length<=1)return;builderWorkingContent.flavors.splice(fi,1);renderBuilderFlavors();}
@@ -3359,7 +3359,7 @@ function saveBuilderVersion(){
   if(!isVersionEditable(v)&&v.versionId!==reviewerEditVersionId){alert('This version is locked. Create a new revision to edit.');return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
-  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),keyPolicies:gv('builder-key-policies'),designerNote:gv('builder-plan-notes')||(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote)||''};
+  builderWorkingContent.planMeta={planName:gv('builder-plan-name'),designerNote:gv('builder-plan-notes')||(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote)||''};
   syncBuilderPayoutTablesFromDOM();
   v.content=JSON.parse(JSON.stringify(builderWorkingContent));
   v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -4342,8 +4342,8 @@ function blankVersionContent(pk){
   const plan=getPlan(planId,fy);
   const f0=getFlavorsForPlan(pk)[0];
   return{
-    planMeta:{planName:plan?.planName||planId,keyPolicies:''},
-    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],reviewStatus:'pending',reviewNote:''}],
+    planMeta:{planName:plan?.planName||planId},
+    flavors:[{flavorId:`${planId}.A`,flavorLabel:'A',flavorName:f0?.flavorName||'Flavor A',role:'',headcount:'',payMixBase:'',payMixVar:'',newHireGuarantee:'',measures:[{description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''}],tether:'',bonuses:[],payoutTables:[],keyPolicies:'',reviewStatus:'pending',reviewNote:''}],
   };
 }
 /* ── Seed payout-table builders (config-set driven, so tables carry real bandSetId/tierSetId
@@ -4501,10 +4501,10 @@ function seedVersionContent(){
         headcount:(fd.headcount!=null?fd.headcount:''),payMixBase:(fd.payMixBase!=null?fd.payMixBase:''),payMixVar:(fd.payMixVar!=null?fd.payMixVar:''),
         newHireGuarantee:fd.newHireGuarantee||'No',measures:clone(fd.measures||[]),
         tether:sc.tether||'N/A',bonuses:clone(sc.bonuses||[]),payoutTables:sc.payouts?sc.payouts():[],
-        reviewStatus:'pending',reviewNote:''};
+        keyPolicies:'',reviewStatus:'pending',reviewNote:''};
     });
     ver.content={
-      planMeta:{planName:plan?.planName||planId,keyPolicies:''},
+      planMeta:{planName:plan?.planName||planId},
       flavors:contentFlavors.length?contentFlavors:blankVersionContent(pk).flavors,
     };
   });
