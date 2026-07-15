@@ -94,10 +94,10 @@ include only the minimum user-facing information needed to understand and use th
   reviewStatus, reviewNote}] }`.
   **FULL PER-FLAVOR OWNERSHIP:** measures, `tether`, `bonuses[]`, and `payoutTables[]` are all owned
   **per flavor** (no version-level `content.payoutTables` and no `planMeta.bonuses`/`.tether` — removed).
-  The measure's `description` (name) + `value` are chosen from **config-driven dependent dropdowns** (see
-  Configuration: Performance Measures) — pick a measure, then a Value filtered to that measure's values
-  (changing the measure resets the value; `value` is optional, not submit-validated). Measures are labelled
-  **M1/M2/M3** by index. Each measure has a **`payoutTableId`** linking it to exactly one payout table **on
+  The measure's `description` is the **performance-measure value** (chosen from a config dropdown of the
+  Performance Measures list); `value` holds the **system pay measure** auto-derived from that value's config
+  mapping and shown **read-only** on the row (`systemPayMeasureFor`; changing the measure re-derives it,
+  `onBuilderMeasureNameChange`). Measures are labelled **M1/M2/M3** by index. Each measure has a **`payoutTableId`** linking it to exactly one payout table **on
   its own flavor** (chosen via a "Payout table" dropdown on the measure row, scoped to that flavor's tables),
   and the builder shows that **linked table read-only inline** under the measure row
   (`renderPayoutMatrixTables`). **Submit**
@@ -167,15 +167,15 @@ include only the minimum user-facing information needed to understand and use th
 ## Configuration (reusable sets)
 - Setup nav has three Config screens — **Quota Band Sets**, **Attainment Tier Sets**, and **Performance
   Measures** — backed by `quotaBandSets` / `attainmentTierSets` / `performanceMeasures`, persisted together
-  to localStorage (`compplan_config_sets_v4`; `performanceMeasures` is added gracefully to older stores).
-- **Performance Measures** (`config-measures`, `renderConfigMeasures`, `renderMeasureSetCard`): each entry
-  `{id,name,values:[str]}` — a measure name + its own value list. Feeds the measure row's **Measure**
-  dropdown (options = names) and the dependent **Value** dropdown (options = the chosen measure's `values`).
-  CRUD: `addPerformanceMeasure`/`deletePerformanceMeasure`/`setMeasureName`/`addMeasureValue`/
-  `removeMeasureValue`/`setMeasureValue`; lookup `findPerformanceMeasure(name)`. On the builder row
-  `onBuilderMeasureNameChange` resets the value when the measure changes.
+  to localStorage (`compplan_config_sets_v5`).
+- **Performance Measures** (`config-measures`, `renderConfigMeasures`): a flat list — each entry
+  `{id,value,systemPayMeasure}` maps one **performance-measure value** (editable) to one **system pay
+  measure** picked from the **fixed** `SYSTEM_PAY_MEASURES` constant (29 options). Feeds the measure row's
+  **Performance measure** dropdown (options = the values); selecting a value auto-fills the row's read-only
+  **System pay measure** via `systemPayMeasureFor(value)`. CRUD: `addPerformanceMeasure`/
+  `deletePerformanceMeasure`/`setPerfMeasureValue`/`setPerfMeasureSystem`; lookup `findPerfMeasureByValue`.
 - Quota Band / Attainment Tier sets are backed by `quotaBandSets` / `attainmentTierSets`, persisted to
-  localStorage (`compplan_config_sets_v4`). Each
+  localStorage (`compplan_config_sets_v5`). Each
   set = `{id,name,bounds:[num]}` (band sets also carry a parallel `descriptions:[str]`); ranges
   auto-derive from the upper bounds. These feed the payout builder's set-driven construction, and a
   band's description shows on applied payout bands + in Compare. Range labels are **explicit about
@@ -260,7 +260,7 @@ include only the minimum user-facing information needed to understand and use th
   `/comp-plan-prototype.html`. If 4599 is held by another chat, use `webui2` (port 4610,
   `static-server-4610.js`) — same file, local-only config. `preview_screenshot` is unreliable on this
   renderer — verify via `preview_eval` DOM reads + `preview_console_logs` (error level). Config sets
-  live in localStorage; clear `compplan_config_sets_v4` for a fresh seed.
+  live in localStorage; clear `compplan_config_sets_v5` for a fresh seed.
 
 ## Git
 - Repo root is the **home dir** (`C:\Users\kexinw`) with many unrelated untracked files —

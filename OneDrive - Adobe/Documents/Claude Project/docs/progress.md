@@ -3,7 +3,22 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — pay measures: config dropdowns + M# + inline linked payout (branch `feature/comp-plan-flavorconfig`)
+## Latest change — Performance Measures config = value → system pay-measure map (branch `feature/comp-plan-flavorconfig`)
+Reworked the Performance Measures config from "measure name → its own value list" to a **flat list**: each
+entry `{id,value,systemPayMeasure}` maps one **performance-measure value** (editable, seeded with 17) to one
+**system pay measure** from the **fixed** `SYSTEM_PAY_MEASURES` constant (29 options). Config screen is now a
+single value+dropdown table (`renderConfigMeasures`; CRUD `setPerfMeasureValue`/`setPerfMeasureSystem`).
+Builder measure row: the **Performance measure** dropdown lists the 17 values; picking one **auto-derives**
+the row's read-only **System pay measure** (`systemPayMeasureFor`, stored on `m.value`). Compare label →
+"M n · System pay measure". Storage key bumped `compplan_config_sets_v4` → `_v5` (shape change). Seed plan
+measures keep their short names (legacy option, prepended). Removed dead handlers (`renderMeasureSetCard`
+etc.).
+
+Verified on webui2 (no console errors): 17 config rows w/ seeded mapping + 29-option dropdown; add/remap
+persists to `_v5`; builder auto-fills system pay measure on select + save round-trip; all 11 versions
+`validateVersionContent`=0; Compare label present. **Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — pay measures: config dropdowns + M# + inline linked payout (branch `feature/comp-plan-flavorconfig`)
 - **Global config `performanceMeasures`** (new Setup → Performance Measures screen; `{id,name,values:[str]}`)
   persisted with the other config sets in `compplan_config_sets_v4` (added gracefully). CRUD mirrors the
   band-set pattern (`renderConfigMeasures`/`renderMeasureSetCard`, `addPerformanceMeasure`, etc.).

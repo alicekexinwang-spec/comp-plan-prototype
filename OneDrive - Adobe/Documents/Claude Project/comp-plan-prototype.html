@@ -1470,11 +1470,11 @@ BONUS_THRESHOLD=0.75</div></div>
         <div class="page-header">
           <div>
             <div class="page-title">Performance Measures</div>
-            <div class="page-subtitle">Reusable performance measures and their values — the dependent dropdowns used on each pay measure in the Plan Builder</div>
+            <div class="page-subtitle">Performance measure values and the system pay measure each one maps to — used by the pay measure dropdown in the Plan Builder</div>
           </div>
           <div class="btn-group"><button class="btn btn-primary btn-sm" type="button" onclick="addPerformanceMeasure()"><i class="ti ti-plus"></i> Add measure</button></div>
         </div>
-        <div class="admin-banner"><i class="ti ti-lock"></i> Admin setup — each measure's name and value list feed the Measure / Value dropdowns on a flavor's pay measures.</div>
+        <div class="admin-banner"><i class="ti ti-lock"></i> Admin setup — each performance measure value maps to one system pay measure; picking the value on a flavor's pay measure auto-fills its system pay measure.</div>
         <div id="config-measure-list"></div>
       </div>
 
@@ -1677,7 +1677,7 @@ function parsePlanKey(key){
 function compPlanExists(planId,fy){return !!compPlans.find(p=>p.planId===planId&&p.fiscalYear===fy);}
 
 /* ── Configuration: reusable quota band sets & attainment tier sets (each = ordered upper bounds) ── */
-const CONFIG_SETS_STORAGE_KEY='compplan_config_sets_v4';
+const CONFIG_SETS_STORAGE_KEY='compplan_config_sets_v5';
 const CONFIG_SETS_SEED={
   quotaBandSets:[
     {name:'$0, $100,000',bounds:['100000','']},
@@ -1729,14 +1729,26 @@ const CONFIG_SETS_SEED={
     {name:'0–100%, >100–120%, >120%',bounds:['100','120','']}
   ],
   performanceMeasures:[
-    {name:'Net New ARR',values:['New Logo','Expansion','Total']},
-    {name:'Renewal ARR',values:['Gross','Net']},
-    {name:'Strategic Products',values:['Attach','Standalone']},
-    {name:'Pipeline Generation',values:['Sourced','Influenced']},
-    {name:'Net Revenue Retention',values:['Gross','Net']},
-    {name:'Customer Expansion',values:['Cross-sell','Upsell']}
+    {value:'Gross New ARR for Assigned DX Products',systemPayMeasure:'Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned DX Products and Gross New ASV for Assigned DME Products',systemPayMeasure:'Gross New ASV; Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned Subscription Products',systemPayMeasure:'Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned DX Products and Assigned DME Products',systemPayMeasure:'Gross New ASV; Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned DX Products and if applicable Gross New ASV for Assigned DME Products',systemPayMeasure:'Gross New ASV; Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned DX Products - Individual',systemPayMeasure:'Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned DX Products - Team',systemPayMeasure:'Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned DX Products - Individual / Team',systemPayMeasure:'Gross New ARR MOPG'},
+    {value:'Gross New ARR for Assigned DX Products – Region/Segment/Solution',systemPayMeasure:'Gross New ARR MOPG'},
+    {value:'Finance Gross New ARR for Assigned DX Products and Gross New ASV for Assigned DME Products – Geo/Segment',systemPayMeasure:'DME Gross New ARR_Fin'},
+    {value:'Net New ARR for Assigned DX Products',systemPayMeasure:'Net New ARR MOPG'},
+    {value:'Net New ARR for Assigned DX Products and Gross New ASV for Assigned DME Products',systemPayMeasure:'Gross New ASV; Net New ARR MOPG'},
+    {value:'Net New ARR for Assigned DX Products and Assigned DME Products',systemPayMeasure:'Net New ASV; Net New ARR MOPG'},
+    {value:'Net New ARR for Assigned Products within Assigned Region and/or RTM',systemPayMeasure:'Net New ARR MOPG'},
+    {value:'Renewal Percent for Assigned Products',systemPayMeasure:'RNW Rate Avg MOPG'},
+    {value:'Renewal Percent for Assigned Products - Team',systemPayMeasure:'RNW Rate Avg MOPG'},
+    {value:'Renewal Percent for Assigned DX Products',systemPayMeasure:'RNW Rate Avg MOPG'}
   ]
 };
+const SYSTEM_PAY_MEASURES=['Gross New ARR MOPG','Gross New ASV','Net New ARR MOPG','Net New ASV','RPO Growth MOPG','BDO','RNW Rate Avg MOPG','UTL','MBO','Other-Amount','Other-Count','Other-Percent','Gross New ASV; Gross New ARR MOPG','Gross New ASV; Net New ARR MOPG','Net New ASV; Gross New ARR MOPG','Net New ASV; Net New ARR MOPG','Consulting ACV','Other-Amount: Consulting ACV','Other-Amount: Gross New ARR MOPG','Other-Amount: Net New ARR MOPG','Other-Amount: Gross New ASV; Gross New ARR MOPG','Other-Amount: Net New ASV; Net New ARR MOPG','Other-Amount: Net New ASV','Other-Amount: Gross New ASV','Net ASV Growth_Fin; Net New ARR_Fin','DME Net New ARR_Fin','DME Gross New ARR_Fin','Net ASV Growth_Fin','Net New ARR_Fin'];
 let quotaBandSets=[];
 let attainmentTierSets=[];
 let performanceMeasures=[];
@@ -1753,13 +1765,14 @@ function seedConfigSets(){
     else{let prev=0;descriptions=bounds.map(b=>{const from=prev;const to=(b===''||b==null)?null:Number(b);const d=quotaBandDesc(from,to);if(to!=null)prev=to;return d;});}
     return{id:payoutUid(),name:s.name||'Untitled set',bounds,descriptions};
   };
-  const normMeasure=s=>({id:payoutUid(),name:s.name||'Untitled measure',values:(s.values||[]).slice()});
+  const normMeasure=s=>({id:payoutUid(),value:s.value||'',systemPayMeasure:s.systemPayMeasure||''});
   quotaBandSets=(data.quotaBandSets||[]).map(normBand);
   attainmentTierSets=(data.attainmentTierSets||[]).map(normTier);
   // Graceful add of a newer config array to existing v4 stores (no loss of band/tier sets).
   performanceMeasures=((data.performanceMeasures&&data.performanceMeasures.length)?data.performanceMeasures:CONFIG_SETS_SEED.performanceMeasures).map(normMeasure);
 }
-function findPerformanceMeasure(name){return performanceMeasures.find(m=>m.name===name);}
+function findPerfMeasureByValue(value){return performanceMeasures.find(m=>m.value===value);}
+function systemPayMeasureFor(value){const m=findPerfMeasureByValue(value);return m?m.systemPayMeasure:'';}
 function quotaBandDesc(from,to){
   const lab=v=>{v=Number(v);return v>=1000?'$'+v.toLocaleString():'$'+v+' Million';};
   if(to===null||to===''||to==null)return '>='+lab(from)+' USD';
@@ -1843,33 +1856,27 @@ function refreshBoundsSetRanges(setId){
   let prev=0;
   set.bounds.forEach((b,i)=>{const from=prev;const to=(b===''||b==null)?null:Number(b);if(cells[i])cells[i].textContent=boundsRangeLabel(from,to,unit,kind==='band');if(to!=null)prev=to;});
 }
-/* ── Config: Performance Measures (user-defined measure names, each with its own value list) ── */
-function renderMeasureSetCard(m){
-  const rows=(m.values||[]).map((val,i)=>`<tr>
-      <td><input class="form-input" value="${(val||'').replace(/"/g,'&quot;')}" oninput="setMeasureValue('${m.id}',${i},this.value)" placeholder="Value" style="min-width:220px"></td>
-      <td class="tier-actions"><button type="button" class="btn btn-sm" onclick="removeMeasureValue('${m.id}',${i})" title="Remove"><i class="ti ti-x"></i></button></td>
-    </tr>`).join('');
-  return `<div class="config-set-card" data-measure-id="${m.id}">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <input class="form-input" value="${(m.name||'').replace(/"/g,'&quot;')}" oninput="setMeasureName('${m.id}',this.value)" placeholder="Performance measure name" style="font-weight:600;flex:1">
-      <button type="button" class="measure-remove-btn" onclick="deletePerformanceMeasure('${m.id}')" title="Delete measure"><i class="ti ti-trash" style="font-size:11px"></i></button>
-    </div>
-    <table class="payout-tier-table"><thead><tr><th>Value (for the dependent dropdown)</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="2" style="font-size:11px;color:var(--pa-text-secondary)">No values yet.</td></tr>'}</tbody></table>
-    <div style="margin-top:6px"><button type="button" class="btn btn-sm" onclick="addMeasureValue('${m.id}')"><i class="ti ti-plus"></i> Add value</button></div>
-  </div>`;
-}
+/* ── Config: Performance Measures (flat list of values, each mapped to a fixed system pay measure) ── */
+function findMeasureById(id){return performanceMeasures.find(m=>m.id===id);}
 function renderConfigMeasures(){
   const cont=document.getElementById('config-measure-list');
   if(!cont)return;
-  cont.innerHTML=performanceMeasures.length?performanceMeasures.map(renderMeasureSetCard).join(''):'<p style="font-size:11px;color:var(--pa-text-secondary)">No performance measures yet. Click “Add measure”.</p>';
+  const opts=v=>`<option value="" ${!v?'selected':''}>Select…</option>`+SYSTEM_PAY_MEASURES.map(p=>`<option value="${escapeCompareHtml(p)}" ${p===v?'selected':''}>${escapeCompareHtml(p)}</option>`).join('');
+  const rows=performanceMeasures.map(m=>`<tr>
+      <td><input class="form-input" value="${(m.value||'').replace(/"/g,'&quot;')}" oninput="setPerfMeasureValue('${m.id}',this.value)" placeholder="Performance measure value" style="min-width:340px;width:100%"></td>
+      <td><select class="form-select" onchange="setPerfMeasureSystem('${m.id}',this.value)" style="min-width:240px">${opts(m.systemPayMeasure)}</select></td>
+      <td class="tier-actions"><button type="button" class="btn btn-sm" onclick="deletePerformanceMeasure('${m.id}')" title="Remove"><i class="ti ti-x"></i></button></td>
+    </tr>`).join('');
+  cont.innerHTML=`<div class="card">
+    <table class="payout-tier-table"><thead><tr><th>Performance measure value</th><th>System pay measure</th><th style="width:32px"></th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="3" style="font-size:11px;color:var(--pa-text-secondary)">No performance measures yet. Click “Add measure”.</td></tr>'}</tbody></table>
+    <div style="margin-top:8px"><button type="button" class="btn btn-sm" onclick="addPerformanceMeasure()"><i class="ti ti-plus"></i> Add measure</button></div>
+  </div>`;
 }
-function findMeasureById(id){return performanceMeasures.find(m=>m.id===id);}
-function addPerformanceMeasure(){performanceMeasures.push({id:payoutUid(),name:'New measure',values:['']});persistConfigSets();renderConfigMeasures();}
+function addPerformanceMeasure(){performanceMeasures.push({id:payoutUid(),value:'',systemPayMeasure:''});persistConfigSets();renderConfigMeasures();}
 function deletePerformanceMeasure(id){performanceMeasures=performanceMeasures.filter(m=>m.id!==id);persistConfigSets();renderConfigMeasures();}
-function setMeasureName(id,v){const m=findMeasureById(id);if(m){m.name=v;persistConfigSets();}}
-function addMeasureValue(id){const m=findMeasureById(id);if(m){if(!Array.isArray(m.values))m.values=[];m.values.push('');persistConfigSets();renderConfigMeasures();}}
-function removeMeasureValue(id,i){const m=findMeasureById(id);if(m&&m.values){m.values.splice(i,1);persistConfigSets();renderConfigMeasures();}}
-function setMeasureValue(id,i,v){const m=findMeasureById(id);if(m&&m.values&&m.values[i]!=null){m.values[i]=v;persistConfigSets();}}
+function setPerfMeasureValue(id,v){const m=findMeasureById(id);if(m){m.value=v;persistConfigSets();}}
+function setPerfMeasureSystem(id,v){const m=findMeasureById(id);if(m){m.systemPayMeasure=v;persistConfigSets();}}
 
 /* ── Compensation Plan → Flavor → Version data model ──
    A Compensation Plan (compPlans, keyed by planId like 'A01') has a NAME and is approved
@@ -3090,7 +3097,7 @@ function renderBuilderFlavorBlock(fl,fi,editable){
     <div style="padding:10px 12px 4px">
     ${collapsibleHtml(`bfl-${fi}-measures`,'Pay measures',
       `<table class="payout-tier-table builder-measure-table" style="width:100%">
-        <thead><tr><th style="width:38px">#</th><th style="min-width:170px">Performance measure</th><th style="min-width:120px">Value</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:120px">Performance period</th><th style="min-width:120px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
+        <thead><tr><th style="width:38px">#</th><th style="min-width:220px">Performance measure</th><th style="min-width:150px">System pay measure</th><th style="width:80px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:120px">Performance period</th><th style="min-width:120px">Payout frequency</th><th style="min-width:150px">Payout table</th><th style="width:32px"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       ${editable?`<div style="padding:10px 0 0"><button type="button" class="btn btn-sm" onclick="addBuilderMeasureToFlavor(${fi})" ${atMax?'disabled title="Maximum 4 pay measures"':''}><i class="ti ti-plus"></i> Add measure</button></div>`:''}`,
@@ -3106,16 +3113,13 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   const fl=builderWorkingContent.flavors[fi];
   const canRemove=editable&&fl.measures.length>1;
   const dis=editable?'':'disabled';
-  // Performance measure — dropdown from the global config (keep current value if not in the list).
-  const names=performanceMeasures.map(pm=>pm.name);
-  if(m.description&&!names.includes(m.description))names.unshift(m.description);
-  const measureSel=`<select class="form-select" ${dis} onchange="onBuilderMeasureNameChange(${fi},${mi},this.value)"><option value="" ${!m.description?'selected':''}>Select…</option>${names.map(n=>`<option value="${escapeCompareHtml(n)}" ${n===m.description?'selected':''}>${escapeCompareHtml(n)}</option>`).join('')}</select>`;
-  // Value — dependent dropdown from the chosen measure's value list.
-  const pmDef=findPerformanceMeasure(m.description);
-  let vals=(pmDef&&pmDef.values||[]).slice();
-  if(m.value&&!vals.includes(m.value))vals.unshift(m.value);
-  const valDis=dis||(!vals.length?'disabled':'');
-  const valueSel=`<select class="form-select" ${valDis} onchange="setBuilderFlavorMeasure(${fi},${mi},'value',this.value)"><option value="" ${!m.value?'selected':''}>${vals.length?'Select…':'—'}</option>${vals.map(v=>`<option value="${escapeCompareHtml(v)}" ${v===m.value?'selected':''}>${escapeCompareHtml(v)}</option>`).join('')}</select>`;
+  // Performance measure — dropdown of the config's values (keep current if not in the list).
+  const vals=performanceMeasures.map(pm=>pm.value);
+  if(m.description&&!vals.includes(m.description))vals.unshift(m.description);
+  const measureSel=`<select class="form-select" ${dis} onchange="onBuilderMeasureNameChange(${fi},${mi},this.value)"><option value="" ${!m.description?'selected':''}>Select…</option>${vals.map(n=>`<option value="${escapeCompareHtml(n)}" ${n===m.description?'selected':''}>${escapeCompareHtml(n)}</option>`).join('')}</select>`;
+  // System pay measure — auto-derived from the config mapping, shown read-only.
+  const sysPay=m.value||systemPayMeasureFor(m.description);
+  const valueCell=`<span style="font-size:11px;color:${sysPay?'var(--pa-text)':'var(--muted)'}">${sysPay?escapeCompareHtml(sysPay):'—'}</span>`;
   // Inline read-only preview of the linked payout table (#3).
   const linked=((fl&&fl.payoutTables)||[]).find(pt=>pt.id===m.payoutTableId);
   const preview=linked
@@ -3124,7 +3128,7 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   return `<tr>
     <td><span class="badge badge-proposal" style="font-weight:600">M${mi+1}</span></td>
     <td>${measureSel}</td>
-    <td>${valueSel}</td>
+    <td>${valueCell}</td>
     <td><div class="xpcr-cell"><input class="form-input" value="${(m.vct||'').replace(/%/g,'')}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderVctInput(${fi},${mi},this)" style="width:44px" placeholder="e.g. 50"><span class="pct-suffix">%</span></div></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
@@ -3133,7 +3137,7 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
   </tr>
   <tr class="measure-payout-inline"><td colspan="8" style="background:var(--pa-canvas);padding:8px 10px 12px">${preview}</td></tr>`;
 }
-function onBuilderMeasureNameChange(fi,mi,val){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(!m)return;m.description=val;m.value='';renderBuilderFlavors();}
+function onBuilderMeasureNameChange(fi,mi,val){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(!m)return;m.description=val;m.value=systemPayMeasureFor(val);renderBuilderFlavors();}
 const MAX_BUILDER_FLAVORS=5;
 function onBuilderFlavorField(fi,field,v){if(builderWorkingContent.flavors[fi])builderWorkingContent.flavors[fi][field]=v;}
 function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-${fi}`);if(!el)return;const sum=flavorVctSum(builderWorkingContent.flavors[fi]);const ok=Math.round(sum)===100;el.textContent=`VCT total ${sum%1===0?sum:sum.toFixed(1)}%`;el.className=`badge ${ok?'badge-approved':'badge-rejected'}`;}
@@ -3406,7 +3410,7 @@ function buildCompareFieldMeta(flavors){
     for(let i=1;i<=Math.max(0,measureCount|0);i++){
       meta.push(
         {key:`flavor${L}Measure${i}Name`,label:`M${i}`,section:sec},
-        {key:`flavor${L}Measure${i}Value`,label:`M${i} · Value`,section:sec},
+        {key:`flavor${L}Measure${i}Value`,label:`M${i} · System pay measure`,section:sec},
         {key:`flavor${L}Measure${i}Vct`,label:`M${i} · VCT Wt%`,section:sec},
         {key:`flavor${L}Measure${i}PerfPd`,label:`M${i} · Perf Pd`,section:sec},
         {key:`flavor${L}Measure${i}PayFreq`,label:`M${i} · Pay Freq`,section:sec},
