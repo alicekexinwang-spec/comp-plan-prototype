@@ -230,10 +230,11 @@ include only the minimum user-facing information needed to understand and use th
   labelled "All flavors" when shared, else "Flavor A, B"). Surfaced in the **builder Overview tab** and the
   **approval detail** (`#approval-overview`).
 - **Plan Overview2** (`renderPlanOverviewByFlavor(content)`): a second builder tab (`#builder-flavorpanel-overview2`,
-  after Overview) — the same info **by flavor dimension**: a responsive grid (`.flavor-ov-grid`) of one
-  `.flavor-ov-card` per flavor, each card = header meta (role · HC · pay mix · NHG · VCT total) + that flavor's
-  Measures & Weightings table + its **own** payout matrices (not deduped) + Bonus / Tether / Key policies.
-  Builder-only (not in the approval detail). **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
+  after Overview) — the same info **by flavor dimension**: a **vertical stack of full-width flavor rows**
+  (`.flavor-ov-grid` flex column), one `.flavor-ov-card` per flavor = header meta (role · HC · pay mix · NHG ·
+  VCT total) + that flavor's five sections (`.flavor-ov-sections` flex column, each a `.flavor-ov-sec`)
+  **stacked vertically**: Measures & Weightings table + its **own** payout matrices (not deduped) + Bonus /
+  Tether / Key policies. Builder-only (not in the approval detail). **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
   are tabbed (`prefix='approval'`, `#approval-flavorpanel-${fi}`). **Compare** (`buildCompareTableBodyHtml`):
   each Flavor section header row is a `.cmp-section-toggle` collapsing its sibling `<tr>`s
   (`toggleCompareSection`) — Plan information + first flavor open, rest collapsed by default.

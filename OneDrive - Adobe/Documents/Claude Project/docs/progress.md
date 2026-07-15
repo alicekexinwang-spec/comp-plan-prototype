@@ -6,8 +6,9 @@ tracks status only._
 ## Latest change — global persona toggle + stage capabilities + reject-to-draft (+ Overview2 tab) (branch `feature/comp-plan-flavorconfig`)
 Two features in one commit.
 - **Overview2 tab** (`renderPlanOverviewByFlavor`): a second builder tab (after Overview) showing the plan
-  **by flavor dimension** — a grid of one card per flavor (header meta + that flavor's Measures & Weightings,
-  own payout matrices, bonus, tether, key policies). Complements the section-first Overview.
+  **by flavor dimension** — a **vertical stack of full-width flavor rows**, each row's five sections
+  (Measures & Weightings, own payout matrices, bonus, tether, key policies) **stacked vertically** for
+  readability. Complements the section-first Overview.
 - **Persona-based views:** a **global top-right "Viewing as" toggle** (`#topbar-persona`/`setPersona`) with
   personas **Creator / 1st / 2nd / Executive** (`REVIEWERS`; Comp dropped for now). **Editing is gated by
   persona** (`canEditVersion`): Creator edits drafts + submits (Create-Plan + builder Submit shown only to

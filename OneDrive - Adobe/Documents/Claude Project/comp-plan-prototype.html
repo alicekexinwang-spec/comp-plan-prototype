@@ -607,9 +607,11 @@ tr:hover td{background:var(--pa-surface-hover)}
 .pa-collapse.open>.pa-collapse-body{display:block}
 .builder-mp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:8px}
 .builder-mp-col{min-width:0}
-.flavor-ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.flavor-ov-grid{display:flex;flex-direction:column;gap:14px}
 .flavor-ov-card{border:var(--border);border-radius:var(--pa-radius);background:var(--card-bg);padding:12px;min-width:0}
-.flavor-ov-subhdr{font-size:11px;font-weight:600;color:var(--pa-theme-dark);text-transform:uppercase;letter-spacing:.03em;margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--pa-border)}
+.flavor-ov-sections{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.flavor-ov-sec{min-width:0}
+.flavor-ov-subhdr{font-size:11px;font-weight:600;color:var(--pa-theme-dark);text-transform:uppercase;letter-spacing:.03em;margin:0 0 6px;padding-bottom:3px;border-bottom:1px solid var(--pa-border)}
 .flavor-ov-meta{font-size:11px;color:var(--pa-text-secondary);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px}
 .builder-mp-col .plan-section-hdr{margin-bottom:6px}
 .cmp-section-toggle{cursor:pointer;user-select:none}
@@ -3215,11 +3217,13 @@ function renderPlanOverviewByFlavor(content){
     return `<div class="flavor-ov-card">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="badge badge-draft" style="background:#EEF2F7;color:#33475B;font-weight:600">${esc(fl.flavorLabel)}</span><strong style="font-size:13px">${esc(fl.role||'—')}</strong><span class="badge ${vctOk?'badge-approved':'badge-rejected'}" style="margin-left:auto">VCT ${sum%1===0?sum:sum.toFixed(1)}%</span></div>
       <div class="flavor-ov-meta">${meta}</div>
-      <div class="flavor-ov-subhdr">Measures &amp; Weightings</div>${measuresTbl}
-      <div class="flavor-ov-subhdr">Payout tables</div>${payouts}
-      <div class="flavor-ov-subhdr">Bonus</div><div style="font-size:12px">${bonuses}</div>
-      <div class="flavor-ov-subhdr">Tether</div><div style="font-size:12px">${tether}</div>
-      <div class="flavor-ov-subhdr">Key policies</div><div style="font-size:12px">${keyPol}</div>
+      <div class="flavor-ov-sections">
+        <div class="flavor-ov-sec"><div class="flavor-ov-subhdr">Measures &amp; Weightings</div>${measuresTbl}</div>
+        <div class="flavor-ov-sec"><div class="flavor-ov-subhdr">Payout tables</div>${payouts}</div>
+        <div class="flavor-ov-sec"><div class="flavor-ov-subhdr">Bonus</div><div style="font-size:12px">${bonuses}</div></div>
+        <div class="flavor-ov-sec"><div class="flavor-ov-subhdr">Tether</div><div style="font-size:12px">${tether}</div></div>
+        <div class="flavor-ov-sec"><div class="flavor-ov-subhdr">Key policies</div><div style="font-size:12px">${keyPol}</div></div>
+      </div>
     </div>`;
   }).join('');
   return `<div class="flavor-ov-grid">${cards}</div>`;
