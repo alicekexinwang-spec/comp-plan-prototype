@@ -3,7 +3,21 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — uncollapse sections + prorate→release validation + plan overview (branch `feature/comp-plan-flavorconfig`)
+## Latest change — overview polish: first tab, no system-pay col, rename, consolidate, side-by-side (branch `feature/comp-plan-flavorconfig`)
+Refined the Plan Overview (`renderPlanOverview`, builder + approval): (1) **Overview is now the first tab**
+and the builder **lands on it** (`flavorTabsHtml` `leadTabs`; `openBuilder` sets `activeBuilderFlavor='overview'`);
+(2) removed the **System pay measure** column from the overview measures table; (3) renamed **"Pay measures"
+→ "Measures & Weightings"** in the overview AND the builder flavor block; (4) **consolidated** Bonus / Tether
+/ Key policies — identical values across flavors collapse to one row labelled "All flavors", else split with
+"Flavor A, B" labels (`consolidate(displayFn)`); (5) **Measures & Weightings + Payout tables side by side**
+in a `.builder-mp-grid`.
+
+Verified on webui2 (no console errors): Overview first + active on open; measures table has no system-pay
+column; both section headers read "Measures & Weightings"; side-by-side grid (2 cols); consolidation shows
+"All flavors" on A01 and splits to "Flavor A, C"/"Flavor B" when a flavor diverges; all 11 versions
+`validateVersionContent`=0. **Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — uncollapse sections + prorate→release validation + plan overview (branch `feature/comp-plan-flavorconfig`)
 - **Bonus / Tether / Key policies** in the flavor block are now **always-visible sections** (no collapse).
 - **Prorate VCT moved to Release Validation.** Removed the builder payout-editor checkbox; `prorateVct` is
   now tri-state `''`/`'Yes'`/`'No'`, set per payout table at release validation (`setReleaseValidationProrate`)

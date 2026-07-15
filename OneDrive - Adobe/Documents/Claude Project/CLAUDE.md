@@ -198,18 +198,23 @@ include only the minimum user-facing information needed to understand and use th
   {open,badge})` + `toggleCollapse(id)`, `.pa-collapse`/`.pa-collapse.open>.pa-collapse-body`). **Builder**
   (`renderBuilderFlavors`): flavors are tab panels (`#builder-flavorpanel-${fi}`) — **all rendered into the
   DOM, inactive ones just hidden**, so per-flavor payout/bonus hydration + the flavor-encoded slot map keep
-  working; within a flavor (`renderBuilderFlavorBlock`) **Pay measures and Payout tables sit side-by-side in
+  working; within a flavor (`renderBuilderFlavorBlock`) **Measures & Weightings and Payout tables sit side-by-side in
   a 2-column grid** (`.builder-mp-grid`, `repeat(auto-fit,minmax(340px,1fr))`; measures table wrapped in an
   `overflow-x:auto` scroller), both always visible, and **Bonuses / Tether / Key policies** are plain
   always-visible sections below (not collapsed). The measure row shows **no** payout preview — the payout
-  tables live in the adjacent column, linked via the row's Payout-table dropdown. The builder flavor tab
-  strip also carries an **"Overview" tab** (`data-flavortab="builder-overview"`, `activeBuilderFlavor==='overview'`)
-  whose panel renders the read-only `renderPlanOverview(content)` (see below).
-- **Plan Overview** (`renderPlanOverview(content)`): a read-only consolidated view of **all flavors** with 5
-  sections — Pay measures (a table per flavor), Payout tables (**deduplicated across flavors** by
-  `payoutOverviewKey(pt)` — a structural JSON key ignoring per-instance `id`/`note`/`prorateVct`; each unique
-  table shown once via `renderPayoutMatrixTables` with a "Used by: Flavor A, B…" chip), Bonus, Tether, Key
-  policies (per flavor). Surfaced in the **builder Overview tab** and the **approval detail** (`#approval-overview`). **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
+  tables live in the adjacent column, linked via the row's Payout-table dropdown. The measures section header
+  reads **"Measures & Weightings"**. The builder flavor tab strip carries an **"Overview" tab as the FIRST
+  tab** (`flavorTabsHtml` `opts.leadTabs`, `data-flavortab="builder-overview"`); `openBuilder` sets
+  `activeBuilderFlavor='overview'` so the builder **lands on Overview**.
+- **Plan Overview** (`renderPlanOverview(content)`): a read-only consolidated view of **all flavors** —
+  **Measures & Weightings** (a table per flavor: M# / Performance measure / VCT Wt% / Perf period / Payout
+  freq / Payout table — **no** system-pay-measure column) and **Payout tables** rendered **side by side** in
+  a `.builder-mp-grid`, then Bonus / Tether / Key policies. Payout tables are **deduplicated across flavors**
+  by `payoutOverviewKey(pt)` (structural JSON key ignoring per-instance `id`/`note`/`prorateVct`; each unique
+  table shown once via `renderPayoutMatrixTables` + a "Used by: Flavor A, B…" chip). Bonus / Tether / Key
+  policies are likewise **consolidated** (`consolidate(displayFn)` groups flavors by identical value → one row
+  labelled "All flavors" when shared, else "Flavor A, B"). Surfaced in the **builder Overview tab** and the
+  **approval detail** (`#approval-overview`). **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
   are tabbed (`prefix='approval'`, `#approval-flavorpanel-${fi}`). **Compare** (`buildCompareTableBodyHtml`):
   each Flavor section header row is a `.cmp-section-toggle` collapsing its sibling `<tr>`s
   (`toggleCompareSection`) — Plan information + first flavor open, rest collapsed by default.

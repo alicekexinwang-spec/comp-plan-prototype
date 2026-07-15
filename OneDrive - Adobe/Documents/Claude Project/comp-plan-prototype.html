@@ -3003,6 +3003,7 @@ function cloneToTarget(sourceVersionId,targetId,targetFy,targetName){
 
 function openBuilder(planId,isNew,fromClone,versionId){
   showBuilderWorkspace();
+  activeBuilderFlavor='overview';
   if(versionId){
     currentVersionId=versionId;
     const ver=getVersion(versionId);
@@ -3059,7 +3060,7 @@ function flavorTabsHtml(flavors,activeIdx,prefix,opts){
     return `<button type="button" class="pa-pivot-tab flavor-tab ${fi===activeIdx?'active':''}" data-flavortab="${prefix}-${fi}" onclick="switchFlavorTab('${prefix}',${fi})">${dot}Flavor ${escapeCompareHtml(fl.flavorLabel||String.fromCharCode(65+fi))}${sub}</button>`;
   }).join('');
   const add=opts.addOnclick?`<button type="button" class="pa-pivot-tab flavor-tab-add" onclick="${opts.addOnclick}" title="Add flavor"><i class="ti ti-plus"></i> Add</button>`:'';
-  return `<div class="pa-pivot flavor-pivot" role="tablist">${tabs}${add}${opts.extraTabs||''}</div>`;
+  return `<div class="pa-pivot flavor-pivot" role="tablist">${opts.leadTabs||''}${tabs}${add}${opts.extraTabs||''}</div>`;
 }
 function switchFlavorTab(prefix,idx){
   if(prefix==='builder')activeBuilderFlavor=idx; else if(prefix==='approval')activeApprovalFlavor=idx;
@@ -3085,7 +3086,7 @@ function renderBuilderFlavors(){
   if(typeof activeBuilderFlavor==='number'&&activeBuilderFlavor>=flavors.length)activeBuilderFlavor=Math.max(0,flavors.length-1);
   sharedPayoutSlots=new Set();builderPayoutSlotIndex={};
   const overviewTab=`<button type="button" class="pa-pivot-tab flavor-tab ${isOverview?'active':''}" data-flavortab="builder-overview" onclick="switchFlavorTab('builder','overview')"><i class="ti ti-layout-list"></i> Overview</button>`;
-  const tabs=flavorTabsHtml(flavors,isOverview?-1:activeBuilderFlavor,'builder',{dotFn:builderFlavorDot,addOnclick:editable?'addBuilderFlavor()':null,extraTabs:overviewTab});
+  const tabs=flavorTabsHtml(flavors,isOverview?-1:activeBuilderFlavor,'builder',{dotFn:builderFlavorDot,addOnclick:editable?'addBuilderFlavor()':null,leadTabs:overviewTab});
   const panels=flavors.map((fl,fi)=>`<div class="pa-pivot-panel ${fi===activeBuilderFlavor?'active':''}" id="builder-flavorpanel-${fi}" role="tabpanel">${renderBuilderFlavorBlock(fl,fi,editable)}</div>`).join('')
     +`<div class="pa-pivot-panel ${isOverview?'active':''}" id="builder-flavorpanel-overview" role="tabpanel">${renderPlanOverview(builderWorkingContent)}</div>`;
   cont.innerHTML=tabs+panels;
@@ -3105,23 +3106,27 @@ function renderPlanOverview(content){
   const measuresHtml=flavors.map(fl=>{
     const rows=(fl.measures||[]).map((m,mi)=>{
       const linked=(fl.payoutTables||[]).find(pt=>pt.id===m.payoutTableId);
-      return `<tr><td><span class="badge badge-proposal" style="font-weight:600">M${mi+1}</span></td><td>${esc(m.description||'—')}</td><td>${esc(m.value||'—')}</td><td class="num">${esc(m.vct||'—')}</td><td>${esc(m.perf||'—')}</td><td>${esc(m.pay||'—')}</td><td>${esc(linked?(linked.title||'Untitled'):'—')}</td></tr>`;
+      return `<tr><td><span class="badge badge-proposal" style="font-weight:600">M${mi+1}</span></td><td>${esc(m.description||'—')}</td><td class="num">${esc(m.vct||'—')}</td><td>${esc(m.perf||'—')}</td><td>${esc(m.pay||'—')}</td><td>${esc(linked?(linked.title||'Untitled'):'—')}</td></tr>`;
     }).join('');
     return `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;margin-bottom:4px">Flavor ${esc(fl.flavorLabel)}${fl.role?' · '+esc(fl.role):''}</div>
-      <div style="overflow-x:auto"><table class="payout-tier-table" style="width:100%;min-width:640px"><thead><tr><th style="width:34px">#</th><th>Performance measure</th><th>System pay measure</th><th class="num">VCT Wt%</th><th>Perf period</th><th>Payout freq</th><th>Payout table</th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="color:var(--muted)">No measures</td></tr>'}</tbody></table></div></div>`;
+      <div style="overflow-x:auto"><table class="payout-tier-table" style="width:100%;min-width:520px"><thead><tr><th style="width:34px">#</th><th>Performance measure</th><th class="num">VCT Wt%</th><th>Perf period</th><th>Payout freq</th><th>Payout table</th></tr></thead><tbody>${rows||'<tr><td colspan="6" style="color:var(--muted)">No measures</td></tr>'}</tbody></table></div></div>`;
   }).join('');
   const uniq=[];const byKey={};
   flavors.forEach(fl=>(fl.payoutTables||[]).forEach(pt=>{const k=payoutOverviewKey(pt);if(!byKey[k]){byKey[k]={pt,labels:[]};uniq.push(byKey[k]);}if(!byKey[k].labels.includes(fl.flavorLabel))byKey[k].labels.push(fl.flavorLabel);}));
   const payoutHtml=uniq.length?uniq.map(u=>`<div class="measure-payout-unit" style="margin-bottom:12px;padding:10px 12px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><i class="ti ti-table"></i><strong>${esc(u.pt.title||'Untitled')}</strong><span class="badge badge-draft" style="background:#EEF2F7;color:#33475B">Used by: ${u.labels.map(l=>'Flavor '+esc(l)).join(', ')}</span></div>
     ${renderPayoutMatrixTables(u.pt,'payout-matrix')}</div>`).join(''):'<p style="font-size:12px;color:var(--muted)">No payout tables.</p>';
-  const perFlavor=(getter)=>flavors.map(fl=>`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">Flavor ${esc(fl.flavorLabel)}</span><span style="font-size:12px">${getter(fl)}</span></div>`).join('');
-  const bonusHtml=perFlavor(fl=>{const b=(fl.bonuses||[]);return b.length?b.map(x=>esc((x.type||'—')+(x.payoutDetails?' · '+x.payoutDetails:'')+(x.maxPayout?' · max '+x.maxPayout:''))).join('<br>'):'<span style="color:var(--muted)">No bonus</span>';});
-  const tetherHtml=perFlavor(fl=>(fl.tether&&fl.tether.trim())?esc(fl.tether):'<span style="color:var(--muted)">—</span>');
-  const keyPolHtml=perFlavor(fl=>(fl.keyPolicies&&fl.keyPolicies.trim())?esc(fl.keyPolicies):'<span style="color:var(--muted)">—</span>');
+  // Consolidate a per-flavor field: group flavors by identical display value; label "All flavors" when shared.
+  const consolidate=(displayFn)=>{const groups=[],by={};flavors.forEach(fl=>{const h=displayFn(fl);if(!by[h]){by[h]={h,labels:[]};groups.push(by[h]);}by[h].labels.push(fl.flavorLabel);});
+    return groups.map(g=>`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">${groups.length===1?'All flavors':'Flavor '+g.labels.map(esc).join(', ')}</span><span style="font-size:12px">${g.h}</span></div>`).join('');};
+  const bonusHtml=consolidate(fl=>{const b=(fl.bonuses||[]);return b.length?b.map(x=>esc((x.type||'—')+(x.payoutDetails?' · '+x.payoutDetails:'')+(x.maxPayout?' · max '+x.maxPayout:''))).join('<br>'):'<span style="color:var(--muted)">No bonus</span>';});
+  const tetherHtml=consolidate(fl=>(fl.tether&&fl.tether.trim())?esc(fl.tether):'<span style="color:var(--muted)">—</span>');
+  const keyPolHtml=consolidate(fl=>(fl.keyPolicies&&fl.keyPolicies.trim())?esc(fl.keyPolicies):'<span style="color:var(--muted)">—</span>');
   return `<div class="plan-overview">
-    <div class="plan-section-hdr">Pay measures</div>${measuresHtml}
-    <div class="plan-section-hdr" style="margin-top:12px">Payout tables <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${uniq.length} unique</span></div>${payoutHtml}
+    <div class="builder-mp-grid">
+      <div class="builder-mp-col"><div class="plan-section-hdr">Measures &amp; Weightings</div>${measuresHtml}</div>
+      <div class="builder-mp-col"><div class="plan-section-hdr">Payout tables <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${uniq.length} unique</span></div>${payoutHtml}</div>
+    </div>
     <div class="plan-section-hdr" style="margin-top:12px">Bonus</div>${bonusHtml}
     <div class="plan-section-hdr" style="margin-top:12px">Tether</div>${tetherHtml}
     <div class="plan-section-hdr" style="margin-top:12px">Key policies</div>${keyPolHtml}
@@ -3155,7 +3160,7 @@ function renderBuilderFlavorBlock(fl,fi,editable){
     <div style="padding:10px 12px 4px">
     <div class="builder-mp-grid">
       <div class="builder-mp-col">
-        <div class="plan-section-hdr">Pay measures <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>
+        <div class="plan-section-hdr">Measures &amp; Weightings <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>
         <div style="overflow-x:auto">
         <table class="payout-tier-table builder-measure-table" style="width:100%;min-width:720px">
           <thead><tr><th style="width:34px">#</th><th style="min-width:180px">Performance measure</th><th style="min-width:130px">System pay measure</th><th style="width:70px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:100px">Performance period</th><th style="min-width:100px">Payout frequency</th><th style="min-width:130px">Payout table</th><th style="width:30px"></th></tr></thead>
