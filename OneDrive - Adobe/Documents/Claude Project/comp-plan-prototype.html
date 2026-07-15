@@ -865,15 +865,15 @@ tr:hover td{background:var(--pa-surface-hover)}
         </div>
         <div class="filter-bar">
           <select class="filter-select" id="library-fy-filter" onchange="buildLibrary()"><option value="">All Fiscal Years</option><option value="FY27">FY27</option><option value="FY26">FY26</option></select>
-          <select class="filter-select" id="library-role-filter" onchange="buildLibrary()"><option value="">All Role Groups</option><option value="Enterprise AE">Enterprise AE</option><option value="Commercial AE">Commercial AE</option><option value="SMB AE">SMB AE</option><option value="Inside Sales">Inside Sales</option><option value="Field Sales">Field Sales</option></select>
+          <select class="filter-select" id="library-planid-filter" onchange="buildLibrary()"><option value="">All Plan IDs</option></select>
           <select class="filter-select" id="library-status-filter" onchange="buildLibrary()"><option value="">All Statuses</option><option value="Draft">Draft</option><option value="Pending review">Pending review</option><option value="Approved">Approved</option><option value="Withdrawn">Withdrawn</option><option value="Published">Published</option></select>
-          <select class="filter-select" id="library-owner-filter" onchange="buildLibrary()"><option value="">All Owners</option><option value="Melissa Yasaitis">Melissa Yasaitis</option><option value="Valeria Alonso">Valeria Alonso</option></select>
+          <select class="filter-select" id="library-owner-filter" onchange="buildLibrary()"><option value="">All Creators</option><option value="Melissa Yasaitis">Melissa Yasaitis</option><option value="Valeria Alonso">Valeria Alonso</option></select>
           <input class="search-input" id="library-search" placeholder="Search plans…" type="search" oninput="buildLibrary()">
         </div>
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Plan #</th><th>Plan Name</th><th>FY</th><th>Status</th><th>Published Version</th><th>Proposals</th><th>Created</th><th>Last updated</th><th>Owner</th><th>Actions</th>
+              <th>Plan #</th><th>Plan Name</th><th>FY</th><th>Status</th><th>Published Version</th><th>Proposals</th><th>Created</th><th>Last updated</th><th>Creator</th><th>Actions</th>
             </tr></thead>
             <tbody id="lib-tbody"></tbody>
           </table>
@@ -1100,7 +1100,7 @@ tr:hover td{background:var(--pa-surface-hover)}
           <select class="filter-select" id="roleview-role-filter" onchange="renderRoleView()"><option value="">All roles</option></select>
           <select class="filter-select" id="roleview-fy-filter" onchange="renderRoleView()"><option value="">All Fiscal Years</option><option value="FY27">FY27</option><option value="FY26">FY26</option></select>
           <select class="filter-select" id="roleview-status-filter" onchange="renderRoleView()"><option value="">All Statuses</option><option value="draft">Draft</option><option value="pending_review">Pending review</option><option value="approved">Approved</option><option value="withdrawn">Withdrawn</option><option value="published">Published</option></select>
-          <select class="filter-select" id="roleview-owner-filter" onchange="renderRoleView()"><option value="">All Owners</option></select>
+          <select class="filter-select" id="roleview-owner-filter" onchange="renderRoleView()"><option value="">All Creators</option></select>
           <input class="search-input" id="roleview-search" placeholder="Search role, plan, measure…" type="search" oninput="renderRoleView()">
         </div>
         <div class="table-wrap" id="roleview-table"></div>
@@ -5940,15 +5940,16 @@ function getPlanDates(pk){
 function buildLibrary(){
   const tbody=document.getElementById('lib-tbody');
   if(!tbody)return;
+  fillRoleViewSelect('library-planid-filter',[...new Set(compPlans.map(p=>p.planId))].sort((a,b)=>a.localeCompare(b)),'All Plan IDs');
   const fyF=document.getElementById('library-fy-filter')?.value||'';
-  const roleF=document.getElementById('library-role-filter')?.value||'';
+  const planIdF=document.getElementById('library-planid-filter')?.value||'';
   const statusF=document.getElementById('library-status-filter')?.value||'';
   const ownerF=document.getElementById('library-owner-filter')?.value||'';
   const q=(document.getElementById('library-search')?.value||'').toLowerCase();
   const rows=compPlans.filter(pl=>{
     const pk=planKey(pl.planId,pl.fiscalYear);
     if(fyF&&pl.fiscalYear!==fyF)return false;
-    if(roleF&&pl.roleGroup!==roleF)return false;
+    if(planIdF&&pl.planId!==planIdF)return false;
     if(ownerF&&pl.owner!==ownerF)return false;
     if(statusF&&getPlanLibraryStatus(pk)!==statusF)return false;
     if(q){
@@ -6023,7 +6024,7 @@ function renderRoleView(){
   });
   // Populate dynamic filter dropdowns (preserve current selection) from all rows.
   fillRoleViewSelect('roleview-role-filter',[...new Set(rows.map(r=>r.role))].sort((a,b)=>a.localeCompare(b)),'All roles');
-  fillRoleViewSelect('roleview-owner-filter',[...new Set(rows.map(r=>r.owner))].filter(o=>o&&o!=='—').sort((a,b)=>a.localeCompare(b)),'All Owners');
+  fillRoleViewSelect('roleview-owner-filter',[...new Set(rows.map(r=>r.owner))].filter(o=>o&&o!=='—').sort((a,b)=>a.localeCompare(b)),'All Creators');
   // Read filters.
   const roleF=document.getElementById('roleview-role-filter')?.value||'';
   const fyF=document.getElementById('roleview-fy-filter')?.value||'';
