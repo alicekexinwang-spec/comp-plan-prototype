@@ -3,7 +3,60 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — person-picker personas + reorganized Approval Review + finalize-on-exec + PowerApps guidance (branch `feature/comp-plan-flavorconfig`)
+## Latest change — payout tables as a standalone config library (reference + copy into builder) (branch `feature/comp-plan-flavorconfig`)
+- **New "Payout Tables" config library** (`payoutSetups`, screen `config-payouts`, `renderConfigPayouts`): a
+  fourth Setup screen alongside Quota Band Sets / Attainment Tier Sets / Performance Measures. Admins define
+  named reusable payout-table setups (name + the full band-set/tier-set/xPCR/MCR/cap editor). Persisted with
+  the other config sets; **storage key bumped `_v5`→`_v6`**; norm functions now **preserve persisted ids** so
+  setup→band/tier references survive reloads. Seeded by `seedPayoutLibrary()` (7 setups) reusing the seed
+  builders.
+- **Builder: reference-then-edit.** Each measure's payout panel now leads with a **"Payout table setup"
+  dropdown** instead of building from scratch. Picking a setup **deep-copies** it into the flavor's table
+  (`onPayoutSetupRefChange`, fresh nested ids) and stamps `sourceSetupId`/`sourceSetupName` ("Based on
+  {setup}"). The copy is a **snapshot** — local edits stay local; editing the library later doesn't change
+  existing plans. Until a setup is chosen the panel shows a "Select a payout table setup" prompt.
+- **Shared editor generalized** to a `scope` on `builderPayoutSlotIndex` (flavor `{fi,idx}` vs config
+  `{scope:'config',idx}`, slots `2000+idx`): `payoutRefList`/`payoutRefRerender` + `flushConfigPayoutSlot`/
+  `onPayoutFieldEdit` route writes + persistence, so the config screen reuses the builder's payout editor.
+  `renderPayoutTableEditor` takes an `editable` override.
+- **Seeds reference the library:** `SEED_CONTENT.linkByTitle` now maps setup-name → measures; per-plan inline
+  `payouts()` removed; the 1:1 pass copies the referenced `payoutSetups` entry per measure + stamps provenance.
+- **Refinements (per follow-up spec):** each config setup gains a **Default xPCR** (`defaultXpcr`) that pre-fills
+  every tier's xPCR when a tier set is chosen (per-tier xPCR + per-band MCR stay editable in config). In the
+  **builder the structure is locked** — band set + per-band tier set are read-only (label + hidden input; ids
+  still collected), and only **xPCR / MCR / pay curve / threshold / cap / note** are editable. The referenced
+  table's **name is user-given** (defaults to the setup name on reference, renamable; no longer auto-synced from
+  the measure name).
+
+Verified on webui2 (v6 key cleared): 7-setup library seeds; **55 payout tables, all carry `sourceSetupId`**;
+all versions `validateVersionContent`=0; config screen renders 7 editable cards + persists edits to localStorage;
+builder shows setup dropdowns, add-measure→unreferenced prompt, referencing copies in + is snapshot-independent
+(editing the library leaves the plan table unchanged); S02/M01 single-band, S08 % target via library. No console
+errors. **Not yet committed.**
+
+## Earlier change — standardized payout-table format (removed the "payout type" concept) (branch `feature/comp-plan-flavorconfig`)
+- **One payout-table format, no `type`:** removed the `quota_band`/`target_pct`/`attainment_only` type
+  selector and all its branches. Every table = pick a **quota band set** (→ bands) + an **attainment tier set
+  per band** (→ tiers), with **xPCR per tier** and **MCR per band**. Dropped: `PAYOUT_TYPE_OPTIONS`,
+  `onPayoutTypeChange`, `addPayoutBand`/`removePayoutBand`, the auto-created table's empty-type state,
+  table-level `mcr`, and per-tier `vctAtMax`. Bands always derive from the selected band set (no free-text
+  manual bands). Removed the now-orphaned `createEmptyBand`.
+- **Former types are now shapes:** "Target %" = a quota band set whose bands are **percentage intervals**;
+  "Attainment tier only" = a **single 0→∞ band**. Added two config band sets — `Single band (all quota)` and
+  `Target: ≤100%, >100%` — and rewired the S02/M01 (single-band) and S08 (target-%) seeds; `seedQuotaBandTable`/
+  `seedAttainmentOnlyTable`/`seedTargetPctTable` now emit the standardized shape with a real `bandSetId`.
+- **Rendering unified:** `renderSinglePayoutTable` always renders the matrix; removed the "Table MCR" caption
+  and the 3-column fallback; `buildPayoutMatrixTable` header is a neutral "Quota Band"; `payoutOverviewKey`
+  drops `type`/table-`mcr`/`vctAtMax`. Left dead/legacy paths untouched (`QUOTA_BAND_SCHEMES`,
+  `normalizePayoutToScheme`, `templateKeyToPayoutStructure`).
+
+Verified on webui2 (no console errors, config key cleared to reseed): builder shows no type dropdown, band-set
+selector + "choose a quota band set" prompt; add-measure auto-creates an empty (type-less) table; picking a
+band set → bands, tier set → tiers. Seeds: S02/M01 render single-band, S08 target-% renders a 2-band %
+matrix with per-band tier sets; A01/B01/T04 unchanged. 55 payout tables, **0 with a `type` field**; all
+versions `validateVersionContent`=0; read-only Overview/Compare all matrices. **Not yet committed.**
+
+## Earlier change — person-picker personas + reorganized Approval Review + finalize-on-exec + PowerApps guidance (branch `feature/comp-plan-flavorconfig`)
 - **Executive approval finalizes:** `advanceVersionStage` jumps `executive_review`→`completed`, so the
   proposal becomes the comp plan's **single current version** (published `Version vN`, `isActivePublished`,
   `activePublishedVersionId`, supersedes prior). The Approval Review shows a green "Current version" banner +

@@ -104,8 +104,9 @@ include only the minimum user-facing information needed to understand and use th
   flavors[{flavorId,flavorLabel,role,flavorName,headcount,payMixBase,payMixVar,newHireGuarantee,
   measures[{description,value,vct,perf,pay,payoutTableId,mechType}],
   tether, bonuses[{type,payoutDetails,maxPayout}],
-  payoutTables[{id,title,type,bandSetId,thresholds[{label,description,tierSetId,mcr,
-  tiers[{attainmentFrom,attainmentTo,xPCR,vctAtMax,mcr}]}],mcr,note,globalVctCap,prorateVct,payCurveType,threshold}],
+  payoutTables[{id,title,bandSetId,thresholds[{label,description,tierSetId,mcr,
+  tiers[{attainmentFrom,attainmentTo,xPCR,mcr}]}],note,globalVctCap,prorateVct,payCurveType,threshold,
+  sourceSetupId,sourceSetupName}],
   keyPolicies, reviewStatus, reviewNote}] }`.
   **FULL PER-FLAVOR OWNERSHIP:** measures, `tether`, `bonuses[]`, `payoutTables[]`, and `keyPolicies` are
   all owned **per flavor** (no version-level `content.payoutTables`, no `planMeta.bonuses`/`.tether`, and
@@ -116,11 +117,21 @@ include only the minimum user-facing information needed to understand and use th
   `onBuilderMeasureNameChange`). Measures are labelled **M1/M2/M3** by index. **Measure ↔ payout table is
   1:1, auto-managed:** each measure **owns exactly one** payout table (linked via `payoutTableId`) that is
   **auto-created** when the measure is added (`addBuilderMeasureToFlavor`) and **auto-removed** when the
-  measure is deleted (`removeBuilderMeasureFromFlavor`). There is **no payout-table dropdown on the measure
-  row** and **no "Add payout table" button** — the table's `title` **auto-generates from the measure name**
-  (`onBuilderMeasureNameChange` syncs it unless the user customized the title) and stays editable in the
-  payout editor (`setBuilderPayoutTitle`). All three mutators call `syncBuilderPayoutTablesFromDOM()` first
-  so in-flight edits survive the re-render. **Submit**
+  measure is deleted (`removeBuilderMeasureFromFlavor`). The table's `title` **auto-generates from the measure
+  name** (`onBuilderMeasureNameChange` syncs it unless the user customized the title) and stays editable
+  (`setBuilderPayoutTitle`). **The payout table content is NOT built from scratch — it is REFERENCED from the
+  Payout Tables config library and COPIED in:** each measure's payout panel has a **"Payout table setup"
+  dropdown** (options = `payoutSetups`); picking one deep-clones that setup's content (fresh nested ids) into
+  the flavor's table via `onPayoutSetupRefChange` and stamps `sourceSetupId`/`sourceSetupName` (shown as
+  "Based on {setup}"). The copy is a **snapshot** — local edits stay in the plan and never touch the library,
+  and later library edits don't change existing plans (confirmed product decision). Until a setup is chosen
+  the panel shows a "Select a payout table setup" prompt. The table's **name is user-given** — it defaults to
+  the setup name on reference and is renamable (`setBuilderPayoutTitle`); it is **no longer auto-synced from the
+  measure name**. In the builder the **structure is LOCKED** — the band set and per-band attainment tier set
+  are shown **read-only** (rendered as labels + hidden inputs so `collectPayoutTable` still preserves the ids);
+  only **xPCR (per tier) / MCR (per band) / pay curve / threshold / cap / note** are editable. (Structure is
+  edited only in the config library.) All three mutators call `syncBuilderPayoutTablesFromDOM()` first so
+  in-flight edits survive the re-render. **Submit**
   (`validateVersionContent`) still requires — **per flavor** — every measure to link to an existing table on
   that flavor and every one of that flavor's tables to have ≥1 measure linked (now always true by
   construction). Measures carry no `measureId`/metric. Each flavor's `payoutTables` therefore holds exactly
@@ -214,22 +225,38 @@ include only the minimum user-facing information needed to understand and use th
   rendered per flavor by `renderBuilderFlavorPayouts(fi)` into `#builder-flavor-${fi}-payouts`). The DOM slot
   **encodes the flavor**: `slot = payoutSlotFor(fi,i) = 1000 + fi*100 + i`, and `builderPayoutSlotIndex[slot]
   = {fi,idx}` (all payout handlers resolve `{fi,idx}` via `payoutTableForSlot`; `syncBuilderPayoutTablesFromDOM`
-  writes each slot back to `flavors[fi].payoutTables[idx]`). Each has a **type**
-  (`quota_band` | `target_pct` | `attainment_only`) and is
-  **set-driven** (the old 36 `QUOTA_BAND_SCHEMES` are gone): `quota_band` picks a **quota band set**
-  (→ bands, remembered on `pt.bandSetId`) and each band picks an **attainment tier set** (→ tier
-  upper bounds, remembered on `threshold.tierSetId`); `target_pct` = manually-added bands, each with a
-  tier set; `attainment_only` = one implicit band + tier set (per-tier free-text "VCT at tier max",
-  table-level `pt.mcr`). Tier upper bounds + band labels are **set-defined/read-only**; the user fills
-  xPCR per tier and MCR per band. Handlers: `onQuotaBandSetChange`, `setBandTierSet`.
+  writes each slot back to `flavors[fi].payoutTables[idx]`). **There is ONE standardized payout-table
+  format — no `type` field** (the old `quota_band`/`target_pct`/`attainment_only` types are gone, as are the
+  `PAYOUT_TYPE_OPTIONS` selector, `onPayoutTypeChange`, `addPayoutBand`/`removePayoutBand`, table-level `mcr`,
+  and per-tier `vctAtMax`). Every table is **set-driven**: pick a **quota band set** (→ bands, remembered on
+  `pt.bandSetId`, `onQuotaBandSetChange`) and each band picks an **attainment tier set** (→ tier upper bounds,
+  remembered on `threshold.tierSetId`, `setBandTierSet`). The former "Target %" table is just a quota band set
+  whose bands are **percentage intervals**; the former "Attainment tier only" table is just a **single 0→∞
+  band** (seeded via the `Single band (all quota)` band set). Bands always derive from the selected band set
+  (no manual/free-text band add). Tier upper bounds + band labels are **set-defined/read-only**; the user fills
+  **xPCR per tier** and **MCR per band**. Cap/threshold/pay-curve are per-table.
 - **New-hire guarantee** is entered per-flavor at the **Release Validation** approval stage
   (`setReleaseValidationGuarantee`; `advanceVersionStage` blocks leaving `release_validation` until
   every flavor has one) — NOT at plan creation.
 
 ## Configuration (reusable sets)
-- Setup nav has three Config screens — **Quota Band Sets**, **Attainment Tier Sets**, and **Performance
-  Measures** — backed by `quotaBandSets` / `attainmentTierSets` / `performanceMeasures`, persisted together
-  to localStorage (`compplan_config_sets_v5`).
+- Setup nav has **four** Config screens — **Quota Band Sets**, **Attainment Tier Sets**, **Performance
+  Measures**, and **Payout Tables** — backed by `quotaBandSets` / `attainmentTierSets` / `performanceMeasures`
+  / `payoutSetups`, persisted together to localStorage (`compplan_config_sets_v6`; `persistConfigSets`/
+  `seedConfigSets`). Norm functions **preserve persisted ids** (payout setups reference band/tier set ids, so
+  those must be stable across reloads).
+- **Payout Tables** (`config-payouts`, `renderConfigPayouts`): the reusable payout-table **library**
+  (`payoutSetups`), each entry `{id,name,defaultXpcr,bandSetId,thresholds[…],globalVctCap,threshold,payCurveType,note}`
+  (a standardized payout table + a `name` + a **`defaultXpcr`**). `defaultXpcr` pre-fills each tier's xPCR when a
+  tier set is chosen in config (`setBandTierSet` config branch, input `setPayoutSetupDefaultXpcr`); per-tier
+  xPCR + per-band MCR remain editable in the config card. Seeded by `seedPayoutLibrary()` (runs in `seedConfigSets` after
+  band/tier sets load; reuses `seedQuotaBandTable`/`seedAttainmentOnlyTable`/`seedTargetPctTable`). The config
+  editor **reuses the builder's slot-based payout editor** at **config-scoped slots** (`configPayoutSlotFor(idx)
+  =2000+idx`); `builderPayoutSlotIndex[slot]` carries a `scope` (`'config'` vs flavor `{fi,idx}`), and
+  `payoutRefList`/`payoutRefRerender` + `flushConfigPayoutSlot`/`onPayoutFieldEdit` route writes + persistence
+  to `payoutSetups`. CRUD: `addPayoutSetup`/`deletePayoutSetup`/`setPayoutSetupName`; lookups `findPayoutSetup`/
+  `findPayoutSetupByName`. **Plans reference a setup and copy it in** (see the builder reference-then-copy flow);
+  editing a setup here never changes plans already built.
 - **Performance Measures** (`config-measures`, `renderConfigMeasures`): a flat list — each entry
   `{id,value,systemPayMeasure}` maps one **performance-measure value** (editable) to one **system pay
   measure** picked from the **fixed** `SYSTEM_PAY_MEASURES` constant (29 options). Feeds the measure row's
@@ -237,7 +264,7 @@ include only the minimum user-facing information needed to understand and use th
   **System pay measure** via `systemPayMeasureFor(value)`. CRUD: `addPerformanceMeasure`/
   `deletePerformanceMeasure`/`setPerfMeasureValue`/`setPerfMeasureSystem`; lookup `findPerfMeasureByValue`.
 - Quota Band / Attainment Tier sets are backed by `quotaBandSets` / `attainmentTierSets`, persisted to
-  localStorage (`compplan_config_sets_v5`). Each
+  localStorage (`compplan_config_sets_v6`). Each
   set = `{id,name,bounds:[num]}` (band sets also carry a parallel `descriptions:[str]`); ranges
   auto-derive from the upper bounds. These feed the payout builder's set-driven construction, and a
   band's description shows on applied payout bands + in Compare. Range labels are **explicit about
@@ -304,12 +331,13 @@ include only the minimum user-facing information needed to understand and use th
   (`#compare-submit-btn` → `sendComparePlanForApproval`) auto-submits the editable (draft/withdrawn)
   selected side via `submitVersionById` (its validation + one-in-queue guards); shown only when both
   sides are selected and one is submittable.
-- **Payout table display (read-only builder view + Compare) is a matrix** for `quota_band`/`target_pct`:
+- **Payout table display (read-only builder view + Compare + `renderSinglePayoutTable`) is always a matrix**:
   **quota bands = columns, attainment tiers = rows, xPCR in cells, MCR row** (`renderPayoutMatrixTables`
-  / `buildPayoutMatrixTable`, class `.payout-matrix`). Bands are **merged into one matrix when they share
-  the same tier axis** (`payoutBandsShareTiers` — same `tierSetId` / same tier bounds), else rendered as
-  **separate one-column tables**. `attainment_only` keeps its tier-list rendering. The **editable** builder
-  keeps the per-band stacked editor (display-only change).
+  / `buildPayoutMatrixTable`, class `.payout-matrix`; column-group header is a neutral "Quota Band"). Bands are
+  **merged into one matrix when they share the same tier axis** (`payoutBandsShareTiers` — same `tierSetId` /
+  same tier bounds), else rendered as **separate one-column tables**. A single-band table renders as a
+  one-column matrix (there is no separate attainment-only tier-list path anymore, and no "Table MCR" caption /
+  3-column fallback). The **editable** builder keeps the per-band stacked editor (display-only change).
 - **Role View** (nav "Role View", screen id still `multi`, `renderRoleView`) replaced the old hardcoded
   Multi-Role View: a data-driven table of **every version × flavor across all FYs**, sorted by flavor
   **role** (Role is a **column**, not a section header). Columns: Plan # / Plan Name / Role / Flavor / FY / Version / HC / Pay·Mix, then one
@@ -327,14 +355,18 @@ include only the minimum user-facing information needed to understand and use th
   builder element ids that no longer exist — harmless no-ops); the live builder uses `renderBuilderFlavors`
   (which fills per-flavor `renderBuilderFlavorPayouts`/`renderBuilderFlavorBonuses`).
 - **Seed/demo content** is authored in `SEED_CONTENT` (keyed by `planId|fy`, with plan-level `tether`/
-  `bonuses`/`payouts()`/`linkByTitle` **cloned into each flavor** by `seedVersionContent` — `sc.payouts()` is
-  called **once per flavor** so each flavor's tables get unique `payoutUid` ids) via config-set-driven payout
-  builders (`seedQuotaBandTable` / `seedAttainmentOnlyTable` / `seedTargetPctTable`, which resolve
-  `quotaBandSets`/`attainmentTierSets` by name so seeded tables carry real `bandSetId`/`tierSetId`). The final
-  linking pass makes it **1:1**: for each flavor, each measure gets its **own cloned** payout table (deep-copied
-  from the structure it was linked to via `linkByTitle`, else the flavor's first table; fresh `payoutUid()` +
-  fresh nested band/tier ids) titled by the measure name, so a flavor ends with exactly one table per measure. Demo data obeys the rules: per-flavor measures total 100% VCT, all three payout types appear, some
-  caps (`%`)/integer thresholds are set, and bonuses are seeded on A01 & S08. The old field maps
+  `bonuses`/`linkByTitle`; `linkByTitle` maps a **library payout-setup name → the measure descriptions that
+  reference it**). The payout **library** itself is seeded once by `seedPayoutLibrary()` via the config-set-
+  driven builders (`seedQuotaBandTable` / `seedAttainmentOnlyTable` / `seedTargetPctTable`, which resolve
+  `quotaBandSets`/`attainmentTierSets` by name; **all emit the single standardized shape — no `type`**).
+  `seedAttainmentOnlyTable` builds a **single 0→∞ band** off the `Single band (all quota)` band set;
+  `seedTargetPctTable` resolves a **percentage-interval** band set (e.g. `Target: ≤100%, >100%`). The **1:1
+  linking pass** in `seedVersionContent` then, for each flavor, **copies the referenced library setup**
+  (`findPayoutSetupByName` per `linkByTitle`, else the first setup) per measure — fresh `payoutUid()` + fresh
+  nested ids, titled by the measure name, and stamped with `sourceSetupId`/`sourceSetupName` — so a flavor ends
+  with exactly one library-sourced table per measure. Demo data obeys the rules: per-flavor measures total 100%
+  VCT, quota-band / percentage-band / single-band setups all appear, some caps (`%`)/integer thresholds are
+  set, and bonuses are seeded on A01 & S08. The old field maps
   (`fy26Baselines`/`fy27CurrentFields`/`planFieldTemplates`/`payMixMap`/`roleMap`) are no longer used by
   seeding but remain for the legacy `buildPlanFieldData` fallback.
 
@@ -343,7 +375,7 @@ include only the minimum user-facing information needed to understand and use th
   `/comp-plan-prototype.html`. If 4599 is held by another chat, use `webui2` (port 4610,
   `static-server-4610.js`) — same file, local-only config. `preview_screenshot` is unreliable on this
   renderer — verify via `preview_eval` DOM reads + `preview_console_logs` (error level). Config sets
-  live in localStorage; clear `compplan_config_sets_v5` for a fresh seed.
+  live in localStorage; clear `compplan_config_sets_v6` for a fresh seed.
 
 ## Git
 - Repo root is the **home dir** (`C:\Users\kexinw`) with many unrelated untracked files —
