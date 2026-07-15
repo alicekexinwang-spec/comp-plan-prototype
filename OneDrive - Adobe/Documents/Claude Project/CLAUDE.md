@@ -76,6 +76,21 @@ serve statically. State lives in in-memory JS arrays near the top of the `<scrip
 Optimize for **end-user clarity**. Exclude internal/system/process metadata from the UI, and
 include only the minimum user-facing information needed to understand and use the screen.
 
+## PowerApps Design Constraints
+- This prototype will eventually be implemented in **Microsoft PowerApps** (canvas app).
+- **Before making any design changes, review all existing screens** to understand the current flow and
+  maintain consistency across the app.
+- When updating or creating screens, **improve layout, usability, and consistency** while **staying within
+  PowerApps capabilities**.
+- **Only propose features, UI patterns, interactions, layouts, styling, navigation, and components that
+  PowerApps supports** (e.g. galleries, forms, tabbed/collapsible containers, simple components, limited
+  nesting, screen-to-screen navigation, variables/collections for state).
+- **Do not introduce** designs that require unsupported functionality, custom frameworks, or unrealistic
+  workarounds (e.g. arbitrary custom JS behavior, bespoke animations, or DOM tricks that don't map to
+  PowerApps controls).
+- If a user request **cannot be implemented in PowerApps**, explicitly explain **why it is not supported**
+  and recommend the **closest PowerApps-compatible alternative**.
+
 ## Domain model (source of truth = those arrays)
 - `compPlans` — plan registry, one per (`planId` e.g. `A01`, `fiscalYear`): planName, owner,
   roleGroup, status, `activePublishedVersionId`.
@@ -126,13 +141,16 @@ include only the minimum user-facing information needed to understand and use th
   `draft, first_review, second_review, executive_review, release_validation, document_generation,
   payout_system_config, completed`. `statusFromStage()` derives status from stage; **only one
   version per plan may be in the approval queue at a time** (`getPendingApprovalVersions`).
-- **Global persona toggle (top-right "Viewing as"):** a topbar `#topbar-persona` select drives
-  `currentReviewerId` across the app (`setPersona` → recompute editability + re-render open surfaces incl.
-  My Tasks + nav badge; `renderPersonaToggle` fills it + the avatar + hides the Create-Plan button for
-  non-creators). Options show **role only** (name lives on the avatar/audit, not the dropdown). Personas
-  (`REVIEWERS`): **Creator** (Melissa C., stage `draft`), **1st Reviewer** (Susan L., `first_review`), **2nd
-  Reviewer** (Val R., `second_review`), **Executive** (Elena M., `executive_review`). (Comp Design Team is
-  dropped from the toggle for now — the release-validation/ops action branches remain but are inert.)
+- **Global persona toggle (top-right "Viewing as") — person picker:** a topbar `#topbar-persona` select
+  drives `currentReviewerId` across the app (`setPersona` → recompute editability + re-render open surfaces
+  incl. My Tasks + nav badge; `renderPersonaToggle` fills it "Name · role" + the avatar + hides the
+  Create-Plan button for non-creators). `REVIEWERS` is a **roster of real people**, each `{id,name,role,
+  stages[]}`; capabilities derive from the **stage(s)** they can act on: Melissa Yasaitis / Aileen Hernandez
+  / Guillaume Gillard / Prateek Singh / Brittany Finkelman / Sonu Shrestha = `draft,first_review`; **Valeria
+  Alonso** = `draft,first_review,second_review`; **Robert Jones** = `second_review,executive_review`; **Susan
+  McDonough** = `executive_review`. `personaIsCreator(p)` = `p.stages.includes('draft')`; `stageReviewerName`
+  returns the stage label (pools have many people). (Comp Design Team / release-validation+ ops stages are
+  out of scope for now — their branches remain but are unreachable.)
 - **Approvals nav group** (renamed from "Workflow"): **My Tasks** (`#screen-mytasks`, `renderMyTasks`) ·
   **Approval Review** (`#screen-approval`) · **Proposal Tracker**. **My Tasks** is persona-scoped: section
   **Awaiting my review** = `currentReviewerQueue` at `REVIEW_STAGES` (Review button → `openApprovalReview` +
@@ -143,11 +161,22 @@ include only the minimum user-facing information needed to understand and use th
   persona. **Logging attribution:** `submitVersionById` sets `v.submittedBy` + logs the actor; `addAuditEntry`
   records `opts.actor||currentReviewer().name` (was hard-coded); approve/reject/flavor-decision events already
   carry `currentReviewer().name` — surfaced in the approval detail timeline.
-- **Persona gates editing app-wide** via `canEditVersion(v)`: Creator edits `draft`/`withdrawn` versions;
-  1st/2nd edit **in-place** only the version at their own review stage (`reviewerEditVersion` sets
-  `reviewerEditVersionId`); Executive **never** edits. `builderMeasuresEditable=canEditVersion(v)` (openBuilder),
-  `saveBuilderVersion` guards on it, and the builder **Submit** shows only for the Creator persona
-  (`updateBuilderSubmitState`).
+- **Persona gates editing app-wide** via `canEditVersion(v)` (stage-membership based): a persona with
+  `draft` capability edits `draft`/`withdrawn` versions; a reviewer edits **in-place** only a `first_review`/
+  `second_review` version they can act on (`reviewerEditVersion` sets `reviewerEditVersionId`); Executive-only
+  personas **never** edit. `builderMeasuresEditable=canEditVersion(v)` (openBuilder), `saveBuilderVersion`
+  guards on it, and Create-Plan + builder **Submit** show only when `personaIsCreator()`.
+- **Approval Review** (`renderApprovalScreen`, `#screen-approval`) is a stacked layout (Power-Apps-friendly):
+  **Review summary** (`#approval-plan-line` "Comp Plan {id} · {name}"; `#approval-proposal-line` "Reviewing
+  {proposal} · {stage} · submitted by {who} · current version: {…}" + flavor-review chip; then the stage
+  track) → **Review decision** (`#approval-actions-panel` per-flavor Approve/Reject + actions + comment) →
+  **Plan overview** (`#approval-overview`) → activity (stages/comment history · status timeline · signoff) →
+  a secondary **"Other proposals awaiting you"** queue. Actions branch order: `published` (finalized banner)
+  → `atMyStage` (Approve→{finalize/next} · Edit at 1st/2nd only · Reject→draft) → creator (open in builder)
+  → "Awaiting {stage}" → draft note. **Executive approval finalizes**: `advanceVersionStage` jumps
+  `executive_review`→`completed`, so the proposal becomes the plan's **single current version** (published
+  `Version vN`, `isActivePublished`, `activePublishedVersionId`, supersedes the prior) — the review shows a
+  green "Current version for this comp plan" banner and no further actions.
 - **Approvals screen** (`renderApprovalScreen`) = the version detail + a persona-scoped **queue**
   (`currentReviewerQueue` — versions at the persona's stage) + a read-only **plan overview** card. The old
   in-approval reviewer bar is removed (the topbar toggle is the single control). Actions are **persona ×

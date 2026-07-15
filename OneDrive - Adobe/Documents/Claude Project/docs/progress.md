@@ -3,7 +3,28 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — Approvals nav group + My Tasks + per-stage progress + logging (branch `feature/comp-plan-flavorconfig`)
+## Latest change — person-picker personas + reorganized Approval Review + finalize-on-exec + PowerApps guidance (branch `feature/comp-plan-flavorconfig`)
+- **Executive approval finalizes:** `advanceVersionStage` jumps `executive_review`→`completed`, so the
+  proposal becomes the comp plan's **single current version** (published `Version vN`, `isActivePublished`,
+  `activePublishedVersionId`, supersedes prior). The Approval Review shows a green "Current version" banner +
+  no further actions; superseded published versions show a muted note.
+- **Person-picker personas:** `REVIEWERS` is now a roster of real people (Melissa Yasaitis, Valeria Alonso,
+  Aileen Hernandez, Guillaume Gillard, Prateek Singh, Brittany Finkelman, Sonu Shrestha = Creator/1st;
+  Robert Jones = 2nd/Exec; Susan McDonough = Exec). Capabilities derive from `stages[]`; the id-based checks
+  were generalized to stage membership (`personaIsCreator`, `canEditVersion`), and the approval actions
+  branch reordered (`atMyStage` before creator) so multi-stage people act correctly. Seed names remapped
+  (Melissa C.→Melissa Yasaitis, Val R.→Valeria Alonso, Susan L.→Susan McDonough).
+- **Approval Review reorganized** (Power-Apps-friendly stacked cards): Review summary (comp plan + proposal +
+  stage + stage track) → Review decision (per-flavor Approve/Reject + actions) → Plan overview → activity →
+  secondary queue.
+- **CLAUDE.md:** added a **PowerApps Design Constraints** section (target platform, review-before-change,
+  only PowerApps-supported patterns, explain+alternative when unsupported).
+
+Verified on webui2 (no console errors): 9-person toggle; Valeria acts at 1st+2nd, Robert 2nd+Exec, Susan M
+Exec-only (no edit); Exec approval finalizes → current version + banner; approval summary shows comp plan +
+proposal; all 11 versions `validateVersionContent`=0. **Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — Approvals nav group + My Tasks + per-stage progress + logging (branch `feature/comp-plan-flavorconfig`)
 - **Approvals nav group** (renamed from "Workflow"): **My Tasks · Approval Review · Proposal Tracker**, with
   a dynamic badge (`updateApprovalNavBadge`) = count awaiting the current persona.
 - **My Tasks** (`renderMyTasks`, persona-scoped): *Awaiting my review* (queue at my stage → Review opens the

@@ -747,7 +747,7 @@ tr:hover td{background:var(--pa-surface-hover)}
     <div style="padding:16px;margin-top:auto;border-top:0.5px solid rgba(255,255,255,.08)">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:28px;height:28px;border-radius:50%;background:#533AB7;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:500">MC</div>
-        <div><div style="color:rgba(255,255,255,.8);font-size:12px">Melissa C.</div><div style="color:rgba(255,255,255,.4);font-size:10px">Comp Design Lead</div></div>
+        <div><div style="color:rgba(255,255,255,.8);font-size:12px">Melissa Yasaitis</div><div style="color:rgba(255,255,255,.4);font-size:10px">Comp Design Lead</div></div>
       </div>
     </div>
   </nav>
@@ -822,11 +822,11 @@ tr:hover td{background:var(--pa-surface-hover)}
               <div>
                 <div class="activity-item">
                   <div class="activity-icon" style="background:#EEEDFE"><i class="ti ti-copy" style="color:#534AB7;font-size:14px"></i></div>
-                  <div><div><strong>H11.A</strong> cloned from H02.A — new draft created</div><div class="activity-time">Today, 10:15 AM · Val R. · 6 fields carried forward</div></div>
+                  <div><div><strong>H11.A</strong> cloned from H02.A — new draft created</div><div class="activity-time">Today, 10:15 AM · Valeria Alonso · 6 fields carried forward</div></div>
                 </div>
                 <div class="activity-item">
                   <div class="activity-icon" style="background:#EAF3DE"><i class="ti ti-circle-check" style="color:#3B6D11;font-size:14px"></i></div>
-                  <div><div><strong>H02.A</strong> approved by Susan L.</div><div class="activity-time">Today, 1:47 PM · CXO Product Specialist</div></div>
+                  <div><div><strong>H02.A</strong> approved by Susan McDonough</div><div class="activity-time">Today, 1:47 PM · CXO Product Specialist</div></div>
                 </div>
                 <div class="activity-item">
                   <div class="activity-icon" style="background:#E6F1FB"><i class="ti ti-send" style="color:#185FA5;font-size:14px"></i></div>
@@ -867,7 +867,7 @@ tr:hover td{background:var(--pa-surface-hover)}
           <select class="filter-select" id="library-fy-filter" onchange="buildLibrary()"><option value="">All Fiscal Years</option><option value="FY27">FY27</option><option value="FY26">FY26</option></select>
           <select class="filter-select" id="library-role-filter" onchange="buildLibrary()"><option value="">All Role Groups</option><option value="Enterprise AE">Enterprise AE</option><option value="Commercial AE">Commercial AE</option><option value="SMB AE">SMB AE</option><option value="Inside Sales">Inside Sales</option><option value="Field Sales">Field Sales</option></select>
           <select class="filter-select" id="library-status-filter" onchange="buildLibrary()"><option value="">All Statuses</option><option value="Draft">Draft</option><option value="Pending review">Pending review</option><option value="Approved">Approved</option><option value="Withdrawn">Withdrawn</option><option value="Published">Published</option></select>
-          <select class="filter-select" id="library-owner-filter" onchange="buildLibrary()"><option value="">All Owners</option><option value="Melissa C.">Melissa C.</option><option value="Val R.">Val R.</option></select>
+          <select class="filter-select" id="library-owner-filter" onchange="buildLibrary()"><option value="">All Owners</option><option value="Melissa Yasaitis">Melissa Yasaitis</option><option value="Valeria Alonso">Valeria Alonso</option></select>
           <input class="search-input" id="library-search" placeholder="Search plans…" type="search" oninput="buildLibrary()">
         </div>
         <div class="table-wrap">
@@ -1131,31 +1131,28 @@ tr:hover td{background:var(--pa-surface-hover)}
           </div>
         </div>
         <div class="card" style="margin-bottom:14px">
-          <div class="card-header"><div class="card-title" id="approval-queue-title">Approval queue</div></div>
-          <div class="table-wrap" id="approval-queue"></div>
+          <div id="approval-plan-line" style="font-size:15px;font-weight:600;margin-bottom:4px"></div>
+          <div id="approval-proposal-line" style="font-size:12px;color:var(--pa-text-secondary);margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px"></div>
+          <div class="approval-stage-track" id="approval-stage-track"></div>
         </div>
-        <div class="compare-prompt" style="margin-bottom:14px">
-          <i class="ti ti-info-circle"></i>
-          <div id="approval-context-text">Reviewing <strong id="approval-version-name">Proposal 2</strong> against the <strong>published version</strong> (<span id="approval-published-label">v1</span>).</div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><div class="card-title">Review decision</div></div>
+          <div id="approval-actions-panel"></div>
+          <textarea class="form-textarea" id="approval-comment-input" style="width:100%;min-height:64px;margin-top:12px" placeholder="Add an optional comment for this decision…"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="openComparePlatform('approval')"><i class="ti ti-columns"></i> Compare Proposals</button>
+            <button class="btn btn-sm" onclick="showScreen('document')"><i class="ti ti-file-text"></i> View document</button>
+          </div>
         </div>
-        <div class="approval-stage-track" id="approval-stage-track"></div>
         <div class="card" id="approval-overview-card" style="margin-bottom:14px">
           <div class="card-header"><div class="card-title">Plan overview — all flavors</div></div>
           <div id="approval-overview"></div>
         </div>
         <div class="two-col">
           <div>
-            <div class="approval-card">
+            <div class="card">
               <div class="card-header" style="margin-bottom:0"><div class="card-title">Approval stages</div></div>
               <div id="approval-stages-list"></div>
-            </div>
-            <div class="card">
-              <div class="card-header"><div class="card-title">Approval actions</div></div>
-              <div id="approval-actions-panel"></div>
-              <textarea class="form-textarea" id="approval-comment-input" style="width:100%;min-height:70px;margin-top:12px" placeholder="Add approval comments or feedback…"></textarea>
-              <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-                <button class="btn btn-sm" onclick="openComparePlatform('approval')"><i class="ti ti-columns"></i> Compare Proposals</button>
-              </div>
             </div>
             <div class="card">
               <div class="card-header"><div class="card-title">Comment history</div></div>
@@ -1175,6 +1172,10 @@ tr:hover td{background:var(--pa-surface-hover)}
               </table>
             </div>
           </div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-header"><div class="card-title" id="approval-queue-title">Other proposals awaiting you</div></div>
+          <div class="table-wrap" id="approval-queue"></div>
         </div>
       </div>
 
@@ -1350,10 +1351,10 @@ BONUS_THRESHOLD=0.75</div></div>
               <table>
                 <thead><tr><th>Version</th><th>Date</th><th>Changed by</th><th>Status</th></tr></thead>
                 <tbody>
-                  <tr><td style="font-weight:500">v2.1</td><td style="font-size:11px">Jun 11, 2026</td><td style="font-size:11px">Melissa C.</td><td><span class="badge badge-approved">Current</span></td></tr>
-                  <tr><td>v2.0</td><td style="font-size:11px">Jun 9, 2026</td><td style="font-size:11px">Melissa C.</td><td><span class="badge badge-rejected">Returned</span></td></tr>
-                  <tr><td>v1.1</td><td style="font-size:11px">Jun 5, 2026</td><td style="font-size:11px">Val R.</td><td><span class="badge badge-draft">Superseded</span></td></tr>
-                  <tr><td>v1.0</td><td style="font-size:11px">Jun 3, 2026</td><td style="font-size:11px">Melissa C.</td><td><span class="badge badge-draft">Superseded</span></td></tr>
+                  <tr><td style="font-weight:500">v2.1</td><td style="font-size:11px">Jun 11, 2026</td><td style="font-size:11px">Melissa Yasaitis</td><td><span class="badge badge-approved">Current</span></td></tr>
+                  <tr><td>v2.0</td><td style="font-size:11px">Jun 9, 2026</td><td style="font-size:11px">Melissa Yasaitis</td><td><span class="badge badge-rejected">Returned</span></td></tr>
+                  <tr><td>v1.1</td><td style="font-size:11px">Jun 5, 2026</td><td style="font-size:11px">Valeria Alonso</td><td><span class="badge badge-draft">Superseded</span></td></tr>
+                  <tr><td>v1.0</td><td style="font-size:11px">Jun 3, 2026</td><td style="font-size:11px">Melissa Yasaitis</td><td><span class="badge badge-draft">Superseded</span></td></tr>
                 </tbody>
               </table>
             </div>
@@ -1380,7 +1381,7 @@ BONUS_THRESHOLD=0.75</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Payout table configured</div><div class="audit-meta">Melissa Chen · Jun 4, 2:10 PM</div><div class="audit-change">150%+ multiplier set to 1.80x · Incentive cap 250%</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Proposal 1 saved</div><div class="audit-meta">Melissa Chen · Jun 5, 4:45 PM</div></div>
               <div class="audit-item"><div class="audit-dot blue"></div><div style="font-size:12px;font-weight:500">Submitted for approval (v1.0)</div><div class="audit-meta">Melissa Chen · Jun 6, 10:00 AM</div></div>
-              <div class="audit-item"><div class="audit-dot" style="background:#E24B4A"></div><div style="font-size:12px;font-weight:500">Returned for revision</div><div class="audit-meta">Susan L. · Jun 7, 2:30 PM</div><div class="audit-change" style="border-left-color:#E24B4A">"Increase 150%+ multiplier to 2.00x. Add renewal tether. Remove cap at top tier."</div></div>
+              <div class="audit-item"><div class="audit-dot" style="background:#E24B4A"></div><div style="font-size:12px;font-weight:500">Returned for revision</div><div class="audit-meta">Susan McDonough · Jun 7, 2:30 PM</div><div class="audit-change" style="border-left-color:#E24B4A">"Increase 150%+ multiplier to 2.00x. Add renewal tether. Remove cap at top tier."</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">VCT weights modified</div><div class="audit-meta">Melissa Chen · Jun 9, 11:15 AM</div><div class="audit-change">ARR New Business: 60% → 50% · Strategic Products: 15% → 20%</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Payout frequency changed</div><div class="audit-meta">Melissa Chen · Jun 9, 11:18 AM</div><div class="audit-change">Monthly → Quarterly · Aligns with deal cycle feedback</div></div>
               <div class="audit-item"><div class="audit-dot gray"></div><div style="font-size:12px;font-weight:500">Renewal tether added</div><div class="audit-meta">Val Reyes · Jun 10, 3:00 PM</div><div class="audit-change">Threshold: 80% · Applies to all measures</div></div>
@@ -1682,28 +1683,36 @@ const EDITABLE_STATUSES=['draft','withdrawn'];
 const LOCKED_STATUSES=['pending_review','approved','published'];
 // Reviewer personas (named people mapped to approval stages) for the top-right "Viewing as" toggle.
 const REVIEW_STAGES=['first_review','second_review','executive_review'];
+// People who can be assigned per review stage; each persona's capabilities derive from the stage(s) they can act on.
 const REVIEWERS=[
-  {id:'creator',name:'Melissa C.',role:'Creator',stages:['draft']},
-  {id:'r1',name:'Susan L.',role:'1st Reviewer',stages:['first_review']},
-  {id:'r2',name:'Val R.',role:'2nd Reviewer',stages:['second_review']},
-  {id:'exec',name:'Elena M.',role:'Executive',stages:['executive_review']},
+  {id:'melissa-y',name:'Melissa Yasaitis',role:'Creator / 1st Reviewer',stages:['draft','first_review']},
+  {id:'valeria-a',name:'Valeria Alonso',role:'Creator / 1st / 2nd Reviewer',stages:['draft','first_review','second_review']},
+  {id:'aileen-h',name:'Aileen Hernandez',role:'Creator / 1st Reviewer',stages:['draft','first_review']},
+  {id:'guillaume-g',name:'Guillaume Gillard',role:'Creator / 1st Reviewer',stages:['draft','first_review']},
+  {id:'prateek-s',name:'Prateek Singh',role:'Creator / 1st Reviewer',stages:['draft','first_review']},
+  {id:'brittany-f',name:'Brittany Finkelman',role:'Creator / 1st Reviewer',stages:['draft','first_review']},
+  {id:'sonu-s',name:'Sonu Shrestha',role:'Creator / 1st Reviewer',stages:['draft','first_review']},
+  {id:'robert-j',name:'Robert Jones',role:'2nd / Executive Reviewer',stages:['second_review','executive_review']},
+  {id:'susan-m',name:'Susan McDonough',role:'Executive Reviewer',stages:['executive_review']},
 ];
-let currentReviewerId='creator';
+let currentReviewerId='melissa-y';
 function currentReviewer(){return REVIEWERS.find(r=>r.id===currentReviewerId)||REVIEWERS[0];}
 function personaInitials(r){return (r.name||'').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();}
-// Can the CURRENT persona edit version v? Creator edits drafts; 1st/2nd edit in-place only at their own review stage; Exec never.
+function personaIsCreator(p){return (p||currentReviewer()).stages.includes('draft');}
+// Can the CURRENT persona edit version v? Anyone with 'draft' capability edits drafts; a reviewer edits in
+// place only at a first/second review stage they can act on; Executive-only personas never edit.
 function canEditVersion(v){if(!v)return false;const p=currentReviewer();
-  if(p.id==='creator')return isVersionEditable(v);
-  if(p.id==='r1'||p.id==='r2')return v.versionId===reviewerEditVersionId&&v.approvalStage===p.stages[0];
+  if(personaIsCreator(p)&&isVersionEditable(v))return true;
+  if((v.approvalStage==='first_review'||v.approvalStage==='second_review')&&p.stages.includes(v.approvalStage)&&v.versionId===reviewerEditVersionId)return true;
   return false;}
-function stageReviewerName(stage){const r=REVIEWERS.find(x=>x.stages.includes(stage));return r?`${r.name} (${r.role})`:APPROVAL_STAGE_LABELS[stage]||stage;}
+function stageReviewerName(stage){return APPROVAL_STAGE_LABELS[stage]||stage;}
 function renderPersonaToggle(){
   const sel=document.getElementById('topbar-persona');
-  if(sel)sel.innerHTML=REVIEWERS.map(r=>`<option value="${r.id}" ${r.id===currentReviewerId?'selected':''}>${escapeCompareHtml(r.role)}</option>`).join('');
+  if(sel)sel.innerHTML=REVIEWERS.map(r=>`<option value="${r.id}" ${r.id===currentReviewerId?'selected':''}>${escapeCompareHtml(r.name)} · ${escapeCompareHtml(r.role)}</option>`).join('');
   const av=document.getElementById('topbar-avatar');
   if(av){const p=currentReviewer();av.textContent=personaInitials(p);av.title=`${p.name} · ${p.role}`;}
   const cb=document.getElementById('topbar-create-btn');
-  if(cb)cb.style.display=currentReviewerId==='creator'?'':'none';
+  if(cb)cb.style.display=personaIsCreator()?'':'none';
 }
 // Global "Viewing as" toggle: switch persona, re-evaluate editing, re-render open surfaces.
 function setPersona(id){
@@ -1951,68 +1960,68 @@ function setPerfMeasureSystem(id,v){const m=findMeasureById(id);if(m){m.systemPa
    tables are shared at the plan level per pay measure; each flavor picks its own measures
    and sets its own VCT weight / performance period / payout period per measure. */
 const compPlans=[
-  {planId:'A01',planName:'Solution Architect Comp Plan',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa C.',status:'active',activePublishedVersionId:null},
-  {planId:'B01',planName:'Renewal & Field Comp Plan',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Val R.',status:'active',activePublishedVersionId:'ver-B01-FY27-1'},
-  {planId:'S08',planName:'Business Sales Comp Plan',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Val R.',status:'active',activePublishedVersionId:'ver-S08-FY27-1'},
-  {planId:'S02',planName:'Customer Success Comp Plan',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa C.',status:'active',activePublishedVersionId:null},
-  {planId:'T04',planName:'Digital Sales Comp Plan',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa C.',status:'active',activePublishedVersionId:null},
-  {planId:'M01',planName:'Inside Sales Comp Plan',fiscalYear:'FY27',roleGroup:'Inside Sales',owner:'Val R.',status:'active',activePublishedVersionId:null},
-  {planId:'A01',planName:'Solution Architect Comp Plan',fiscalYear:'FY26',roleGroup:'Commercial AE',owner:'Melissa C.',status:'archived',activePublishedVersionId:'ver-A01-FY26-1'},
-  {planId:'B01',planName:'Renewal & Field Comp Plan',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Val R.',status:'archived',activePublishedVersionId:'ver-B01-FY26-1'},
-  {planId:'S08',planName:'Business Sales Comp Plan',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Val R.',status:'archived',activePublishedVersionId:'ver-S08-FY26-1'},
+  {planId:'A01',planName:'Solution Architect Comp Plan',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'active',activePublishedVersionId:null},
+  {planId:'B01',planName:'Renewal & Field Comp Plan',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'active',activePublishedVersionId:'ver-B01-FY27-1'},
+  {planId:'S08',planName:'Business Sales Comp Plan',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'active',activePublishedVersionId:'ver-S08-FY27-1'},
+  {planId:'S02',planName:'Customer Success Comp Plan',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'active',activePublishedVersionId:null},
+  {planId:'T04',planName:'Digital Sales Comp Plan',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'active',activePublishedVersionId:null},
+  {planId:'M01',planName:'Inside Sales Comp Plan',fiscalYear:'FY27',roleGroup:'Inside Sales',owner:'Valeria Alonso',status:'active',activePublishedVersionId:null},
+  {planId:'A01',planName:'Solution Architect Comp Plan',fiscalYear:'FY26',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'archived',activePublishedVersionId:'ver-A01-FY26-1'},
+  {planId:'B01',planName:'Renewal & Field Comp Plan',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'archived',activePublishedVersionId:'ver-B01-FY26-1'},
+  {planId:'S08',planName:'Business Sales Comp Plan',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'archived',activePublishedVersionId:'ver-S08-FY26-1'},
 ];
 
 /* Flavors — children of a plan. flavorId stays stable (drives the field/payout data maps);
    planId groups them under a plan, flavorLabel is the A/B/C variant, role is self-defined. */
 const planFlavors=[
-  {flavorId:'A01.A',planId:'A01',flavorLabel:'A',flavorName:'Solution Architect',role:'Solution Architect',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa C.',status:'active'},
-  {flavorId:'A03.A',planId:'A01',flavorLabel:'B',flavorName:'Delivery',role:'Delivery Specialist',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa C.',status:'active'},
-  {flavorId:'A06.A',planId:'A01',flavorLabel:'C',flavorName:'Ultimate',role:'Ultimate Specialist',fiscalYear:'FY27',roleGroup:'Enterprise AE',owner:'Melissa C.',status:'active'},
-  {flavorId:'B01.A',planId:'B01',flavorLabel:'A',flavorName:'Renewal',role:'Renewal Specialist',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Val R.',status:'active'},
-  {flavorId:'B12.A',planId:'B01',flavorLabel:'B',flavorName:'Inside Sales',role:'Inside Sales Representative',fiscalYear:'FY27',roleGroup:'Inside Sales',owner:'Val R.',status:'active'},
-  {flavorId:'B06.A',planId:'B01',flavorLabel:'C',flavorName:'Field Sales',role:'Field Sales Executive',fiscalYear:'FY27',roleGroup:'Field Sales',owner:'Val R.',status:'active'},
-  {flavorId:'S08.A',planId:'S08',flavorLabel:'A',flavorName:'Business',role:'Business Development Rep',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Val R.',status:'active'},
-  {flavorId:'S12.A',planId:'S08',flavorLabel:'B',flavorName:'SMB Sales',role:'SMB Account Executive',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Val R.',status:'active'},
-  {flavorId:'S05.C',planId:'S08',flavorLabel:'C',flavorName:'Domestic',role:'Domestic Account Executive',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Val R.',status:'active'},
-  {flavorId:'S02.B',planId:'S02',flavorLabel:'A',flavorName:'Customer',role:'Customer Success Manager',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa C.',status:'active'},
-  {flavorId:'T04.A',planId:'T04',flavorLabel:'A',flavorName:'Digital Sales',role:'Digital Sales Executive',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa C.',status:'active'},
-  {flavorId:'M01.A',planId:'M01',flavorLabel:'A',flavorName:'Inside Sales',role:'Inside Sales AE',fiscalYear:'FY27',roleGroup:'Inside Sales',owner:'Val R.',status:'active'},
-  {flavorId:'A01.A',planId:'A01',flavorLabel:'A',flavorName:'Solution Architect',role:'Solution Architect',fiscalYear:'FY26',roleGroup:'Commercial AE',owner:'Melissa C.',status:'archived'},
-  {flavorId:'B01.A',planId:'B01',flavorLabel:'A',flavorName:'Renewal',role:'Renewal Specialist',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Val R.',status:'archived'},
-  {flavorId:'B06.A',planId:'B01',flavorLabel:'C',flavorName:'Field Sales',role:'Field Sales Executive',fiscalYear:'FY26',roleGroup:'Field Sales',owner:'Val R.',status:'archived'},
-  {flavorId:'S08.A',planId:'S08',flavorLabel:'A',flavorName:'Business',role:'Business Development Rep',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Val R.',status:'archived'},
+  {flavorId:'A01.A',planId:'A01',flavorLabel:'A',flavorName:'Solution Architect',role:'Solution Architect',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'active'},
+  {flavorId:'A03.A',planId:'A01',flavorLabel:'B',flavorName:'Delivery',role:'Delivery Specialist',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'active'},
+  {flavorId:'A06.A',planId:'A01',flavorLabel:'C',flavorName:'Ultimate',role:'Ultimate Specialist',fiscalYear:'FY27',roleGroup:'Enterprise AE',owner:'Melissa Yasaitis',status:'active'},
+  {flavorId:'B01.A',planId:'B01',flavorLabel:'A',flavorName:'Renewal',role:'Renewal Specialist',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'active'},
+  {flavorId:'B12.A',planId:'B01',flavorLabel:'B',flavorName:'Inside Sales',role:'Inside Sales Representative',fiscalYear:'FY27',roleGroup:'Inside Sales',owner:'Valeria Alonso',status:'active'},
+  {flavorId:'B06.A',planId:'B01',flavorLabel:'C',flavorName:'Field Sales',role:'Field Sales Executive',fiscalYear:'FY27',roleGroup:'Field Sales',owner:'Valeria Alonso',status:'active'},
+  {flavorId:'S08.A',planId:'S08',flavorLabel:'A',flavorName:'Business',role:'Business Development Rep',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'active'},
+  {flavorId:'S12.A',planId:'S08',flavorLabel:'B',flavorName:'SMB Sales',role:'SMB Account Executive',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'active'},
+  {flavorId:'S05.C',planId:'S08',flavorLabel:'C',flavorName:'Domestic',role:'Domestic Account Executive',fiscalYear:'FY27',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'active'},
+  {flavorId:'S02.B',planId:'S02',flavorLabel:'A',flavorName:'Customer',role:'Customer Success Manager',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'active'},
+  {flavorId:'T04.A',planId:'T04',flavorLabel:'A',flavorName:'Digital Sales',role:'Digital Sales Executive',fiscalYear:'FY27',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'active'},
+  {flavorId:'M01.A',planId:'M01',flavorLabel:'A',flavorName:'Inside Sales',role:'Inside Sales AE',fiscalYear:'FY27',roleGroup:'Inside Sales',owner:'Valeria Alonso',status:'active'},
+  {flavorId:'A01.A',planId:'A01',flavorLabel:'A',flavorName:'Solution Architect',role:'Solution Architect',fiscalYear:'FY26',roleGroup:'Commercial AE',owner:'Melissa Yasaitis',status:'archived'},
+  {flavorId:'B01.A',planId:'B01',flavorLabel:'A',flavorName:'Renewal',role:'Renewal Specialist',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'archived'},
+  {flavorId:'B06.A',planId:'B01',flavorLabel:'C',flavorName:'Field Sales',role:'Field Sales Executive',fiscalYear:'FY26',roleGroup:'Field Sales',owner:'Valeria Alonso',status:'archived'},
+  {flavorId:'S08.A',planId:'S08',flavorLabel:'A',flavorName:'Business',role:'Business Development Rep',fiscalYear:'FY26',roleGroup:'SMB AE',owner:'Valeria Alonso',status:'archived'},
 ];
 
 /* Plan versions — anchored to planId (one approval chain per plan, covering all flavors). */
 let planVersions=[
-  {versionId:'ver-A01-FY26-1',flavorId:'A01',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Oct 1, 2025',updatedAt:'Oct 12, 2025',submittedAt:'Oct 8, 2025',approvedAt:'Oct 10, 2025',publishedAt:'Oct 12, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'FY26 baseline',description:'FY26 approved baseline',approvalStage:'completed',isActivePublished:false},
-  {versionId:'ver-A01-FY27-1',flavorId:'A01',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'draft',sourceVersionId:'ver-A01-FY26-1',createdBy:'Melissa C.',createdAt:'Jun 3, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'FY26 structure carry-forward',approvalStage:'draft',isActivePublished:false},
-  {versionId:'ver-A01-FY27-2',flavorId:'A01',fy:'FY27',versionNumber:2,label:'Proposal 2',status:'pending_review',sourceVersionId:'ver-A01-FY27-1',createdBy:'Melissa C.',createdAt:'Jun 8, 2026',updatedAt:'Jun 11, 2026',submittedAt:'Jun 11, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Quarterly payout & renewal tether',approvalStage:'first_review',isActivePublished:false},
-  {versionId:'ver-A01-FY27-3',flavorId:'A01',fy:'FY27',versionNumber:3,label:'Proposal 3',status:'draft',sourceVersionId:'ver-A01-FY27-1',createdBy:'Val R.',createdAt:'Jun 10, 2026',updatedAt:'Jun 10, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Higher 150%+ accelerators',approvalStage:'draft',isActivePublished:false},
-  {versionId:'ver-B01-FY26-1',flavorId:'B01',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 20, 2025',submittedAt:'Oct 12, 2025',approvedAt:'Oct 18, 2025',publishedAt:'Oct 20, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 renewal & field plan',approvalStage:'completed',isActivePublished:false},
-  {versionId:'ver-B01-FY27-1',flavorId:'B01',fy:'FY27',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:'ver-B01-FY26-1',createdBy:'Val R.',createdAt:'Jun 1, 2026',updatedAt:'Jun 9, 2026',submittedAt:'Jun 5, 2026',approvedAt:'Jun 8, 2026',publishedAt:'Jun 9, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Renewal & field FY27 plan',approvalStage:'completed',isActivePublished:true},
-  {versionId:'ver-S08-FY26-1',flavorId:'S08',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Val R.',createdAt:'Oct 1, 2025',updatedAt:'Oct 28, 2025',submittedAt:'Oct 20, 2025',approvedAt:'Oct 25, 2025',publishedAt:'Oct 28, 2025',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'FY26 business plan',approvalStage:'completed',isActivePublished:false},
-  {versionId:'ver-S08-FY27-1',flavorId:'S08',fy:'FY27',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:'ver-S08-FY26-1',createdBy:'Val R.',createdAt:'May 20, 2026',updatedAt:'Jun 5, 2026',submittedAt:'Jun 3, 2026',approvedAt:'Jun 4, 2026',publishedAt:'Jun 5, 2026',rescindedAt:null,approvedBy:'Susan L.',publishedBy:'Susan L.',comments:'',description:'Business-focused plan',approvalStage:'completed',isActivePublished:true},
-  {versionId:'ver-S02-FY27-1',flavorId:'S02',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'approved',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'May 28, 2026',updatedAt:'Jun 10, 2026',submittedAt:'Jun 8, 2026',approvedAt:'Jun 10, 2026',publishedAt:null,rescindedAt:null,approvedBy:'Susan L.',publishedBy:null,comments:'Approved pending SEO',description:'Customer success baseline FY27',approvalStage:'release_validation',isActivePublished:false},
-  {versionId:'ver-T04-FY27-1',flavorId:'T04',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'withdrawn',sourceVersionId:null,createdBy:'Melissa C.',createdAt:'Jun 1, 2026',updatedAt:'Jun 2, 2026',submittedAt:'Jun 2, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'Increase 150%+ multiplier to 2.00x. Add renewal tether.',description:'Digital sales revision',approvalStage:'draft',isActivePublished:false},
-  {versionId:'ver-M01-FY27-1',flavorId:'M01',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'draft',sourceVersionId:null,createdBy:'Val R.',createdAt:'Jun 5, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Inside sales AE draft',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-A01-FY26-1',flavorId:'A01',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Melissa Yasaitis',createdAt:'Oct 1, 2025',updatedAt:'Oct 12, 2025',submittedAt:'Oct 8, 2025',approvedAt:'Oct 10, 2025',publishedAt:'Oct 12, 2025',rescindedAt:null,approvedBy:'Susan McDonough',publishedBy:'Susan McDonough',comments:'FY26 baseline',description:'FY26 approved baseline',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-A01-FY27-1',flavorId:'A01',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'draft',sourceVersionId:'ver-A01-FY26-1',createdBy:'Melissa Yasaitis',createdAt:'Jun 3, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'FY26 structure carry-forward',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-A01-FY27-2',flavorId:'A01',fy:'FY27',versionNumber:2,label:'Proposal 2',status:'pending_review',sourceVersionId:'ver-A01-FY27-1',createdBy:'Melissa Yasaitis',createdAt:'Jun 8, 2026',updatedAt:'Jun 11, 2026',submittedAt:'Jun 11, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Quarterly payout & renewal tether',approvalStage:'first_review',isActivePublished:false},
+  {versionId:'ver-A01-FY27-3',flavorId:'A01',fy:'FY27',versionNumber:3,label:'Proposal 3',status:'draft',sourceVersionId:'ver-A01-FY27-1',createdBy:'Valeria Alonso',createdAt:'Jun 10, 2026',updatedAt:'Jun 10, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Higher 150%+ accelerators',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-B01-FY26-1',flavorId:'B01',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Valeria Alonso',createdAt:'Oct 1, 2025',updatedAt:'Oct 20, 2025',submittedAt:'Oct 12, 2025',approvedAt:'Oct 18, 2025',publishedAt:'Oct 20, 2025',rescindedAt:null,approvedBy:'Susan McDonough',publishedBy:'Susan McDonough',comments:'',description:'FY26 renewal & field plan',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-B01-FY27-1',flavorId:'B01',fy:'FY27',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:'ver-B01-FY26-1',createdBy:'Valeria Alonso',createdAt:'Jun 1, 2026',updatedAt:'Jun 9, 2026',submittedAt:'Jun 5, 2026',approvedAt:'Jun 8, 2026',publishedAt:'Jun 9, 2026',rescindedAt:null,approvedBy:'Susan McDonough',publishedBy:'Susan McDonough',comments:'',description:'Renewal & field FY27 plan',approvalStage:'completed',isActivePublished:true},
+  {versionId:'ver-S08-FY26-1',flavorId:'S08',fy:'FY26',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:null,createdBy:'Valeria Alonso',createdAt:'Oct 1, 2025',updatedAt:'Oct 28, 2025',submittedAt:'Oct 20, 2025',approvedAt:'Oct 25, 2025',publishedAt:'Oct 28, 2025',rescindedAt:null,approvedBy:'Susan McDonough',publishedBy:'Susan McDonough',comments:'',description:'FY26 business plan',approvalStage:'completed',isActivePublished:false},
+  {versionId:'ver-S08-FY27-1',flavorId:'S08',fy:'FY27',versionNumber:1,label:'Version v1',status:'published',sourceVersionId:'ver-S08-FY26-1',createdBy:'Valeria Alonso',createdAt:'May 20, 2026',updatedAt:'Jun 5, 2026',submittedAt:'Jun 3, 2026',approvedAt:'Jun 4, 2026',publishedAt:'Jun 5, 2026',rescindedAt:null,approvedBy:'Susan McDonough',publishedBy:'Susan McDonough',comments:'',description:'Business-focused plan',approvalStage:'completed',isActivePublished:true},
+  {versionId:'ver-S02-FY27-1',flavorId:'S02',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'approved',sourceVersionId:null,createdBy:'Melissa Yasaitis',createdAt:'May 28, 2026',updatedAt:'Jun 10, 2026',submittedAt:'Jun 8, 2026',approvedAt:'Jun 10, 2026',publishedAt:null,rescindedAt:null,approvedBy:'Susan McDonough',publishedBy:null,comments:'Approved pending SEO',description:'Customer success baseline FY27',approvalStage:'release_validation',isActivePublished:false},
+  {versionId:'ver-T04-FY27-1',flavorId:'T04',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'withdrawn',sourceVersionId:null,createdBy:'Melissa Yasaitis',createdAt:'Jun 1, 2026',updatedAt:'Jun 2, 2026',submittedAt:'Jun 2, 2026',approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'Increase 150%+ multiplier to 2.00x. Add renewal tether.',description:'Digital sales revision',approvalStage:'draft',isActivePublished:false},
+  {versionId:'ver-M01-FY27-1',flavorId:'M01',fy:'FY27',versionNumber:1,label:'Proposal 1',status:'draft',sourceVersionId:null,createdBy:'Valeria Alonso',createdAt:'Jun 5, 2026',updatedAt:'Jun 5, 2026',submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,comments:'',description:'Inside sales AE draft',approvalStage:'draft',isActivePublished:false},
 ];
 
 let approvalEvents=[
-  {eventId:'evt-1',versionId:'ver-A01-FY27-2',action:'submitted',actor:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',note:'Proposal 2 submitted for Susan review.'},
-  {eventId:'evt-2',versionId:'ver-B01-FY27-1',action:'published',actor:'Susan L.',timestamp:'Jun 9, 2026 9:10 AM',note:'Version v1 — all flavors.'},
-  {eventId:'evt-4',versionId:'ver-S08-FY27-1',action:'published',actor:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',note:'Version v1 from approved draft.'},
-  {eventId:'evt-5',versionId:'ver-A01-FY27-3',action:'created',actor:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',note:'Proposal 3 created for internal design review.'},
-  {eventId:'evt-6',versionId:'ver-T04-FY27-1',action:'rejected',actor:'Susan L.',timestamp:'Jun 2, 2026 2:30 PM',note:'Increase 150%+ multiplier to 2.00x. Add renewal tether.'},
-  {eventId:'evt-7',versionId:'ver-S02-FY27-1',action:'approved',actor:'Susan L.',timestamp:'Jun 10, 2026 3:00 PM',note:'Susan approved — awaiting SEO review.'},
+  {eventId:'evt-1',versionId:'ver-A01-FY27-2',action:'submitted',actor:'Melissa Yasaitis',timestamp:'Jun 11, 2026 11:22 AM',note:'Proposal 2 submitted for Susan review.'},
+  {eventId:'evt-2',versionId:'ver-B01-FY27-1',action:'published',actor:'Susan McDonough',timestamp:'Jun 9, 2026 9:10 AM',note:'Version v1 — all flavors.'},
+  {eventId:'evt-4',versionId:'ver-S08-FY27-1',action:'published',actor:'Susan McDonough',timestamp:'Jun 5, 2026 10:15 AM',note:'Version v1 from approved draft.'},
+  {eventId:'evt-5',versionId:'ver-A01-FY27-3',action:'created',actor:'Valeria Alonso',timestamp:'Jun 10, 2026 4:00 PM',note:'Proposal 3 created for internal design review.'},
+  {eventId:'evt-6',versionId:'ver-T04-FY27-1',action:'rejected',actor:'Susan McDonough',timestamp:'Jun 2, 2026 2:30 PM',note:'Increase 150%+ multiplier to 2.00x. Add renewal tether.'},
+  {eventId:'evt-7',versionId:'ver-S02-FY27-1',action:'approved',actor:'Susan McDonough',timestamp:'Jun 10, 2026 3:00 PM',note:'Susan approved — awaiting SEO review.'},
   {eventId:'evt-8',versionId:'ver-B01-FY27-1',action:'seo_approved',actor:'SEO Team',timestamp:'Jun 9, 2026 9:00 AM',note:'Mechanics validated.'},
 ];
 
 let auditLog=[
-  {id:'aud-1',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-2',action:'Submitted for approval',user:'Melissa C.',timestamp:'Jun 11, 2026 11:22 AM',detail:'Proposal 2 submitted to Susan L.'},
-  {id:'aud-2',planId:'B01',fy:'FY27',versionId:'ver-B01-FY27-1',action:'Published final version',user:'Susan L.',timestamp:'Jun 9, 2026 9:10 AM',detail:'Version v1 — all flavors.'},
-  {id:'aud-4',planId:'S08',fy:'FY27',versionId:'ver-S08-FY27-1',action:'Published final version',user:'Susan L.',timestamp:'Jun 5, 2026 10:15 AM',detail:'Version v1.'},
-  {id:'aud-5',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-3',action:'Revision created',user:'Val R.',timestamp:'Jun 10, 2026 4:00 PM',detail:'Proposal 3 — higher accelerators variant.'},
+  {id:'aud-1',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-2',action:'Submitted for approval',user:'Melissa Yasaitis',timestamp:'Jun 11, 2026 11:22 AM',detail:'Proposal 2 submitted to Susan McDonough'},
+  {id:'aud-2',planId:'B01',fy:'FY27',versionId:'ver-B01-FY27-1',action:'Published final version',user:'Susan McDonough',timestamp:'Jun 9, 2026 9:10 AM',detail:'Version v1 — all flavors.'},
+  {id:'aud-4',planId:'S08',fy:'FY27',versionId:'ver-S08-FY27-1',action:'Published final version',user:'Susan McDonough',timestamp:'Jun 5, 2026 10:15 AM',detail:'Version v1.'},
+  {id:'aud-5',planId:'A01',fy:'FY27',versionId:'ver-A01-FY27-3',action:'Revision created',user:'Valeria Alonso',timestamp:'Jun 10, 2026 4:00 PM',detail:'Proposal 3 — higher accelerators variant.'},
 ];
 
 /* Legacy aliases for compare/builder compatibility */
@@ -2118,7 +2127,7 @@ function isVersionEditable(v){return v&&EDITABLE_STATUSES.includes(v.status);}
 function formatVersionLabel(v){return v?(v.status==='published'?`Version v${v.versionNumber}`:`Proposal ${v.versionNumber}`):'';}
 
 function addApprovalEvent(versionId,action,note,actor){
-  approvalEvents.unshift({eventId:'evt-'+Date.now(),versionId,action,actor:actor||'Melissa C.',timestamp:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}),note});
+  approvalEvents.unshift({eventId:'evt-'+Date.now(),versionId,action,actor:actor||'Melissa Yasaitis',timestamp:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}),note});
 }
 function addAuditEntry(planKey,action,detail,opts={}){
   const {planId,fy}=parsePlanKey(planKey);
@@ -2407,7 +2416,7 @@ function createVersionRecord(planKey,opts={}){
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const v={
     versionId:id,flavorId:planId,fy,versionNumber:num,label:`Proposal ${num}`,status:'draft',
-    sourceVersionId:opts.sourceVersionId||null,createdBy:'Melissa C.',createdAt:now,updatedAt:now,
+    sourceVersionId:opts.sourceVersionId||null,createdBy:'Melissa Yasaitis',createdAt:now,updatedAt:now,
     submittedAt:null,approvedAt:null,publishedAt:null,rescindedAt:null,approvedBy:null,publishedBy:null,
     comments:'',description:opts.description||`Revision v${num}`,approvalStage:'draft',isActivePublished:false,
   };
@@ -2456,7 +2465,7 @@ function updateBuilderSubmitState(planKey,v){
   if(!v)return;
   const headerSubmit=document.getElementById('builder-header-submit');
   const otherPending=getPendingApprovalVersions(planKey).filter(x=>x.versionId!==v.versionId);
-  const canSubmit=isVersionEditable(v)&&!otherPending.length&&currentReviewerId==='creator';
+  const canSubmit=isVersionEditable(v)&&!otherPending.length&&personaIsCreator();
   if(headerSubmit)headerSubmit.style.display=canSubmit?'inline-flex':'none';
   const queueNote=document.getElementById('builder-approval-queue-note');
   if(queueNote){
@@ -2542,7 +2551,8 @@ function advanceVersionStage(versionId){
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const note=document.getElementById('approval-comment-input')?.value||'';
   const actor=currentReviewer().name;
-  const nextStage=APPROVAL_STAGES[idx+1];
+  let nextStage=APPROVAL_STAGES[idx+1];
+  if(v.approvalStage==='executive_review')nextStage='completed'; // Exec approval finalizes → current version (ops stages deferred)
   v.approvalStage=nextStage;
   v.status=statusFromStage(nextStage);
   // Entering a NEW review stage: reset per-flavor review so the next reviewer reviews fresh.
@@ -2768,15 +2778,23 @@ function renderApprovalScreen(){
   if(!v){
     document.getElementById('approval-page-title').textContent='Approval Review';
     document.getElementById('approval-page-subtitle').textContent='Select an item from your queue.';
-    ['approval-stage-track','approval-stages-list','approval-actions-panel','approval-comment-history','approval-status-timeline','approval-signoff-tbody','approval-overview'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+    ['approval-plan-line','approval-proposal-line','approval-stage-track','approval-stages-list','approval-actions-panel','approval-comment-history','approval-status-timeline','approval-signoff-tbody','approval-overview'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
     return;
   }
   const pk=planKey(v.flavorId,v.fy);
   const pub=getPublishedVersion(pk);
-  document.getElementById('approval-page-title').textContent=`Approval Review — ${v.label}`;
-  document.getElementById('approval-page-subtitle').textContent=`${getPlan(v.flavorId,v.fy)?.planName||v.flavorId} · ${getFlavorsForPlan(pk).map(f=>f.flavorLabel).join('/')} flavors · Submitted ${v.submittedAt||'—'}`;
-  document.getElementById('approval-version-name').textContent=v.label;
-  document.getElementById('approval-published-label').textContent=pub?`Version v${pub.versionNumber}`:'none yet';
+  const plan=getPlan(v.flavorId,v.fy);
+  document.getElementById('approval-page-title').textContent='Approval Review';
+  document.getElementById('approval-page-subtitle').textContent=`${v.flavorId} · ${plan?.planName||v.flavorId}`;
+  // Review summary — which comp plan, which proposal, its stage, who submitted, current version.
+  const planLine=document.getElementById('approval-plan-line');
+  if(planLine)planLine.innerHTML=`<span style="font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--pa-text-secondary)">Comp Plan</span> <strong>${escapeCompareHtml(v.flavorId)}</strong> · ${escapeCompareHtml(plan?.planName||v.flavorId)} <span style="font-size:11px;color:var(--pa-text-secondary)">· ${getFlavorsForPlan(pk).map(f=>escapeCompareHtml(f.flavorLabel)).join('/')} flavors</span>`;
+  const propLine=document.getElementById('approval-proposal-line');
+  if(propLine){
+    const sum=deriveFlavorReviewSummary(v);
+    const sumCls=sum.rework?'badge-rejected':(sum.pending?'badge-review':'badge-approved');
+    propLine.innerHTML=`<span>Reviewing <strong>${escapeCompareHtml(v.label)}</strong> · ${APPROVAL_STAGE_LABELS[v.approvalStage]||v.approvalStage} · submitted by ${escapeCompareHtml(v.submittedBy||v.createdBy||'—')}${v.submittedAt?' '+escapeCompareHtml(v.submittedAt):''} · current version: ${pub?escapeCompareHtml(pub.label):'none yet'}</span>${REVIEW_STAGES.includes(v.approvalStage)?`<span class="badge ${sumCls}">${escapeCompareHtml(sum.label)}</span>`:''}`;
+  }
 
   const currentIdx=stageIndex(v.approvalStage);
   const withdrawn=v.status==='withdrawn';
@@ -2806,21 +2824,25 @@ function renderApprovalScreen(){
   let actions='';
   const P=currentReviewer();
   const atMyStage=REVIEW_STAGES.includes(v.approvalStage)&&P.stages.includes(v.approvalStage);
-  if(P.id==='creator'){
-    actions=isVersionEditable(v)
-      ?`<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openVersionInBuilder('${v.versionId}')"><i class="ti ti-pencil"></i> Open in builder to edit &amp; submit</button>`
-      :`<div style="font-size:12px;color:var(--muted)">This plan is under review — switch persona (top right) to review it.</div>`;
+  // Executive approval finalizes the proposal as the plan's current version (skips ops stages for now).
+  const approveLabel=v.approvalStage==='executive_review'?'Finalize as current version':APPROVAL_STAGE_LABELS[nextStage];
+  if(v.status==='published'){
+    actions=v.isActivePublished
+      ?`<div style="background:#EAF3DE;border:1px solid #639922;color:#27500A;border-radius:var(--pa-radius);padding:10px 12px;font-size:12px;font-weight:600"><i class="ti ti-circle-check"></i> Current version for this comp plan${v.publishedAt?` — finalized ${escapeCompareHtml(v.publishedAt)}${v.publishedBy?' by '+escapeCompareHtml(v.publishedBy):''}`:''}.</div>`
+      :`<div style="font-size:12px;color:var(--muted)">Superseded — no longer the current version for this comp plan.</div>`;
   }else if(atMyStage){
-    const editBtn=(P.id==='r1'||P.id==='r2')?`<button class="btn" style="flex:1;justify-content:center;min-width:110px" onclick="reviewerEditVersion('${v.versionId}')"><i class="ti ti-pencil"></i> Edit</button>`:'';
+    const editBtn=(v.approvalStage==='first_review'||v.approvalStage==='second_review')?`<button class="btn" style="flex:1;justify-content:center;min-width:110px" onclick="reviewerEditVersion('${v.versionId}')"><i class="ti ti-pencil"></i> Edit</button>`:'';
     actions=`<div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" style="${gA}" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Approve → ${APPROVAL_STAGE_LABELS[nextStage]}</button>
+      <button class="btn" style="${gA}" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Approve → ${approveLabel}</button>
       ${editBtn}
       <button class="btn" style="${rX}" onclick="rejectVersionToDraft('${v.versionId}')"><i class="ti ti-x"></i> Reject → back to draft</button>
     </div>`;
+  }else if(personaIsCreator(P)&&isVersionEditable(v)){
+    actions=`<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openVersionInBuilder('${v.versionId}')"><i class="ti ti-pencil"></i> Open in builder to edit &amp; submit</button>`;
   }else if(REVIEW_STAGES.includes(v.approvalStage)){
     actions=`<div style="font-size:12px;color:var(--muted)">Awaiting ${escapeCompareHtml(stageReviewerName(v.approvalStage))} — switch persona (top right) to act.</div>`;
   }else if(isVersionEditable(v)){
-    actions=`<div style="font-size:12px;color:var(--muted)">This is a draft — switch to Creator to edit &amp; submit.</div>`;
+    actions=`<div style="font-size:12px;color:var(--muted)">This is a draft — switch to a Creator persona to edit &amp; submit.</div>`;
   }else if(v.approvalStage==='release_validation'){
     actions=isComp?`<div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" style="${gA};min-width:200px" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-cloud-upload"></i> Release to downstream →</button>
@@ -3048,9 +3070,9 @@ function createPlanNext(){
   if(!name){alert('Please enter a Comp Plan Name.');return;}
   const role=''; // first flavor's role is defined in the builder
   const firstFlavorId=`${id}.A`;
-  compPlans.push({planId:id,planName:name,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active',activePublishedVersionId:null});
-  planFlavors.push({flavorId:firstFlavorId,planId:id,flavorLabel:'A',flavorName:name,role,fiscalYear:fy,roleGroup:'',owner:'Melissa C.',status:'active'});
-  plans.push({id:firstFlavorId,name,role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:'Melissa C.',approval:'none'});
+  compPlans.push({planId:id,planName:name,fiscalYear:fy,roleGroup:'',owner:'Melissa Yasaitis',status:'active',activePublishedVersionId:null});
+  planFlavors.push({flavorId:firstFlavorId,planId:id,flavorLabel:'A',flavorName:name,role,fiscalYear:fy,roleGroup:'',owner:'Melissa Yasaitis',status:'active'});
+  plans.push({id:firstFlavorId,name,role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:'Melissa Yasaitis',approval:'none'});
   const pk=planKey(id,fy);
   const v=createVersionRecord(pk,{description:'Initial design — Proposal 1'});
   addAuditEntry(pk,'Comp plan created',`${id} · ${fy} created with Proposal 1 (flavor A).`,{versionId:v.versionId});
@@ -3116,7 +3138,7 @@ function cloneToTarget(sourceVersionId,targetId,targetFy,targetName){
   const content=JSON.parse(JSON.stringify(src.content));
   content.flavors.forEach(f=>{f.flavorId=`${targetId}.${f.flavorLabel}`;});
   content.planMeta.planName=exists?(targetPlan.planName):targetName;
-  const owner=(exists?targetPlan.owner:srcPlan?.owner)||'Melissa C.';
+  const owner=(exists?targetPlan.owner:srcPlan?.owner)||'Melissa Yasaitis';
   const roleGroup=(exists?targetPlan.roleGroup:srcPlan?.roleGroup)||'';
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
   const pk=planKey(targetId,targetFy);
@@ -3151,7 +3173,7 @@ function openBuilder(planId,isNew,fromClone,versionId){
   let v=versionId?getVersion(versionId):null;
   if(!v)v=getVersionsForFlavor(pk).find(x=>EDITABLE_STATUSES.includes(x.status))||getPublishedVersion(pk)||getVersionsForFlavor(pk)[0];
   currentVersionId=v?v.versionId:null;
-  builderMeasuresEditable=v?canEditVersion(v):(currentReviewerId==='creator');
+  builderMeasuresEditable=v?canEditVersion(v):personaIsCreator();
   if(v){
     if(!v.content)v.content=blankVersionContent(pk);
     populateBuilderFromVersion(v);
@@ -3592,10 +3614,10 @@ function reconcilePlanFlavors(pk,flavors){
   flavors.forEach(cf=>{
     const f=getPlanFlavor(cf.flavorId,fy);
     if(f){f.role=cf.role;f.flavorLabel=cf.flavorLabel;f.flavorName=cf.flavorName||cf.role;}
-    else planFlavors.push({flavorId:cf.flavorId,planId,flavorLabel:cf.flavorLabel,flavorName:cf.flavorName||cf.role,role:cf.role,fiscalYear:fy,roleGroup:plan?.roleGroup||'',owner:plan?.owner||'Melissa C.',status:'active'});
+    else planFlavors.push({flavorId:cf.flavorId,planId,flavorLabel:cf.flavorLabel,flavorName:cf.flavorName||cf.role,role:cf.role,fiscalYear:fy,roleGroup:plan?.roleGroup||'',owner:plan?.owner||'Melissa Yasaitis',status:'active'});
     const leg=plans.find(p=>p.id===cf.flavorId&&p.fy===fy);
     if(leg){leg.role=cf.role;leg.name=cf.flavorName||cf.role;}
-    else plans.push({id:cf.flavorId,name:cf.flavorName||cf.role,role:cf.role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:plan?.owner||'Melissa C.',approval:'none'});
+    else plans.push({id:cf.flavorId,name:cf.flavorName||cf.role,role:cf.role,fy,status:'draft',ver:'1.0',updated:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),owner:plan?.owner||'Melissa Yasaitis',approval:'none'});
   });
 }
 /* Validate builder content: each flavor's pay measures must total 100% and be ≤4. */
@@ -3638,18 +3660,18 @@ function saveBuilderVersion(){
 
 /* ── Plan catalog (used by library & comparison) ── */
 const plans=[
-  {id:'A01.A',name:'SOLUTION ARCHITECT',role:'Solution Architect',fy:'FY27',status:'review',ver:'2.1',updated:'Jun 11',owner:'Melissa C.',approval:'pending'},
-  {id:'A03.A',name:'DELIVERY',role:'Delivery Specialist',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 8',owner:'Val R.',approval:'none'},
-  {id:'A06.A',name:'ULTIMATE',role:'Ultimate Specialist',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 6',owner:'Melissa C.',approval:'none'},
-  {id:'B01.A',name:'RENEWAL',role:'Renewal Specialist',fy:'FY27',status:'published',ver:'1.0',updated:'Jun 9',owner:'Val R.',approval:'approved'},
-  {id:'B06.A',name:'FIELD SALES',role:'Field Sales Executive',fy:'FY27',status:'published',ver:'2.0',updated:'Jun 7',owner:'Melissa C.',approval:'approved'},
-  {id:'B12.A',name:'INSIDE SALES',role:'Inside Sales Rep',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 4',owner:'Melissa C.',approval:'none'},
-  {id:'S02.B',name:'CUSTOMER',role:'Customer Success Manager',fy:'FY27',status:'approved',ver:'1.0',updated:'Jun 10',owner:'Melissa C.',approval:'approved'},
-  {id:'S05.C',name:'DOMESTIC',role:'Domestic Account Executive',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 4',owner:'Val R.',approval:'none'},
-  {id:'S08.A',name:'BUSINESS',role:'Business Development Rep',fy:'FY27',status:'published',ver:'1.0',updated:'Jun 5',owner:'Val R.',approval:'approved'},
-  {id:'S12.A',name:'SMB SALES',role:'SMB Account Executive',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 7',owner:'Val R.',approval:'none'},
-  {id:'T04.A',name:'DIGITAL SALES',role:'Digital Sales Executive',fy:'FY27',status:'rejected',ver:'1.0',updated:'Jun 2',owner:'Melissa C.',approval:'rejected'},
-  {id:'M01.A',name:'INSIDE SALES',role:'Inside Sales AE',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 5',owner:'Val R.',approval:'none'},
+  {id:'A01.A',name:'SOLUTION ARCHITECT',role:'Solution Architect',fy:'FY27',status:'review',ver:'2.1',updated:'Jun 11',owner:'Melissa Yasaitis',approval:'pending'},
+  {id:'A03.A',name:'DELIVERY',role:'Delivery Specialist',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 8',owner:'Valeria Alonso',approval:'none'},
+  {id:'A06.A',name:'ULTIMATE',role:'Ultimate Specialist',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 6',owner:'Melissa Yasaitis',approval:'none'},
+  {id:'B01.A',name:'RENEWAL',role:'Renewal Specialist',fy:'FY27',status:'published',ver:'1.0',updated:'Jun 9',owner:'Valeria Alonso',approval:'approved'},
+  {id:'B06.A',name:'FIELD SALES',role:'Field Sales Executive',fy:'FY27',status:'published',ver:'2.0',updated:'Jun 7',owner:'Melissa Yasaitis',approval:'approved'},
+  {id:'B12.A',name:'INSIDE SALES',role:'Inside Sales Rep',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 4',owner:'Melissa Yasaitis',approval:'none'},
+  {id:'S02.B',name:'CUSTOMER',role:'Customer Success Manager',fy:'FY27',status:'approved',ver:'1.0',updated:'Jun 10',owner:'Melissa Yasaitis',approval:'approved'},
+  {id:'S05.C',name:'DOMESTIC',role:'Domestic Account Executive',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 4',owner:'Valeria Alonso',approval:'none'},
+  {id:'S08.A',name:'BUSINESS',role:'Business Development Rep',fy:'FY27',status:'published',ver:'1.0',updated:'Jun 5',owner:'Valeria Alonso',approval:'approved'},
+  {id:'S12.A',name:'SMB SALES',role:'SMB Account Executive',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 7',owner:'Valeria Alonso',approval:'none'},
+  {id:'T04.A',name:'DIGITAL SALES',role:'Digital Sales Executive',fy:'FY27',status:'rejected',ver:'1.0',updated:'Jun 2',owner:'Melissa Yasaitis',approval:'rejected'},
+  {id:'M01.A',name:'INSIDE SALES',role:'Inside Sales AE',fy:'FY27',status:'draft',ver:'1.0',updated:'Jun 5',owner:'Valeria Alonso',approval:'none'},
 ];
 
 const MIN_BUILDER_MEASURES=1;
