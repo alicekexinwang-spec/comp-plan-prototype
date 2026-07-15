@@ -130,8 +130,11 @@ include only the minimum user-facing information needed to understand and use th
   Withdraw**; **Edit is in-place** (`reviewerEditVersion` → builder editable via `reviewerEditVersionId`,
   even though the version is locked). At **Release Validation** the Comp Design Team sets per-flavor
   new-hire guarantee + per-measure **plan-mechanics type** (`m.mechType` from `PLAN_MECH_TYPES`,
-  `setReleaseValidationMechType`) then **Release to downstream** (`advanceVersionStage`, gated until all
-  NHG + all mechType are set). Approve/withdraw/publish are attributed to `currentReviewer().name`.
+  `setReleaseValidationMechType`) + per-payout-table **prorate VCT** (`pt.prorateVct`, tri-state
+  `''`/`'Yes'`/`'No'`, `setReleaseValidationProrate` — moved here from the builder; the builder no longer
+  edits it, `syncBuilderPayoutTablesFromDOM` preserves it like `id`) then **Release to downstream**
+  (`advanceVersionStage`, gated until all NHG + all mechType + all prorate are set; `rvFlavorDot` reflects
+  full completeness). Approve/withdraw/publish are attributed to `currentReviewer().name`.
 - **Per-flavor review status (net requirement):** at the **review stages** the approval detail shows a
   per-flavor panel where a reviewer sets each flavor's `reviewStatus` (`pending`/`approved`/`needs_rework`)
   + a `reviewNote` (`setFlavorReviewStatus`/`setFlavorReviewNote`, `FLAVOR_REVIEW_LABELS`). **Plan status is
@@ -197,9 +200,16 @@ include only the minimum user-facing information needed to understand and use th
   DOM, inactive ones just hidden**, so per-flavor payout/bonus hydration + the flavor-encoded slot map keep
   working; within a flavor (`renderBuilderFlavorBlock`) **Pay measures and Payout tables sit side-by-side in
   a 2-column grid** (`.builder-mp-grid`, `repeat(auto-fit,minmax(340px,1fr))`; measures table wrapped in an
-  `overflow-x:auto` scroller), both always visible, and **Bonuses / Tether / Key policies** are collapsibles
-  below. The measure row shows **no** payout preview — the payout tables live in the adjacent column, linked
-  via the row's Payout-table dropdown. **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
+  `overflow-x:auto` scroller), both always visible, and **Bonuses / Tether / Key policies** are plain
+  always-visible sections below (not collapsed). The measure row shows **no** payout preview — the payout
+  tables live in the adjacent column, linked via the row's Payout-table dropdown. The builder flavor tab
+  strip also carries an **"Overview" tab** (`data-flavortab="builder-overview"`, `activeBuilderFlavor==='overview'`)
+  whose panel renders the read-only `renderPlanOverview(content)` (see below).
+- **Plan Overview** (`renderPlanOverview(content)`): a read-only consolidated view of **all flavors** with 5
+  sections — Pay measures (a table per flavor), Payout tables (**deduplicated across flavors** by
+  `payoutOverviewKey(pt)` — a structural JSON key ignoring per-instance `id`/`note`/`prorateVct`; each unique
+  table shown once via `renderPayoutMatrixTables` with a "Used by: Flavor A, B…" chip), Bonus, Tether, Key
+  policies (per flavor). Surfaced in the **builder Overview tab** and the **approval detail** (`#approval-overview`). **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
   are tabbed (`prefix='approval'`, `#approval-flavorpanel-${fi}`). **Compare** (`buildCompareTableBodyHtml`):
   each Flavor section header row is a `.cmp-section-toggle` collapsing its sibling `<tr>`s
   (`toggleCompareSection`) — Plan information + first flavor open, rest collapsed by default.

@@ -3,7 +3,22 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — flavor-level key policies + builder measures/payouts side-by-side (branch `feature/comp-plan-flavorconfig`)
+## Latest change — uncollapse sections + prorate→release validation + plan overview (branch `feature/comp-plan-flavorconfig`)
+- **Bonus / Tether / Key policies** in the flavor block are now **always-visible sections** (no collapse).
+- **Prorate VCT moved to Release Validation.** Removed the builder payout-editor checkbox; `prorateVct` is
+  now tri-state `''`/`'Yes'`/`'No'`, set per payout table at release validation (`setReleaseValidationProrate`)
+  and **required** — `advanceVersionStage` blocks release until every table's prorate (+ NHG + mechType) is
+  set (`rvFlavorDot` shows completeness). Builder Save preserves it via `syncBuilderPayoutTablesFromDOM`.
+- **Plan Overview** (`renderPlanOverview(content)`): read-only all-flavors view — Pay measures (table per
+  flavor), Payout tables **deduped** across flavors (`payoutOverviewKey`, "Used by: Flavor A/B/C" chip),
+  Bonus/Tether/Key policies per flavor. Surfaced as a builder **Overview tab** + an approval-detail card.
+
+Verified on webui2 (no console errors): 0 collapsibles / 0 prorate checkboxes in the flavor block; Overview
+tab renders and dedupes A01's 6 tables→2 unique; Release Validation shows per-table prorate selects, the gate
+blocks (message names prorate) then advances once all set, prorate persists + survives builder sync; all 11
+versions `validateVersionContent`=0. **Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — flavor-level key policies + builder measures/payouts side-by-side (branch `feature/comp-plan-flavorconfig`)
 - **Key policies → per flavor.** Removed `planMeta.keyPolicies` + the plan-level "Key Policies" section;
   each flavor owns `keyPolicies` (seed/blank/add-flavor/normalizer), edited in a **Key policies** collapsible
   in the flavor block. `planMeta` is now `{planName,designerNote}`.

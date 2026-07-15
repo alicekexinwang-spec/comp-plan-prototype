@@ -1106,6 +1106,10 @@ tr:hover td{background:var(--pa-surface-hover)}
           <div id="approval-context-text">Reviewing <strong id="approval-version-name">Proposal 2</strong> against the <strong>published version</strong> (<span id="approval-published-label">v1</span>).</div>
         </div>
         <div class="approval-stage-track" id="approval-stage-track"></div>
+        <div class="card" id="approval-overview-card" style="margin-bottom:14px">
+          <div class="card-header"><div class="card-title">Plan overview — all flavors</div></div>
+          <div id="approval-overview"></div>
+        </div>
         <div class="two-col">
           <div>
             <div class="approval-card">
@@ -2464,7 +2468,9 @@ function advanceVersionStage(versionId){
     const missNHG=(v.content?.flavors||[]).filter(fl=>!fl.newHireGuarantee).map(f=>'Flavor '+f.flavorLabel+' new-hire guarantee');
     const missMech=[];
     (v.content?.flavors||[]).forEach(fl=>(fl.measures||[]).forEach((m,mi)=>{if(!m.mechType)missMech.push('Flavor '+fl.flavorLabel+' · '+(m.description||('Measure '+(mi+1)))+' mechanics type');}));
-    const missing=missNHG.concat(missMech);
+    const missProrate=[];
+    (v.content?.flavors||[]).forEach(fl=>(fl.payoutTables||[]).forEach((pt,ti)=>{if(!pt.prorateVct)missProrate.push('Flavor '+fl.flavorLabel+' · '+(pt.title||('Payout table '+(ti+1)))+' prorate VCT');}));
+    const missing=missNHG.concat(missMech,missProrate);
     if(missing.length){alert('Complete Release Validation before releasing downstream — missing:\n• '+missing.join('\n• '));return;}
   }
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -2509,6 +2515,21 @@ function setReleaseValidationMechType(versionId,fi,mi,value){
   v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   buildPlanSnapshots();buildCompareSelects();
   renderApprovalScreen();
+}
+/* Release-validation: capture per-payout-table prorate-VCT decision. */
+function setReleaseValidationProrate(versionId,fi,ti,value){
+  const v=getVersion(versionId);
+  const pt=v&&v.content&&v.content.flavors&&v.content.flavors[fi]&&v.content.flavors[fi].payoutTables&&v.content.flavors[fi].payoutTables[ti];
+  if(!pt)return;
+  pt.prorateVct=value;
+  v.updatedAt=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  buildPlanSnapshots();buildCompareSelects();
+  renderApprovalScreen();
+}
+/* Release-validation completeness dot: green only when NHG + every measure's mechType + every table's prorate are set. */
+function rvFlavorDot(fl){
+  const ok=fl.newHireGuarantee&&(fl.measures||[]).every(m=>m.mechType)&&(fl.payoutTables||[]).every(pt=>pt.prorateVct);
+  return ok?'ok':'warn';
 }
 /* Per-flavor review status (set by a reviewer at a review stage). Plan status is DERIVED from these. */
 const FLAVOR_REVIEW_LABELS={pending:'Not reviewed',approved:'Approved',needs_rework:'Needs rework'};
@@ -2619,7 +2640,7 @@ function renderApprovalScreen(){
   if(!v){
     document.getElementById('approval-page-title').textContent='Approval Review';
     document.getElementById('approval-page-subtitle').textContent='Select an item from your queue.';
-    ['approval-stage-track','approval-stages-list','approval-actions-panel','approval-comment-history','approval-status-timeline','approval-signoff-tbody'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+    ['approval-stage-track','approval-stages-list','approval-actions-panel','approval-comment-history','approval-status-timeline','approval-signoff-tbody','approval-overview'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
     return;
   }
   const pk=planKey(v.flavorId,v.fy);
@@ -2680,11 +2701,12 @@ function renderApprovalScreen(){
   let rvHtml='';
   if(v.approvalStage==='release_validation'&&isComp){
     rvHtml=`<div style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;margin-bottom:6px">Release validation <span style="font-weight:400;color:var(--muted)">— set new-hire guarantee (per flavor) &amp; plan-mechanics type (per measure) before releasing</span></div>
-      ${flavorTabsHtml(v.content.flavors,activeApprovalFlavor,'approval',{dotFn:fl=>fl.newHireGuarantee?'ok':'warn'})}
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">Release validation <span style="font-weight:400;color:var(--muted)">— set new-hire guarantee (per flavor), plan-mechanics type (per measure) &amp; prorate VCT (per payout table) before releasing</span></div>
+      ${flavorTabsHtml(v.content.flavors,activeApprovalFlavor,'approval',{dotFn:fl=>rvFlavorDot(fl)})}
       ${(v.content?.flavors||[]).map((fl,fi)=>`<div class="pa-pivot-panel ${fi===activeApprovalFlavor?'active':''}" id="approval-flavorpanel-${fi}" role="tabpanel"><div style="border:1px solid var(--pa-border);border-radius:var(--radius);padding:8px 10px">
         <div class="plan-kv-row"><span class="k">Flavor ${fl.flavorLabel}${fl.role?' · '+escapeCompareHtml(fl.role):''} — new hire guarantee</span><select class="form-select" onchange="setReleaseValidationGuarantee('${v.versionId}',${fi},this.value)">${['','Yes','No'].map(o=>`<option value="${o}" ${o===(fl.newHireGuarantee||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>
         ${(fl.measures||[]).map((m,mi)=>`<div class="plan-kv-row"><span class="k">${escapeCompareHtml(m.description||('Measure '+(mi+1)))} — mechanics type</span><select class="form-select" onchange="setReleaseValidationMechType('${v.versionId}',${fi},${mi},this.value)"><option value="" ${!m.mechType?'selected':''}>Select…</option>${PLAN_MECH_TYPES.map(t=>`<option value="${escapeCompareHtml(t)}" ${t===m.mechType?'selected':''}>${escapeCompareHtml(t)}</option>`).join('')}</select></div>`).join('')}
+        ${(fl.payoutTables||[]).map((pt,ti)=>`<div class="plan-kv-row"><span class="k">${escapeCompareHtml(pt.title||('Payout table '+(ti+1)))} — prorate VCT</span><select class="form-select" onchange="setReleaseValidationProrate('${v.versionId}',${fi},${ti},this.value)">${['','Yes','No'].map(o=>`<option value="${o}" ${o===(pt.prorateVct||'')?'selected':''}>${o||'Select…'}</option>`).join('')}</select></div>`).join('')}
       </div></div>`).join('')}
     </div>`;
   }
@@ -2714,6 +2736,7 @@ function renderApprovalScreen(){
     </div>`;
   }
   document.getElementById('approval-actions-panel').innerHTML=rvHtml+frHtml+actions;
+  {const ov=document.getElementById('approval-overview');if(ov)ov.innerHTML=renderPlanOverview(v.content);}
 
   const events=getApprovalEventsForVersion(v.versionId);
   document.getElementById('approval-comment-history').innerHTML=events.filter(e=>e.note).map(e=>`
@@ -3036,7 +3059,7 @@ function flavorTabsHtml(flavors,activeIdx,prefix,opts){
     return `<button type="button" class="pa-pivot-tab flavor-tab ${fi===activeIdx?'active':''}" data-flavortab="${prefix}-${fi}" onclick="switchFlavorTab('${prefix}',${fi})">${dot}Flavor ${escapeCompareHtml(fl.flavorLabel||String.fromCharCode(65+fi))}${sub}</button>`;
   }).join('');
   const add=opts.addOnclick?`<button type="button" class="pa-pivot-tab flavor-tab-add" onclick="${opts.addOnclick}" title="Add flavor"><i class="ti ti-plus"></i> Add</button>`:'';
-  return `<div class="pa-pivot flavor-pivot" role="tablist">${tabs}${add}</div>`;
+  return `<div class="pa-pivot flavor-pivot" role="tablist">${tabs}${add}${opts.extraTabs||''}</div>`;
 }
 function switchFlavorTab(prefix,idx){
   if(prefix==='builder')activeBuilderFlavor=idx; else if(prefix==='approval')activeApprovalFlavor=idx;
@@ -3058,13 +3081,51 @@ function renderBuilderFlavors(){
   if(!cont||!builderWorkingContent)return;
   const editable=builderMeasuresEditable;
   const flavors=builderWorkingContent.flavors;
-  if(activeBuilderFlavor>=flavors.length)activeBuilderFlavor=Math.max(0,flavors.length-1);
+  const isOverview=activeBuilderFlavor==='overview';
+  if(typeof activeBuilderFlavor==='number'&&activeBuilderFlavor>=flavors.length)activeBuilderFlavor=Math.max(0,flavors.length-1);
   sharedPayoutSlots=new Set();builderPayoutSlotIndex={};
-  const tabs=flavorTabsHtml(flavors,activeBuilderFlavor,'builder',{dotFn:builderFlavorDot,addOnclick:editable?'addBuilderFlavor()':null});
-  const panels=flavors.map((fl,fi)=>`<div class="pa-pivot-panel ${fi===activeBuilderFlavor?'active':''}" id="builder-flavorpanel-${fi}" role="tabpanel">${renderBuilderFlavorBlock(fl,fi,editable)}</div>`).join('');
+  const overviewTab=`<button type="button" class="pa-pivot-tab flavor-tab ${isOverview?'active':''}" data-flavortab="builder-overview" onclick="switchFlavorTab('builder','overview')"><i class="ti ti-layout-list"></i> Overview</button>`;
+  const tabs=flavorTabsHtml(flavors,isOverview?-1:activeBuilderFlavor,'builder',{dotFn:builderFlavorDot,addOnclick:editable?'addBuilderFlavor()':null,extraTabs:overviewTab});
+  const panels=flavors.map((fl,fi)=>`<div class="pa-pivot-panel ${fi===activeBuilderFlavor?'active':''}" id="builder-flavorpanel-${fi}" role="tabpanel">${renderBuilderFlavorBlock(fl,fi,editable)}</div>`).join('')
+    +`<div class="pa-pivot-panel ${isOverview?'active':''}" id="builder-flavorpanel-overview" role="tabpanel">${renderPlanOverview(builderWorkingContent)}</div>`;
   cont.innerHTML=tabs+panels;
   // Fill each flavor's own payout-table & bonus editors (containers created in the flavor block; hidden panels are still in the DOM).
   flavors.forEach((fl,fi)=>{renderBuilderFlavorPayouts(fi);renderBuilderFlavorBonuses(fi);});
+}
+/* Structural key for deduping payout tables across flavors (ignores per-instance id/note/prorate). */
+function payoutOverviewKey(pt){
+  return JSON.stringify({title:pt.title||'',type:pt.type||'',bandSetId:pt.bandSetId||'',mcr:pt.mcr||'',globalVctCap:pt.globalVctCap||'',threshold:(pt.threshold??''),payCurveType:pt.payCurveType||'',
+    thresholds:(pt.thresholds||[]).map(b=>({label:b.label||'',tierSetId:b.tierSetId||'',mcr:b.mcr||'',tiers:(b.tiers||[]).map(t=>({f:t.attainmentFrom,to:t.attainmentTo,x:t.xPCR,v:t.vctAtMax,m:t.mcr}))}))});
+}
+/* Read-only consolidated overview of all flavors: measures per flavor, deduped payout tables, bonus/tether/key policies per flavor. */
+function renderPlanOverview(content){
+  const flavors=(content&&content.flavors)||[];
+  const esc=escapeCompareHtml;
+  if(!flavors.length)return '<p style="font-size:12px;color:var(--pa-text-secondary)">No flavors.</p>';
+  const measuresHtml=flavors.map(fl=>{
+    const rows=(fl.measures||[]).map((m,mi)=>{
+      const linked=(fl.payoutTables||[]).find(pt=>pt.id===m.payoutTableId);
+      return `<tr><td><span class="badge badge-proposal" style="font-weight:600">M${mi+1}</span></td><td>${esc(m.description||'—')}</td><td>${esc(m.value||'—')}</td><td class="num">${esc(m.vct||'—')}</td><td>${esc(m.perf||'—')}</td><td>${esc(m.pay||'—')}</td><td>${esc(linked?(linked.title||'Untitled'):'—')}</td></tr>`;
+    }).join('');
+    return `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;margin-bottom:4px">Flavor ${esc(fl.flavorLabel)}${fl.role?' · '+esc(fl.role):''}</div>
+      <div style="overflow-x:auto"><table class="payout-tier-table" style="width:100%;min-width:640px"><thead><tr><th style="width:34px">#</th><th>Performance measure</th><th>System pay measure</th><th class="num">VCT Wt%</th><th>Perf period</th><th>Payout freq</th><th>Payout table</th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="color:var(--muted)">No measures</td></tr>'}</tbody></table></div></div>`;
+  }).join('');
+  const uniq=[];const byKey={};
+  flavors.forEach(fl=>(fl.payoutTables||[]).forEach(pt=>{const k=payoutOverviewKey(pt);if(!byKey[k]){byKey[k]={pt,labels:[]};uniq.push(byKey[k]);}if(!byKey[k].labels.includes(fl.flavorLabel))byKey[k].labels.push(fl.flavorLabel);}));
+  const payoutHtml=uniq.length?uniq.map(u=>`<div class="measure-payout-unit" style="margin-bottom:12px;padding:10px 12px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><i class="ti ti-table"></i><strong>${esc(u.pt.title||'Untitled')}</strong><span class="badge badge-draft" style="background:#EEF2F7;color:#33475B">Used by: ${u.labels.map(l=>'Flavor '+esc(l)).join(', ')}</span></div>
+    ${renderPayoutMatrixTables(u.pt,'payout-matrix')}</div>`).join(''):'<p style="font-size:12px;color:var(--muted)">No payout tables.</p>';
+  const perFlavor=(getter)=>flavors.map(fl=>`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">Flavor ${esc(fl.flavorLabel)}</span><span style="font-size:12px">${getter(fl)}</span></div>`).join('');
+  const bonusHtml=perFlavor(fl=>{const b=(fl.bonuses||[]);return b.length?b.map(x=>esc((x.type||'—')+(x.payoutDetails?' · '+x.payoutDetails:'')+(x.maxPayout?' · max '+x.maxPayout:''))).join('<br>'):'<span style="color:var(--muted)">No bonus</span>';});
+  const tetherHtml=perFlavor(fl=>(fl.tether&&fl.tether.trim())?esc(fl.tether):'<span style="color:var(--muted)">—</span>');
+  const keyPolHtml=perFlavor(fl=>(fl.keyPolicies&&fl.keyPolicies.trim())?esc(fl.keyPolicies):'<span style="color:var(--muted)">—</span>');
+  return `<div class="plan-overview">
+    <div class="plan-section-hdr">Pay measures</div>${measuresHtml}
+    <div class="plan-section-hdr" style="margin-top:12px">Payout tables <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${uniq.length} unique</span></div>${payoutHtml}
+    <div class="plan-section-hdr" style="margin-top:12px">Bonus</div>${bonusHtml}
+    <div class="plan-section-hdr" style="margin-top:12px">Tether</div>${tetherHtml}
+    <div class="plan-section-hdr" style="margin-top:12px">Key policies</div>${keyPolHtml}
+  </div>`;
 }
 function flavorVctSum(fl){return (fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);}
 function flavorVctSumBadge(fi){
@@ -3108,9 +3169,12 @@ function renderBuilderFlavorBlock(fl,fi,editable){
         <div id="builder-flavor-${fi}-payouts"></div>
       </div>
     </div>
-    ${collapsibleHtml(`bfl-${fi}-bonuses`,'Bonuses',`<div id="builder-flavor-${fi}-bonuses"></div>`,{badge:`${(fl.bonuses||[]).length} bonus${(fl.bonuses||[]).length===1?'':'es'}`})}
-    ${collapsibleHtml(`bfl-${fi}-tether`,'Tether',`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorTether(${fi},this.value)" placeholder="Tether description (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.tether||'').replace(/</g,'&lt;')}</textarea></div>`,{badge:(fl.tether||'').trim()?'set':'—'})}
-    ${collapsibleHtml(`bfl-${fi}-keypolicies`,'Key policies',`<div class="plan-kv-row" style="align-items:flex-start"><span class="k">Key policies</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorField(${fi},'keyPolicies',this.value)" placeholder="Key policies (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.keyPolicies||'').replace(/</g,'&lt;')}</textarea></div>`,{badge:(fl.keyPolicies||'').trim()?'set':'—'})}
+    <div class="plan-section-hdr" style="margin-top:12px">Bonuses <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${(fl.bonuses||[]).length} bonus${(fl.bonuses||[]).length===1?'':'es'}</span></div>
+    <div id="builder-flavor-${fi}-bonuses"></div>
+    <div class="plan-section-hdr" style="margin-top:12px">Tether</div>
+    <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Description</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorTether(${fi},this.value)" placeholder="Tether description (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.tether||'').replace(/</g,'&lt;')}</textarea></div>
+    <div class="plan-section-hdr" style="margin-top:12px">Key policies</div>
+    <div class="plan-kv-row" style="align-items:flex-start"><span class="k">Key policies</span><textarea class="form-textarea" ${editable?'':'readonly'} oninput="onBuilderFlavorField(${fi},'keyPolicies',this.value)" placeholder="Key policies (free text)" style="width:100%;min-height:52px;resize:vertical">${(fl.keyPolicies||'').replace(/</g,'&lt;')}</textarea></div>
     </div>
   </div>`;
 }
@@ -3182,7 +3246,6 @@ function renderBuilderFlavorPayouts(fi){
         <span class="pf"><label>Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
         <span class="pf"><label>Threshold</label><input class="form-input" id="builder-p${slot}-threshold" type="text" inputmode="numeric" value="${(pt.threshold!=null&&pt.threshold!=='')?pt.threshold:''}" ${editable?'':'readonly'} oninput="this.value=this.value.replace(/[^0-9]/g,'')" title="Minimum attainment required for payout (optional)" placeholder="Optional" style="width:72px"></span>
         <span class="pf"><label>Cap</label><span class="xpcr-cell"><input class="form-input" id="builder-p${slot}-cap" value="${(String(pt.globalVctCap||'').match(/[\d.]+/)||[''])[0]}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderCapInput(${slot},this)" placeholder="e.g. 200" style="width:90px"><span class="pct-suffix">%</span></span></span>
-        <label class="pf pf-check"><input type="checkbox" id="builder-p${slot}-prorate" ${pt.prorateVct?'checked':''} ${editable?'':'disabled'}> Prorate VCT</label>
         ${mcrField}${bandSetField}
       </div>
       <div class="payout-table-wrap ${editable?'':'payout-readonly'}" id="builder-p${slot}-table"></div>
@@ -3314,6 +3377,7 @@ function syncBuilderPayoutTablesFromDOM(){
     const prev=list[ref.idx]||{};
     const cur=collectPayoutTable(parseInt(slot,10));
     cur.id=prev.id||payoutUid();
+    cur.prorateVct=(prev.prorateVct!=null?prev.prorateVct:'');
     list[ref.idx]=cur;
   });
 }
@@ -4111,7 +4175,7 @@ const QUOTA_BAND_SCHEMES=[
 const DEFAULT_QUOTA_SCHEME='opt2';
 const BLANK_SCHEME={key:'',bands:[],label:'Select quota band…'};
 function getQuotaScheme(key){if(!key)return BLANK_SCHEME;return QUOTA_BAND_SCHEMES.find(s=>s.key===key)||QUOTA_BAND_SCHEMES[0];}
-function blankPayoutTable(){return{type:'',bandSetId:'',thresholds:[],mcr:'',note:'',globalVctCap:'',prorateVct:false,payCurveType:'Linear',threshold:''};}
+function blankPayoutTable(){return{type:'',bandSetId:'',thresholds:[],mcr:'',note:'',globalVctCap:'',prorateVct:'',payCurveType:'Linear',threshold:''};}
 function defaultBandTiers(){return[{id:payoutUid(),attainmentFrom:0,attainmentTo:null,xPCR:'',vctAtMax:'',mcr:null}];}
 function createEmptyBand(label){return{id:payoutUid(),label:label||'',mcr:null,tierSetId:'',tiers:[createEmptyTier()]};}
 /* Reshape a payout table to a quota-band scheme: one threshold (band) per scheme range. */
@@ -4130,7 +4194,7 @@ function normalizePayoutToScheme(pt,key){
     mcr:'',
     note:'',
     globalVctCap:(pt&&pt.globalVctCap)||'',
-    prorateVct:!!(pt&&pt.prorateVct),
+    prorateVct:(pt&&pt.prorateVct)||'',
     payCurveType:(pt&&pt.payCurveType)||'Linear',
     threshold:(pt&&pt.threshold!=null)?pt.threshold:'',
   };
@@ -4374,14 +4438,14 @@ function seedQuotaBandTable(title,bandSetName,tierSetName,xpcrByTier,opts){
       mcr:opts.bandMcr||null,tierSetId:(tierSet&&tierSet.id)||'',tiers:seedTiersFromTierSet(tierSet,xpcrByTier)};
   });
   return{id:payoutUid(),title,type:'quota_band',bandSetId:(bandSet&&bandSet.id)||'',thresholds,
-    mcr:'',note:'',globalVctCap:opts.cap||'',prorateVct:false,payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
+    mcr:'',note:'',globalVctCap:opts.cap||'',prorateVct:'',payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
 }
 function seedAttainmentOnlyTable(title,tierSetName,vctByTier,opts){
   opts=opts||{};
   const tierSet=findTierSetByName(tierSetName);
   const thresholds=[{id:payoutUid(),label:'',description:'',mcr:null,tierSetId:(tierSet&&tierSet.id)||'',tiers:seedTiersFromTierSet(tierSet,null,vctByTier)}];
   return{id:payoutUid(),title,type:'attainment_only',bandSetId:'',thresholds,
-    mcr:opts.mcr||'',note:'',globalVctCap:opts.cap||'',prorateVct:false,payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
+    mcr:opts.mcr||'',note:'',globalVctCap:opts.cap||'',prorateVct:'',payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
 }
 function seedTargetPctTable(title,bands,opts){
   opts=opts||{};
@@ -4390,7 +4454,7 @@ function seedTargetPctTable(title,bands,opts){
     return{id:payoutUid(),label:bd.label||'',description:bd.description||'',mcr:bd.mcr||null,tierSetId:(tierSet&&tierSet.id)||'',tiers:seedTiersFromTierSet(tierSet,bd.xpcrByTier)};
   });
   return{id:payoutUid(),title,type:'target_pct',bandSetId:'',thresholds,
-    mcr:'',note:'',globalVctCap:opts.cap||'',prorateVct:false,payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
+    mcr:'',note:'',globalVctCap:opts.cap||'',prorateVct:'',payCurveType:'Linear',threshold:(opts.threshold!=null?opts.threshold:'')};
 }
 function mkMeasure(description,vct,perf,pay,value){return{description,value:value||'',vct,perf,pay};}
 
@@ -4859,7 +4923,7 @@ function collectPayoutTable(slot){
     mcr:document.getElementById(`builder-p${slot}-mcr`)?.value||'',
     note:document.getElementById(`builder-p${slot}-note`)?.value||'',
     globalVctCap:(()=>{const c=(document.getElementById(`builder-p${slot}-cap`)?.value||'').trim();return c?c+'%':'';})(),
-    prorateVct:!!document.getElementById(`builder-p${slot}-prorate`)?.checked,
+    prorateVct:'',
     payCurveType:document.getElementById(`builder-p${slot}-curve`)?.value||'Linear',
     threshold:(()=>{const t=(document.getElementById(`builder-p${slot}-threshold`)?.value||'').trim();return t===''?'':parseInt(t,10);})(),
   };
