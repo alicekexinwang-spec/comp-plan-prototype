@@ -98,14 +98,18 @@ include only the minimum user-facing information needed to understand and use th
   The measure's `description` is the **performance-measure value** (chosen from a config dropdown of the
   Performance Measures list); `value` holds the **system pay measure** auto-derived from that value's config
   mapping and shown **read-only** on the row (`systemPayMeasureFor`; changing the measure re-derives it,
-  `onBuilderMeasureNameChange`). Measures are labelled **M1/M2/M3** by index. Each measure has a **`payoutTableId`** linking it to exactly one payout table **on
-  its own flavor** (chosen via a "Payout table" dropdown on the measure row, scoped to that flavor's tables),
-  and the builder shows that **linked table read-only inline** under the measure row
-  (`renderPayoutMatrixTables`). **Submit**
-  (`validateVersionContent`) requires — **per flavor** — every measure to link to an existing table on
-  that flavor and every one of that flavor's tables to have ≥1 measure linked. Measures carry no
-  `measureId`/metric. Each flavor's `payoutTables` is added via a per-flavor **"Add payout table"** button;
-  each has its own `id` (`payoutUid()`) + free-text `title`. Each flavor's `bonuses` is a **per-flavor list
+  `onBuilderMeasureNameChange`). Measures are labelled **M1/M2/M3** by index. **Measure ↔ payout table is
+  1:1, auto-managed:** each measure **owns exactly one** payout table (linked via `payoutTableId`) that is
+  **auto-created** when the measure is added (`addBuilderMeasureToFlavor`) and **auto-removed** when the
+  measure is deleted (`removeBuilderMeasureFromFlavor`). There is **no payout-table dropdown on the measure
+  row** and **no "Add payout table" button** — the table's `title` **auto-generates from the measure name**
+  (`onBuilderMeasureNameChange` syncs it unless the user customized the title) and stays editable in the
+  payout editor (`setBuilderPayoutTitle`). All three mutators call `syncBuilderPayoutTablesFromDOM()` first
+  so in-flight edits survive the re-render. **Submit**
+  (`validateVersionContent`) still requires — **per flavor** — every measure to link to an existing table on
+  that flavor and every one of that flavor's tables to have ≥1 measure linked (now always true by
+  construction). Measures carry no `measureId`/metric. Each flavor's `payoutTables` therefore holds exactly
+  one table per measure, each with its own `id` (`payoutUid()`) + auto/editable `title`. Each flavor's `bonuses` is a **per-flavor list
   of up to 5** (`MAX_BUILDER_BONUSES`), each `{type,payoutDetails,maxPayout}` — **no bonus by default**
   (empty); Bonus Type is a dropdown (`BONUS_TYPE_OPTIONS`: Lead Referral / Linearity / M1 & M2 Achievement),
   the other two are free text (handlers `addBuilderBonus(fi)`/`removeBuilderBonus(fi,i)`/`setBuilderBonusField(fi,i,…)`,
@@ -287,9 +291,9 @@ include only the minimum user-facing information needed to understand and use th
   called **once per flavor** so each flavor's tables get unique `payoutUid` ids) via config-set-driven payout
   builders (`seedQuotaBandTable` / `seedAttainmentOnlyTable` / `seedTargetPctTable`, which resolve
   `quotaBandSets`/`attainmentTierSets` by name so seeded tables carry real `bandSetId`/`tierSetId`). The final
-  linking pass links each measure to a table **on its own flavor** and then **prunes each flavor's payout
-  tables to only those a measure links to** (so per-flavor validation passes — a flavor only owns the tables
-  it uses). Demo data obeys the rules: per-flavor measures total 100% VCT, all three payout types appear, some
+  linking pass makes it **1:1**: for each flavor, each measure gets its **own cloned** payout table (deep-copied
+  from the structure it was linked to via `linkByTitle`, else the flavor's first table; fresh `payoutUid()` +
+  fresh nested band/tier ids) titled by the measure name, so a flavor ends with exactly one table per measure. Demo data obeys the rules: per-flavor measures total 100% VCT, all three payout types appear, some
   caps (`%`)/integer thresholds are set, and bonuses are seeded on A01 & S08. The old field maps
   (`fy26Baselines`/`fy27CurrentFields`/`planFieldTemplates`/`payMixMap`/`roleMap`) are no longer used by
   seeding but remain for the legacy `buildPlanFieldData` fallback.

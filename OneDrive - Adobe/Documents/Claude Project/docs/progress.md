@@ -3,7 +3,22 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — global persona toggle + stage capabilities + reject-to-draft (+ Overview2 tab) (branch `feature/comp-plan-flavorconfig`)
+## Latest change — measure ↔ payout table = 1:1 auto-created/named/linked (branch `feature/comp-plan-flavorconfig`)
+Each pay measure now **owns exactly one** payout table, auto-managed:
+- Adding a measure (`addBuilderMeasureToFlavor`) auto-creates + links its payout table; removing the measure
+  (`removeBuilderMeasureFromFlavor`) removes its table. The **payout-table dropdown on the measure row and the
+  "Add payout table" button are gone**.
+- The table `title` **auto-generates from the measure name** (`onBuilderMeasureNameChange` keeps it in sync
+  unless the user customized it) and stays editable in the payout editor. All mutators call
+  `syncBuilderPayoutTablesFromDOM()` first so in-flight edits survive re-render.
+- Seed final pass rewritten to 1:1: each measure gets its **own cloned** table (fresh ids, titled by the
+  measure). The payout editor (type/bands/tiers/cap/threshold/note) is unchanged.
+
+Verified on webui2 (no console errors): no dropdown/Add-button; add→auto-create+link, rename→title syncs,
+custom title kept on later rename, remove→table removed (count stays 1:1); all 11 seeded versions
+`validateVersionContent`=0. **Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — global persona toggle + stage capabilities + reject-to-draft (+ Overview2 tab) (branch `feature/comp-plan-flavorconfig`)
 Two features in one commit.
 - **Overview2 tab** (`renderPlanOverviewByFlavor`): a second builder tab (after Overview) showing the plan
   **by flavor dimension** — a **vertical stack of full-width flavor rows**, each row's five sections

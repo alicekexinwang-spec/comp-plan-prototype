@@ -3259,7 +3259,7 @@ function renderBuilderFlavorBlock(fl,fi,editable){
         <div class="plan-section-hdr">Measures &amp; Weightings <span style="font-weight:400;color:var(--pa-text-secondary);font-size:11px">${fl.measures.length}/${MAX_BUILDER_MEASURES} · must total 100%</span></div>
         <div style="overflow-x:auto">
         <table class="payout-tier-table builder-measure-table" style="width:100%;min-width:720px">
-          <thead><tr><th style="width:34px">#</th><th style="min-width:180px">Performance measure</th><th style="min-width:130px">System pay measure</th><th style="width:70px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:100px">Performance period</th><th style="min-width:100px">Payout frequency</th><th style="min-width:130px">Payout table</th><th style="width:30px"></th></tr></thead>
+          <thead><tr><th style="width:34px">#</th><th style="min-width:180px">Performance measure</th><th style="min-width:130px">System pay measure</th><th style="width:70px">VCT Wt%<span class="req" title="Pay measures must total 100%">*</span></th><th style="min-width:100px">Performance period</th><th style="min-width:100px">Payout frequency</th><th style="width:30px"></th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
         </div>
@@ -3298,19 +3298,43 @@ function renderBuilderFlavorMeasureRow(fi,mi,m,editable){
     <td><div class="xpcr-cell"><input class="form-input" value="${(m.vct||'').replace(/%/g,'')}" ${editable?'':'readonly'} inputmode="decimal" oninput="onBuilderVctInput(${fi},${mi},this)" style="width:44px" placeholder="e.g. 50"><span class="pct-suffix">%</span></div></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'perf',this.value)"><option value="" ${!m.perf?'selected':''}>Select…</option>${PERF_PERIOD_OPTIONS.map(o=>`<option value="${o}" ${o===m.perf?'selected':''}>${o}</option>`).join('')}</select></td>
     <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'pay',this.value)"><option value="" ${!m.pay?'selected':''}>Select…</option>${PAY_FREQ_OPTIONS.map(o=>`<option value="${o}" ${o===m.pay?'selected':''}>${o}</option>`).join('')}</select></td>
-    <td><select class="form-select" ${dis} onchange="setBuilderFlavorMeasure(${fi},${mi},'payoutTableId',this.value)"><option value="" ${!m.payoutTableId?'selected':''}>Select…</option>${((fl&&fl.payoutTables)||[]).map((pt,pi)=>`<option value="${pt.id}" ${pt.id===m.payoutTableId?'selected':''}>${escapeCompareHtml(pt.title||('Payout table '+(pi+1)))}</option>`).join('')}</select></td>
     <td>${canRemove?`<button type="button" class="btn btn-sm" onclick="removeBuilderMeasureFromFlavor(${fi},${mi})" title="Remove measure"><i class="ti ti-x"></i></button>`:''}</td>
   </tr>`;
 }
-function onBuilderMeasureNameChange(fi,mi,val){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(!m)return;m.description=val;m.value=systemPayMeasureFor(val);renderBuilderFlavors();}
+// Renaming a measure keeps its auto-created payout table's title in sync — unless the user customized it.
+function onBuilderMeasureNameChange(fi,mi,val){
+  const fl=builderWorkingContent.flavors[fi];const m=fl?.measures[mi];if(!m)return;
+  syncBuilderPayoutTablesFromDOM();
+  const oldName=m.description||'';
+  m.description=val;m.value=systemPayMeasureFor(val);
+  const pt=flavorPayoutTables(fi).find(t=>t.id===m.payoutTableId);
+  if(pt&&(!pt.title||pt.title===oldName))pt.title=val;
+  renderBuilderFlavors();
+}
 const MAX_BUILDER_FLAVORS=5;
 function onBuilderFlavorField(fi,field,v){if(builderWorkingContent.flavors[fi])builderWorkingContent.flavors[fi][field]=v;}
 function recalcFlavorVctSum(fi){const el=document.getElementById(`flavor-vctsum-${fi}`);if(!el)return;const sum=flavorVctSum(builderWorkingContent.flavors[fi]);const ok=Math.round(sum)===100;el.textContent=`VCT total ${sum%1===0?sum:sum.toFixed(1)}%`;el.className=`badge ${ok?'badge-approved':'badge-rejected'}`;}
 function setBuilderFlavorMeasure(fi,mi,field,v){const m=builderWorkingContent.flavors[fi]?.measures[mi];if(m)m[field]=v;}
 function onBuilderVctInput(fi,mi,el){el.value=el.value.replace(/[^0-9.]/g,'');setBuilderFlavorMeasure(fi,mi,'vct',el.value?el.value+'%':'');recalcFlavorVctSum(fi);}
 function onBuilderCapInput(slot,el){el.value=el.value.replace(/[^0-9.]/g,'');syncPayoutVctCalcs(slot);}
-function addBuilderMeasureToFlavor(fi){if(builderWorkingContent.flavors[fi].measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}builderWorkingContent.flavors[fi].measures.push({description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:'',mechType:''});renderBuilderFlavors();}
-function removeBuilderMeasureFromFlavor(fi,mi){if(builderWorkingContent.flavors[fi].measures.length<=1)return;builderWorkingContent.flavors[fi].measures.splice(mi,1);renderBuilderFlavors();}
+function addBuilderMeasureToFlavor(fi){
+  const fl=builderWorkingContent.flavors[fi];
+  if(fl.measures.length>=MAX_BUILDER_MEASURES){alert(`Maximum ${MAX_BUILDER_MEASURES} pay measures per flavor.`);return;}
+  syncBuilderPayoutTablesFromDOM();
+  const pt=Object.assign({id:payoutUid(),title:''},blankPayoutTable()); // 1:1 auto-created payout table
+  flavorPayoutTables(fi).push(pt);
+  fl.measures.push({description:'',value:'',vct:'',perf:'',pay:'',payoutTableId:pt.id,mechType:''});
+  renderBuilderFlavors();
+}
+function removeBuilderMeasureFromFlavor(fi,mi){
+  const fl=builderWorkingContent.flavors[fi];
+  if(fl.measures.length<=1)return;
+  syncBuilderPayoutTablesFromDOM();
+  const rid=fl.measures[mi]&&fl.measures[mi].payoutTableId;
+  fl.measures.splice(mi,1);
+  if(rid){const list=flavorPayoutTables(fi);const ti=list.findIndex(t=>t.id===rid);if(ti>=0)list.splice(ti,1);} // remove the measure's own payout table
+  renderBuilderFlavors();
+}
 function addBuilderFlavor(){
   if(!builderMeasuresEditable)return;
   if(builderWorkingContent.flavors.length>=MAX_BUILDER_FLAVORS){alert(`Maximum ${MAX_BUILDER_FLAVORS} flavors per comp plan.`);return;}
@@ -3331,8 +3355,8 @@ function renderBuilderFlavorPayouts(fi){
   // Refresh only this flavor's slot entries (leave other flavors' entries intact).
   Object.keys(builderPayoutSlotIndex).forEach(s=>{if(builderPayoutSlotIndex[s]&&builderPayoutSlotIndex[s].fi===fi){delete builderPayoutSlotIndex[s];sharedPayoutSlots.delete(+s);}});
   const editable=builderMeasuresEditable;
-  const addBtn=editable?`<div class="measure-actions"><button class="btn btn-sm" type="button" onclick="addBuilderPayoutTable(${fi})"><i class="ti ti-plus"></i> Add payout table</button></div>`:'';
-  if(!tables.length){cont.innerHTML=`<p style="font-size:11px;color:var(--pa-text-secondary)">No payout tables yet.</p>${addBtn}`;return;}
+  const addBtn=''; // payout tables are auto-created 1:1 with pay measures — no manual add
+  if(!tables.length){cont.innerHTML=`<p style="font-size:11px;color:var(--pa-text-secondary)">Each pay measure automatically creates its payout table — add a measure to get started.</p>`;return;}
   const PAYOUT_TYPE_OPTIONS=[['quota_band','Quota band + attainment tier'],['target_pct','Target % based'],['attainment_only','Attainment tier only']];
   cont.innerHTML=tables.map((pt,i)=>{
     const slot=payoutSlotFor(fi,i);sharedPayoutSlots.add(slot);builderPayoutSlotIndex[slot]={fi,idx:i};
@@ -3341,7 +3365,7 @@ function renderBuilderFlavorPayouts(fi){
     const mcrField=pt.type==='attainment_only'?`<span class="pf"><label>MCR</label><input class="form-input" id="builder-p${slot}-mcr" value="${(pt.mcr||'').replace(/"/g,'&quot;')}" ${editable?'':'readonly'} placeholder="e.g. 7%" style="width:100px"></span>`:'';
     const bandSetField=pt.type==='quota_band'?`<span class="pf pf-wide"><label>Quota band set</label>${quotaBandSets.length?`<select class="form-select" id="builder-p${slot}-bandset" ${editable?'':'disabled'} onchange="onQuotaBandSetChange(${slot},this.value)" style="min-width:200px"><option value="" ${!pt.bandSetId?'selected':''}>Select quota band set…</option>${quotaBandSets.map(s=>`<option value="${s.id}" ${s.id===pt.bandSetId?'selected':''}>${escapeCompareHtml(s.name)}</option>`).join('')}</select>`:`<span style="font-size:11px;color:var(--pa-text-secondary)">No band sets — create one in Configuration → Quota Band Sets</span>`}</span>`:'';
     return `<div class="measure-payout-unit" style="margin-bottom:16px">
-      <div class="payout-linked-hdr" style="justify-content:space-between;gap:8px"><span style="display:flex;align-items:center;gap:6px;flex:1"><i class="ti ti-table"></i> ${titleField}</span>${editable?`<button type="button" class="measure-remove-btn" onclick="removeBuilderPayoutTable(${slot})"><i class="ti ti-trash" style="font-size:11px"></i> Remove payout table</button>`:''}</div>
+      <div class="payout-linked-hdr" style="justify-content:space-between;gap:8px"><span style="display:flex;align-items:center;gap:6px;flex:1"><i class="ti ti-table"></i> ${titleField}</span><span style="font-size:10px;color:var(--pa-text-secondary)">Auto-created for M${i+1}</span></div>
       <div class="payout-options-bar">
         <span class="pf pf-wide"><label>Payout type</label>${typeSel}</span>
         <span class="pf"><label>Pay curve</label><select class="form-select" id="builder-p${slot}-curve" ${editable?'':'disabled'} style="min-width:110px">${selectOptionsHtml(['Linear','Stepped'],pt.payCurveType||'Linear')}</select></span>
@@ -4684,20 +4708,29 @@ function seedVersionContent(){
   };
   setA(getVersion('ver-A01-FY27-2'),[mkMeasure('Net New ARR','55%','Annual','Quarterly'),mkMeasure('Renewal ARR','25%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 85%',2.25);
   setA(getVersion('ver-A01-FY27-3'),[mkMeasure('Net New ARR','60%','Annual','Quarterly'),mkMeasure('Renewal ARR','20%','Annual','Quarterly'),mkMeasure('Strategic Products','20%','Annual','Quarterly')],'Renewal tether 90%',2.5);
-  // Final pass: link each measure to a payout table ON ITS OWN FLAVOR (per linkByTitle, else the flavor's first table).
+  // Final pass: 1:1 — each measure OWNS its own payout table (cloned from the structure it was linked to,
+  // titled by the measure name). Ensures flavor.payoutTables has exactly one table per measure.
   planVersions.forEach(ver=>{
     const c=ver.content;if(!c)return;
     const linkMap=SEED_CONTENT[planKey(ver.flavorId,ver.fy)]?.linkByTitle||null;
     (c.flavors||[]).forEach(fl=>{
       const tables=fl.payoutTables||[];
-      const tableIdForMeasure=desc=>{
-        if(linkMap){const hit=tables.find(t=>(linkMap[t.title]||[]).includes(desc));if(hit)return hit.id;}
-        return tables[0]?tables[0].id:'';
+      const srcFor=desc=>{
+        if(linkMap){const hit=tables.find(t=>(linkMap[t.title]||[]).includes(desc));if(hit)return hit;}
+        return tables[0]||null;
       };
-      (fl.measures||[]).forEach(m=>{m.payoutTableId=tableIdForMeasure(m.description);if(m.mechType==null)m.mechType='';});
-      // Per-flavor ownership: keep only the payout tables this flavor's measures actually use.
-      const used=new Set((fl.measures||[]).map(m=>m.payoutTableId).filter(Boolean));
-      fl.payoutTables=tables.filter(t=>used.has(t.id));
+      const newTables=[];
+      (fl.measures||[]).forEach(m=>{
+        const src=srcFor(m.description);
+        const copy=src?JSON.parse(JSON.stringify(src)):Object.assign({},blankPayoutTable());
+        copy.id=payoutUid();
+        copy.title=m.description||copy.title||'';
+        (copy.thresholds||[]).forEach(b=>{b.id=payoutUid();(b.tiers||[]).forEach(t=>t.id=payoutUid());});
+        m.payoutTableId=copy.id;
+        if(m.mechType==null)m.mechType='';
+        newTables.push(copy);
+      });
+      fl.payoutTables=newTables;
     });
   });
 }
