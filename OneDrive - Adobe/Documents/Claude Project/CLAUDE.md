@@ -127,11 +127,22 @@ include only the minimum user-facing information needed to understand and use th
   payout_system_config, completed`. `statusFromStage()` derives status from stage; **only one
   version per plan may be in the approval queue at a time** (`getPendingApprovalVersions`).
 - **Global persona toggle (top-right "Viewing as"):** a topbar `#topbar-persona` select drives
-  `currentReviewerId` across the app (`setPersona` → recompute editability + re-render open surfaces;
-  `renderPersonaToggle` fills it + the avatar + hides the Create-Plan button for non-creators). Personas
+  `currentReviewerId` across the app (`setPersona` → recompute editability + re-render open surfaces incl.
+  My Tasks + nav badge; `renderPersonaToggle` fills it + the avatar + hides the Create-Plan button for
+  non-creators). Options show **role only** (name lives on the avatar/audit, not the dropdown). Personas
   (`REVIEWERS`): **Creator** (Melissa C., stage `draft`), **1st Reviewer** (Susan L., `first_review`), **2nd
   Reviewer** (Val R., `second_review`), **Executive** (Elena M., `executive_review`). (Comp Design Team is
   dropped from the toggle for now — the release-validation/ops action branches remain but are inert.)
+- **Approvals nav group** (renamed from "Workflow"): **My Tasks** (`#screen-mytasks`, `renderMyTasks`) ·
+  **Approval Review** (`#screen-approval`) · **Proposal Tracker**. **My Tasks** is persona-scoped: section
+  **Awaiting my review** = `currentReviewerQueue` at `REVIEW_STAGES` (Review button → `openApprovalReview` +
+  `showScreen('approval')`); section **Proposals I submitted** = `planVersions` where `createdBy===persona.name
+  && submittedAt`, each showing **three per-stage progress bars** (`stageProgBarsHtml`/`stageApprovalPct`:
+  passed stage 100%, current = flavors approved/total, future 0%) + latest-activity line. The My Tasks nav
+  badge (`#nav-mytasks-badge`, `updateApprovalNavBadge`) shows the awaiting-review count for the current
+  persona. **Logging attribution:** `submitVersionById` sets `v.submittedBy` + logs the actor; `addAuditEntry`
+  records `opts.actor||currentReviewer().name` (was hard-coded); approve/reject/flavor-decision events already
+  carry `currentReviewer().name` — surfaced in the approval detail timeline.
 - **Persona gates editing app-wide** via `canEditVersion(v)`: Creator edits `draft`/`withdrawn` versions;
   1st/2nd edit **in-place** only the version at their own review stage (`reviewerEditVersion` sets
   `reviewerEditVersionId`); Executive **never** edits. `builderMeasuresEditable=canEditVersion(v)` (openBuilder),

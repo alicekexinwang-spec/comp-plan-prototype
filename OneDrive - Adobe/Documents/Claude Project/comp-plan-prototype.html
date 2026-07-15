@@ -613,6 +613,13 @@ tr:hover td{background:var(--pa-surface-hover)}
 .flavor-ov-sec{min-width:0}
 .flavor-ov-subhdr{font-size:11px;font-weight:600;color:var(--pa-theme-dark);text-transform:uppercase;letter-spacing:.03em;margin:0 0 6px;padding-bottom:3px;border-bottom:1px solid var(--pa-border)}
 .flavor-ov-meta{font-size:11px;color:var(--pa-text-secondary);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.stageprog-row{display:flex;gap:14px;flex-wrap:wrap}
+.stageprog{min-width:120px}
+.stageprog-lbl{font-size:10px;color:var(--pa-text-secondary);display:flex;justify-content:space-between;gap:6px;margin-bottom:2px}
+.stageprog-bar{height:6px;border-radius:3px;background:var(--pa-border);overflow:hidden}
+.stageprog-fill{height:100%;border-radius:3px}
+.stageprog-fill.done{background:#3B6D11}.stageprog-fill.cur{background:#BA7517}.stageprog-fill.future{background:var(--pa-border-strong)}
+.mytasks-latest{font-size:10px;color:var(--pa-text-secondary);margin-top:4px}
 .builder-mp-col .plan-section-hdr{margin-bottom:6px}
 .cmp-section-toggle{cursor:pointer;user-select:none}
 .cmp-section-toggle td{background:var(--pa-theme-light)}
@@ -719,8 +726,9 @@ tr:hover td{background:var(--pa-surface-hover)}
       <div class="nav-item" onclick="showScreen('multi')"><i class="ti ti-users"></i> Role View</div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-label">Workflow</div>
-      <div class="nav-item" onclick="showScreen('approval')"><i class="ti ti-circle-check"></i> Approvals <span class="nav-badge">5</span></div>
+      <div class="sidebar-label">Approvals</div>
+      <div class="nav-item" onclick="showScreen('mytasks')"><i class="ti ti-checkbox"></i> My Tasks <span class="nav-badge" id="nav-mytasks-badge" style="display:none"></span></div>
+      <div class="nav-item" onclick="showScreen('approval')"><i class="ti ti-circle-check"></i> Approval Review</div>
       <div class="nav-item" onclick="showScreen('tracker')"><i class="ti ti-list-check"></i> Proposal Tracker</div>
     </div>
     <div class="sidebar-section">
@@ -1096,6 +1104,21 @@ tr:hover td{background:var(--pa-surface-hover)}
           <input class="search-input" id="roleview-search" placeholder="Search role, plan, measure…" type="search" oninput="renderRoleView()">
         </div>
         <div class="table-wrap" id="roleview-table"></div>
+      </div>
+
+      <!-- SCREEN: MY TASKS -->
+      <div id="screen-mytasks" class="screen">
+        <div class="page-header">
+          <div><div class="page-title">My Tasks</div><div class="page-subtitle" id="mytasks-subtitle">Your review queue and the proposals you've submitted</div></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><div class="card-title" id="mytasks-review-title">Awaiting my review</div></div>
+          <div class="table-wrap" id="mytasks-review"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Proposals I submitted</div></div>
+          <div id="mytasks-submitted"></div>
+        </div>
       </div>
 
       <!-- SCREEN 6: APPROVAL -->
@@ -1627,6 +1650,7 @@ const screens={
   compare:{title:'Compare Plans'},
   plan:{title:'Compensation Plan'},
   multi:{title:'Role View'},
+  mytasks:{title:'My Tasks'},
   approval:{title:'Approval Review'},
   tracker:{title:'Proposal Tracker'},
   mechanics:{title:'Plan Mechanics — H01.A'},
@@ -1675,7 +1699,7 @@ function canEditVersion(v){if(!v)return false;const p=currentReviewer();
 function stageReviewerName(stage){const r=REVIEWERS.find(x=>x.stages.includes(stage));return r?`${r.name} (${r.role})`:APPROVAL_STAGE_LABELS[stage]||stage;}
 function renderPersonaToggle(){
   const sel=document.getElementById('topbar-persona');
-  if(sel)sel.innerHTML=REVIEWERS.map(r=>`<option value="${r.id}" ${r.id===currentReviewerId?'selected':''}>${escapeCompareHtml(r.name)} · ${escapeCompareHtml(r.role)}</option>`).join('');
+  if(sel)sel.innerHTML=REVIEWERS.map(r=>`<option value="${r.id}" ${r.id===currentReviewerId?'selected':''}>${escapeCompareHtml(r.role)}</option>`).join('');
   const av=document.getElementById('topbar-avatar');
   if(av){const p=currentReviewer();av.textContent=personaInitials(p);av.title=`${p.name} · ${p.role}`;}
   const cb=document.getElementById('topbar-create-btn');
@@ -1691,6 +1715,8 @@ function setPersona(id){
   if(typeof renderBuilderFlavors==='function')renderBuilderFlavors();
   if(typeof updateBuilderSubmitState==='function')updateBuilderSubmitState();
   if(typeof renderApprovalScreen==='function')renderApprovalScreen();
+  if(typeof renderMyTasks==='function')renderMyTasks();
+  if(typeof updateApprovalNavBadge==='function')updateApprovalNavBadge();
   if(typeof buildProposalTracker==='function')buildProposalTracker();
 }
 // Pay-measure → plan-mechanics type vocabulary (captured at Release Validation).
@@ -2096,7 +2122,7 @@ function addApprovalEvent(versionId,action,note,actor){
 }
 function addAuditEntry(planKey,action,detail,opts={}){
   const {planId,fy}=parsePlanKey(planKey);
-  auditLog.unshift({id:'aud-'+Date.now(),planId,fy,versionId:opts.versionId||opts.proposalId||null,proposalId:opts.versionId||opts.proposalId||null,revisionId:opts.versionId||opts.revisionId||null,action,user:'Melissa C.',timestamp:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}),detail});
+  auditLog.unshift({id:'aud-'+Date.now(),planId,fy,versionId:opts.versionId||opts.proposalId||null,proposalId:opts.versionId||opts.proposalId||null,revisionId:opts.versionId||opts.revisionId||null,action,user:opts.actor||currentReviewer().name,timestamp:new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}),detail});
 }
 
 function nextVersionNumber(planKey){
@@ -2453,6 +2479,8 @@ function duplicateCurrentVersion(){if(currentVersionId)duplicateVersionById(curr
 function refreshAfterVersionChange(pk){
   syncLegacyFromVersions();buildPlanSnapshots();buildCompareSelects();buildLibrary();buildProposalTracker();
   if(document.getElementById('screen-approval')?.classList.contains('active'))renderApprovalScreen();
+  if(document.getElementById('screen-mytasks')?.classList.contains('active'))renderMyTasks();
+  updateApprovalNavBadge();
   if(currentPlanKey===pk)renderPlanDetail(pk);
 }
 
@@ -2466,11 +2494,12 @@ function submitVersionById(versionId){
   const errs=v.content?validateVersionContent(v.content):[];
   if(errs.length){alert(`Cannot submit — fix these first:\n• ${errs.join('\n• ')}`);return;}
   const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  v.status='pending_review';v.approvalStage='first_review';v.submittedAt=now;v.updatedAt=now;
+  const actor=currentReviewer().name;
+  v.status='pending_review';v.approvalStage='first_review';v.submittedAt=now;v.submittedBy=actor;v.updatedAt=now;
   (v.content?.flavors||[]).forEach(fl=>{fl.reviewStatus='pending';fl.reviewNote='';}); // fresh per-flavor review on (re)submit
   approvalVersionId=versionId;
-  addApprovalEvent(versionId,'submitted','Submitted for 1st Review.');
-  addAuditEntry(pk,'Submitted for approval',`${v.flavorId} ${formatVersionLabel(v)} submitted for 1st Review.`,{versionId});
+  addApprovalEvent(versionId,'submitted','Submitted for 1st Review.',actor);
+  addAuditEntry(pk,'Submitted for approval',`${v.flavorId} ${formatVersionLabel(v)} submitted for 1st Review.`,{versionId,actor});
   refreshAfterVersionChange(pk);
   alert(`${v.flavorId} ${formatVersionLabel(v)} submitted — now at 1st Review.`);
 }
@@ -2678,6 +2707,54 @@ function openCompareCurrentVsProposal(){openCompareCurrentVsDraft();}
 function currentReviewerQueue(rev){return planVersions.filter(v=>rev.stages.includes(v.approvalStage));}
 function setApprovalReviewer(id){currentReviewerId=id;renderApprovalScreen();}
 function openApprovalReview(versionId){approvalVersionId=versionId;renderApprovalScreen();}
+/* Per-stage approval progress (by flavor): passed stage=100, current=approved/total, future=0. */
+function stageApprovalPct(v,stage){
+  const cur=stageIndex(v.approvalStage), si=stageIndex(stage), sum=deriveFlavorReviewSummary(v);
+  if(cur>si)return 100;
+  if(cur===si)return sum.total?Math.round(sum.approved/sum.total*100):0;
+  return 0;
+}
+function stageProgBarsHtml(v){
+  const cur=stageIndex(v.approvalStage);
+  return `<div class="stageprog-row">${REVIEW_STAGES.map(st=>{
+    const pct=stageApprovalPct(v,st), si=stageIndex(st);
+    const cls=cur>si?'done':(cur===si?(pct===100?'done':'cur'):'future');
+    return `<div class="stageprog"><div class="stageprog-lbl"><span>${escapeCompareHtml(APPROVAL_STAGE_LABELS[st])}</span><span>${pct}%</span></div><div class="stageprog-bar"><div class="stageprog-fill ${cls}" style="width:${pct}%"></div></div></div>`;
+  }).join('')}</div>`;
+}
+function updateApprovalNavBadge(){
+  const el=document.getElementById('nav-mytasks-badge');if(!el)return;
+  const n=currentReviewerQueue(currentReviewer()).filter(v=>REVIEW_STAGES.includes(v.approvalStage)).length;
+  if(n){el.textContent=n;el.style.display='';}else{el.style.display='none';}
+}
+function renderMyTasks(){
+  const rev=currentReviewer();
+  const rt=document.getElementById('mytasks-review-title');if(rt)rt.textContent=`Awaiting my review · ${rev.role}`;
+  // Section A — awaiting my review (proposals at my stage)
+  const aq=currentReviewerQueue(rev).filter(v=>REVIEW_STAGES.includes(v.approvalStage));
+  const rc=document.getElementById('mytasks-review');
+  if(rc)rc.innerHTML=aq.length?`<table><thead><tr><th>Plan #</th><th>Plan Name</th><th>FY</th><th>Proposal</th><th>Stage</th><th>Flavor progress</th><th>Submitted</th><th></th></tr></thead><tbody>${aq.map(v=>{const plan=getPlan(v.flavorId,v.fy);const sum=deriveFlavorReviewSummary(v);return `<tr><td style="font-weight:600">${escapeCompareHtml(v.flavorId)}</td><td>${escapeCompareHtml(plan?.planName||v.flavorId)}</td><td>${v.fy}</td><td>${escapeCompareHtml(v.label)}</td><td>${APPROVAL_STAGE_LABELS[v.approvalStage]||v.approvalStage}</td><td>${sum.approved}/${sum.total} approved</td><td style="font-size:11px">${v.submittedAt||'—'}</td><td><button class="btn btn-sm btn-primary" onclick="openApprovalReview('${v.versionId}');showScreen('approval')">Review</button></td></tr>`;}).join('')}</tbody></table>`:`<p style="font-size:12px;color:var(--pa-text-secondary);padding:12px">Nothing awaiting your review as ${escapeCompareHtml(rev.role)}.</p>`;
+  // Section B — proposals I submitted (with per-stage approval progress)
+  const mine=planVersions.filter(v=>v.createdBy===rev.name&&v.submittedAt);
+  const sc=document.getElementById('mytasks-submitted');
+  if(sc)sc.innerHTML=mine.length?mine.map(v=>{
+    const plan=getPlan(v.flavorId,v.fy);
+    const ev=getApprovalEventsForVersion(v.versionId)[0];
+    const latest=ev?`<div class="mytasks-latest"><i class="ti ti-history"></i> ${escapeCompareHtml(ev.action.replace(/_/g,' '))} · ${escapeCompareHtml(ev.actor)} · ${escapeCompareHtml(ev.timestamp)}</div>`:'';
+    const link=isVersionEditable(v)?`openVersionInBuilder('${v.versionId}')`:`openApprovalReview('${v.versionId}');showScreen('approval')`;
+    return `<div class="measure-payout-unit" style="margin-bottom:10px;padding:10px 12px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <strong style="font-size:12px">${escapeCompareHtml(v.flavorId)} · ${escapeCompareHtml(plan?.planName||v.flavorId)}</strong>
+        <span style="font-size:11px;color:var(--pa-text-secondary)">${escapeCompareHtml(v.label)} · ${v.fy}</span>
+        ${versionBadgeHtml(v.status)}
+        <button class="btn btn-sm" style="margin-left:auto" onclick="${link}">Open</button>
+      </div>
+      ${stageProgBarsHtml(v)}
+      ${latest}
+    </div>`;
+  }).join(''):`<p style="font-size:12px;color:var(--pa-text-secondary)">You haven't submitted any proposals.</p>`;
+  updateApprovalNavBadge();
+}
 function renderApprovalScreen(){
   // Persona is chosen from the global top-right "Viewing as" toggle; the queue is scoped to that persona's stage.
   const rev=currentReviewer();
@@ -2886,6 +2963,7 @@ function showScreen(id){
   if(id==='metric-definitions')renderMetricDefinitionsList();
   if(id==='metric-components'&&metricComponentsParentId)renderMetricComponentsPage();
   if(id==='approval')renderApprovalScreen();
+  if(id==='mytasks')renderMyTasks();
   if(id==='plan'&&currentPlanKey)renderPlanDetail(currentPlanKey);
   const title=currentDraftPlan&&id==='builder'&&document.getElementById('builder-workspace')?.style.display!=='none'?`Plan Builder — ${currentDraftPlan.id}`:screens[id]?.title||id;
   document.getElementById('topbar-title').textContent=title;
@@ -6074,6 +6152,7 @@ currentPlanKey='A01|FY27';
 approvalVersionId='ver-A01-FY27-2';
 currentVersionId='ver-A01-FY27-2';
 renderPersonaToggle();
+updateApprovalNavBadge();
 </script>
 </body>
 </html>

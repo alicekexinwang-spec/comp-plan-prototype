@@ -3,7 +3,24 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — measure ↔ payout table = 1:1 auto-created/named/linked (branch `feature/comp-plan-flavorconfig`)
+## Latest change — Approvals nav group + My Tasks + per-stage progress + logging (branch `feature/comp-plan-flavorconfig`)
+- **Approvals nav group** (renamed from "Workflow"): **My Tasks · Approval Review · Proposal Tracker**, with
+  a dynamic badge (`updateApprovalNavBadge`) = count awaiting the current persona.
+- **My Tasks** (`renderMyTasks`, persona-scoped): *Awaiting my review* (queue at my stage → Review opens the
+  approval detail) + *Proposals I submitted* (`createdBy===persona.name && submittedAt`), each with **three
+  per-stage approval progress bars** (1st/2nd/Exec, %-approved by flavor via `stageApprovalPct`) + a latest-
+  activity line.
+- **Logging attribution:** `submitVersionById` sets `submittedBy` + logs the actor; `addAuditEntry` uses
+  `opts.actor||currentReviewer().name` (was hard-coded "Melissa C."); reviewer approve/reject/flavor
+  decisions already carry the actor.
+- **Persona toggle** now shows **role only** (no name).
+
+Verified on webui2 (no console errors): Approvals group + items; badge=awaiting count; Creator sees 4
+submitted proposals w/ 12 stage bars, empty review; 1st Reviewer sees 1 awaiting row, empty submitted;
+reject/flavor-decision events + audit attributed to Susan L.; all 11 versions `validateVersionContent`=0.
+**Committed on `feature/comp-plan-flavorconfig`.**
+
+## Earlier change — measure ↔ payout table = 1:1 auto-created/named/linked (branch `feature/comp-plan-flavorconfig`)
 Each pay measure now **owns exactly one** payout table, auto-managed:
 - Adding a measure (`addBuilderMeasureToFlavor`) auto-creates + links its payout table; removing the measure
   (`removeBuilderMeasureFromFlavor`) removes its table. The **payout-table dropdown on the measure row and the
