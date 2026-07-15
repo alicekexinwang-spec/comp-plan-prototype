@@ -90,6 +90,10 @@ body{font-family:var(--pa-font);font-size:12px;background:var(--surface);color:v
 .topbar{height:var(--hdr-h);background:var(--pa-theme-primary);border-bottom:none;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;color:#fff;box-shadow:var(--pa-shadow)}
 .topbar-title{font-size:16px;font-weight:600;flex:1;color:#fff}
 .topbar-fy{font-size:11px;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:2px;color:#fff;border:1px solid rgba(255,255,255,.2)}
+.topbar-persona-wrap{display:flex;align-items:center;gap:6px;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:3px 8px}
+.topbar-persona-lbl{font-size:10px;opacity:.85;text-transform:uppercase;letter-spacing:.03em}
+.topbar-persona{background:rgba(0,0,0,.15);color:#fff;border:none;border-radius:3px;font-size:12px;font-weight:600;font-family:var(--pa-font);padding:2px 4px;cursor:pointer;outline:none}
+.topbar-persona option{color:#201F1E}
 .topbar .btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff}
 .topbar .btn:hover{background:rgba(255,255,255,.22)}
 .topbar .btn-primary{background:#fff;color:var(--pa-theme-primary);border-color:#fff;font-weight:600}
@@ -603,6 +607,10 @@ tr:hover td{background:var(--pa-surface-hover)}
 .pa-collapse.open>.pa-collapse-body{display:block}
 .builder-mp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:8px}
 .builder-mp-col{min-width:0}
+.flavor-ov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.flavor-ov-card{border:var(--border);border-radius:var(--pa-radius);background:var(--card-bg);padding:12px;min-width:0}
+.flavor-ov-subhdr{font-size:11px;font-weight:600;color:var(--pa-theme-dark);text-transform:uppercase;letter-spacing:.03em;margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--pa-border)}
+.flavor-ov-meta{font-size:11px;color:var(--pa-text-secondary);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px}
 .builder-mp-col .plan-section-hdr{margin-bottom:6px}
 .cmp-section-toggle{cursor:pointer;user-select:none}
 .cmp-section-toggle td{background:var(--pa-theme-light)}
@@ -738,9 +746,10 @@ tr:hover td{background:var(--pa-surface-hover)}
     <div class="topbar">
       <div class="topbar-title" id="topbar-title">Executive Dashboard</div>
       <span class="topbar-fy">FY27 Planning Cycle</span>
+      <span class="topbar-persona-wrap"><i class="ti ti-eye" style="opacity:.85;font-size:13px"></i><span class="topbar-persona-lbl">Viewing as</span><select class="topbar-persona" id="topbar-persona" onchange="setPersona(this.value)"></select></span>
       <button class="btn btn-sm"><i class="ti ti-bell"></i> 5</button>
-      <button class="btn btn-primary btn-sm" onclick="enterPlanBuilder()"><i class="ti ti-plus"></i> Create Plan</button>
-      <div class="topbar-avatar" title="Melissa Chen">MC</div>
+      <button class="btn btn-primary btn-sm" id="topbar-create-btn" onclick="enterPlanBuilder()"><i class="ti ti-plus"></i> Create Plan</button>
+      <div class="topbar-avatar" id="topbar-avatar" title="Melissa Chen">MC</div>
     </div>
 
     <div class="content" id="content">
@@ -1096,7 +1105,6 @@ tr:hover td{background:var(--pa-surface-hover)}
             <button class="btn btn-sm" onclick="showScreen('document')"><i class="ti ti-file-text"></i> View document</button>
           </div>
         </div>
-        <div class="approval-reviewer-bar" id="approval-reviewer-bar"></div>
         <div class="card" style="margin-bottom:14px">
           <div class="card-header"><div class="card-title" id="approval-queue-title">Approval queue</div></div>
           <div class="table-wrap" id="approval-queue"></div>
@@ -1646,16 +1654,43 @@ const APPROVAL_STAGE_LABELS={
 const VALID_FYS=['FY26','FY27'];
 const EDITABLE_STATUSES=['draft','withdrawn'];
 const LOCKED_STATUSES=['pending_review','approved','published'];
-// Reviewer personas (named people mapped to approval stages) for the "view as reviewer" toggle.
+// Reviewer personas (named people mapped to approval stages) for the top-right "Viewing as" toggle.
 const REVIEW_STAGES=['first_review','second_review','executive_review'];
 const REVIEWERS=[
+  {id:'creator',name:'Melissa C.',role:'Creator',stages:['draft']},
   {id:'r1',name:'Susan L.',role:'1st Reviewer',stages:['first_review']},
   {id:'r2',name:'Val R.',role:'2nd Reviewer',stages:['second_review']},
   {id:'exec',name:'Elena M.',role:'Executive',stages:['executive_review']},
-  {id:'comp',name:'Comp Design Team',role:'Comp Design',stages:['release_validation','document_generation','payout_system_config']},
 ];
-let currentReviewerId='r1';
+let currentReviewerId='creator';
 function currentReviewer(){return REVIEWERS.find(r=>r.id===currentReviewerId)||REVIEWERS[0];}
+function personaInitials(r){return (r.name||'').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+// Can the CURRENT persona edit version v? Creator edits drafts; 1st/2nd edit in-place only at their own review stage; Exec never.
+function canEditVersion(v){if(!v)return false;const p=currentReviewer();
+  if(p.id==='creator')return isVersionEditable(v);
+  if(p.id==='r1'||p.id==='r2')return v.versionId===reviewerEditVersionId&&v.approvalStage===p.stages[0];
+  return false;}
+function stageReviewerName(stage){const r=REVIEWERS.find(x=>x.stages.includes(stage));return r?`${r.name} (${r.role})`:APPROVAL_STAGE_LABELS[stage]||stage;}
+function renderPersonaToggle(){
+  const sel=document.getElementById('topbar-persona');
+  if(sel)sel.innerHTML=REVIEWERS.map(r=>`<option value="${r.id}" ${r.id===currentReviewerId?'selected':''}>${escapeCompareHtml(r.name)} · ${escapeCompareHtml(r.role)}</option>`).join('');
+  const av=document.getElementById('topbar-avatar');
+  if(av){const p=currentReviewer();av.textContent=personaInitials(p);av.title=`${p.name} · ${p.role}`;}
+  const cb=document.getElementById('topbar-create-btn');
+  if(cb)cb.style.display=currentReviewerId==='creator'?'':'none';
+}
+// Global "Viewing as" toggle: switch persona, re-evaluate editing, re-render open surfaces.
+function setPersona(id){
+  currentReviewerId=id;
+  reviewerEditVersionId=null; // switching persona drops any in-place edit grant
+  renderPersonaToggle();
+  const v=getVersion(currentVersionId);
+  if(v)builderMeasuresEditable=canEditVersion(v);
+  if(typeof renderBuilderFlavors==='function')renderBuilderFlavors();
+  if(typeof updateBuilderSubmitState==='function')updateBuilderSubmitState();
+  if(typeof renderApprovalScreen==='function')renderApprovalScreen();
+  if(typeof buildProposalTracker==='function')buildProposalTracker();
+}
 // Pay-measure → plan-mechanics type vocabulary (captured at Release Validation).
 const PLAN_MECH_TYPES=['VCT Weight Measure','Linearity','Bonus','MBO','Tether'];
 let reviewerEditVersionId=null; // a review-stage version a reviewer is editing in place
@@ -2393,7 +2428,7 @@ function updateBuilderSubmitState(planKey,v){
   if(!v)return;
   const headerSubmit=document.getElementById('builder-header-submit');
   const otherPending=getPendingApprovalVersions(planKey).filter(x=>x.versionId!==v.versionId);
-  const canSubmit=isVersionEditable(v)&&!otherPending.length;
+  const canSubmit=isVersionEditable(v)&&!otherPending.length&&currentReviewerId==='creator';
   if(headerSubmit)headerSubmit.style.display=canSubmit?'inline-flex':'none';
   const queueNote=document.getElementById('builder-approval-queue-note');
   if(queueNote){
@@ -2479,6 +2514,8 @@ function advanceVersionStage(versionId){
   const nextStage=APPROVAL_STAGES[idx+1];
   v.approvalStage=nextStage;
   v.status=statusFromStage(nextStage);
+  // Entering a NEW review stage: reset per-flavor review so the next reviewer reviews fresh.
+  if(REVIEW_STAGES.includes(nextStage))(v.content?.flavors||[]).forEach(fl=>{fl.reviewStatus='pending';fl.reviewNote='';});
   v.updatedAt=now;
   if(note)v.comments=note;
   if(v.status==='approved'&&!v.approvedAt){v.approvedAt=now;v.approvedBy=actor;}
@@ -2532,7 +2569,7 @@ function rvFlavorDot(fl){
   return ok?'ok':'warn';
 }
 /* Per-flavor review status (set by a reviewer at a review stage). Plan status is DERIVED from these. */
-const FLAVOR_REVIEW_LABELS={pending:'Not reviewed',approved:'Approved',needs_rework:'Needs rework'};
+const FLAVOR_REVIEW_LABELS={pending:'Not reviewed',approved:'Approved',needs_rework:'Rejected'};
 function deriveFlavorReviewSummary(v){
   const flavs=(v&&v.content&&v.content.flavors)||[];
   const total=flavs.length;
@@ -2576,6 +2613,20 @@ function withdrawVersion(versionId){
   if(plan&&plan.activePublishedVersionId===versionId)plan.activePublishedVersionId=null;
   addApprovalEvent(versionId,'withdrawn',note||`${v.flavorId} ${formatVersionLabel(v)} withdrawn from approval.`,currentReviewer().name);
   addAuditEntry(pk,'Withdrawn',`${v.flavorId} ${formatVersionLabel(v)} withdrawn.`,{versionId});
+  refreshAfterVersionChange(pk);
+}
+/* Reviewer reject → send the plan back to draft (keeps per-flavor review so the creator sees what to fix). */
+function rejectVersionToDraft(versionId){
+  const v=getVersion(versionId);
+  if(!v)return;
+  const pk=planKey(v.flavorId,v.fy);
+  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const note=document.getElementById('approval-comment-input')?.value||'';
+  const fromStage=v.approvalStage;
+  v.status='draft';v.approvalStage='draft';v.isActivePublished=false;v.updatedAt=now;
+  if(note)v.comments=note;
+  addApprovalEvent(versionId,'rejected',note||`${v.flavorId} ${formatVersionLabel(v)} rejected at ${APPROVAL_STAGE_LABELS[fromStage]||fromStage} — back to draft.`,currentReviewer().name);
+  addAuditEntry(pk,'Rejected to draft',`${v.flavorId} ${formatVersionLabel(v)} rejected by ${currentReviewer().name} — back to draft.`,{versionId});
   refreshAfterVersionChange(pk);
 }
 /* Aliases for existing callers. */
@@ -2626,9 +2677,7 @@ function currentReviewerQueue(rev){return planVersions.filter(v=>rev.stages.incl
 function setApprovalReviewer(id){currentReviewerId=id;renderApprovalScreen();}
 function openApprovalReview(versionId){approvalVersionId=versionId;renderApprovalScreen();}
 function renderApprovalScreen(){
-  // Reviewer toggle bar (view-as) + reviewer-scoped queue
-  const bar=document.getElementById('approval-reviewer-bar');
-  if(bar)bar.innerHTML=REVIEWERS.map(r=>{const n=currentReviewerQueue(r).length;return `<div class="reviewer-btn ${r.id===currentReviewerId?'active':''}" onclick="setApprovalReviewer('${r.id}')"><span class="rb-count ${n?'':'zero'}">${n}</span><div class="rb-name">${escapeCompareHtml(r.name)}</div><div class="rb-role">${escapeCompareHtml(r.role)}</div></div>`;}).join('');
+  // Persona is chosen from the global top-right "Viewing as" toggle; the queue is scoped to that persona's stage.
   const rev=currentReviewer();
   const queue=currentReviewerQueue(rev);
   const qt=document.getElementById('approval-queue-title');if(qt)qt.textContent=`Pending ${rev.name}'s decision · ${rev.role}`;
@@ -2676,24 +2725,32 @@ function renderApprovalScreen(){
   const isComp=currentReviewerId==='comp';
   const nextStage=APPROVAL_STAGES[currentIdx+1];
   let actions='';
-  if(isVersionEditable(v)){
-    actions=`<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitVersionById('${v.versionId}')"><i class="ti ti-send"></i> Submit for approval</button>`;
-  }else if(REVIEW_STAGES.includes(v.approvalStage)){
+  const P=currentReviewer();
+  const atMyStage=REVIEW_STAGES.includes(v.approvalStage)&&P.stages.includes(v.approvalStage);
+  if(P.id==='creator'){
+    actions=isVersionEditable(v)
+      ?`<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openVersionInBuilder('${v.versionId}')"><i class="ti ti-pencil"></i> Open in builder to edit &amp; submit</button>`
+      :`<div style="font-size:12px;color:var(--muted)">This plan is under review — switch persona (top right) to review it.</div>`;
+  }else if(atMyStage){
+    const editBtn=(P.id==='r1'||P.id==='r2')?`<button class="btn" style="flex:1;justify-content:center;min-width:110px" onclick="reviewerEditVersion('${v.versionId}')"><i class="ti ti-pencil"></i> Edit</button>`:'';
     actions=`<div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" style="${gA}" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Approve → ${APPROVAL_STAGE_LABELS[nextStage]}</button>
-      <button class="btn" style="flex:1;justify-content:center;min-width:110px" onclick="reviewerEditVersion('${v.versionId}')"><i class="ti ti-pencil"></i> Edit</button>
-      <button class="btn" style="${rX}" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
+      ${editBtn}
+      <button class="btn" style="${rX}" onclick="rejectVersionToDraft('${v.versionId}')"><i class="ti ti-x"></i> Reject → back to draft</button>
     </div>`;
+  }else if(REVIEW_STAGES.includes(v.approvalStage)){
+    actions=`<div style="font-size:12px;color:var(--muted)">Awaiting ${escapeCompareHtml(stageReviewerName(v.approvalStage))} — switch persona (top right) to act.</div>`;
+  }else if(isVersionEditable(v)){
+    actions=`<div style="font-size:12px;color:var(--muted)">This is a draft — switch to Creator to edit &amp; submit.</div>`;
   }else if(v.approvalStage==='release_validation'){
     actions=isComp?`<div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" style="${gA};min-width:200px" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-cloud-upload"></i> Release to downstream →</button>
-      <button class="btn" style="${rX}" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
-    </div>`:`<div style="font-size:12px;color:var(--muted)">Awaiting Comp Design Team — Release Validation. Switch reviewer to act.</div>`;
+      <button class="btn" style="${rX}" onclick="rejectVersionToDraft('${v.versionId}')"><i class="ti ti-x"></i> Reject → back to draft</button>
+    </div>`:`<div style="font-size:12px;color:var(--muted)">Approved — awaiting downstream release (Comp Design Team). Out of scope for now.</div>`;
   }else if(['document_generation','payout_system_config'].includes(v.approvalStage)){
     actions=isComp?`<div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" style="${gA}" onclick="advanceVersionStage('${v.versionId}')"><i class="ti ti-circle-check"></i> Advance → ${APPROVAL_STAGE_LABELS[nextStage]}</button>
-      <button class="btn" style="${rX}" onclick="withdrawVersion('${v.versionId}')"><i class="ti ti-x"></i> Withdraw</button>
-    </div>`:`<div style="font-size:12px;color:var(--muted)">Awaiting Comp Design Team — ${APPROVAL_STAGE_LABELS[v.approvalStage]}. Switch reviewer to act.</div>`;
+    </div>`:`<div style="font-size:12px;color:var(--muted)">${APPROVAL_STAGE_LABELS[v.approvalStage]} — Comp Design Team (out of scope for now).</div>`;
   }else{
     actions=`<div style="font-size:12px;color:var(--muted)">No actions — ${VERSION_STATUS_LABELS[v.status]||v.status}.</div>`;
   }
@@ -2710,14 +2767,14 @@ function renderApprovalScreen(){
       </div></div>`).join('')}
     </div>`;
   }
-  // Per-flavor review panel (review stages) — approve/needs-rework each flavor; plan advance is gated on all approved.
+  // Per-flavor review panel — only the reviewer at THIS stage sees per-flavor Approve/Reject; advance is gated on all approved.
   let frHtml='';
-  if(REVIEW_STAGES.includes(v.approvalStage)){
+  if(REVIEW_STAGES.includes(v.approvalStage)&&currentReviewer().stages.includes(v.approvalStage)){
     const sum=deriveFlavorReviewSummary(v);
     const sumCls=sum.rework?'badge-rejected':(sum.pending?'badge-review':'badge-approved');
     frHtml=`<div style="margin-bottom:12px">
       <div style="font-size:12px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">Flavor review <span class="badge ${sumCls}">${sum.label}</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Approve each flavor, or send one back for rework — the plan can't advance until every flavor is approved.</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Approve each flavor, or reject one to send the whole plan back to draft — the plan can't advance until every flavor is approved.</div>
       ${flavorTabsHtml(v.content.flavors,activeApprovalFlavor,'approval',{dotFn:fl=>{const st=fl.reviewStatus||'pending';return st==='approved'?'ok':(st==='needs_rework'?'bad':'warn');}})}
       ${(v.content?.flavors||[]).map((fl,fi)=>{
         const st=fl.reviewStatus||'pending';
@@ -2729,7 +2786,7 @@ function renderApprovalScreen(){
           </div>
           <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
             <button class="btn btn-sm" style="background:#EAF3DE;border-color:#639922;color:#3B6D11" onclick="setFlavorReviewStatus('${v.versionId}',${fi},'approved')"><i class="ti ti-check"></i> Approve</button>
-            <button class="btn btn-sm" style="background:#FCEBEB;border-color:#E24B4A;color:#A32D2D" onclick="setFlavorReviewStatus('${v.versionId}',${fi},'needs_rework')"><i class="ti ti-arrow-back-up"></i> Needs rework</button>
+            <button class="btn btn-sm" style="background:#FCEBEB;border-color:#E24B4A;color:#A32D2D" onclick="setFlavorReviewStatus('${v.versionId}',${fi},'needs_rework')"><i class="ti ti-x"></i> Reject</button>
           </div>
           ${st==='needs_rework'?`<textarea class="form-textarea" placeholder="What needs rework? (note to author)" oninput="setFlavorReviewNote('${v.versionId}',${fi},this.value)" style="width:100%;min-height:40px;margin-top:6px;resize:vertical">${escapeCompareHtml(fl.reviewNote||'')}</textarea>`:''}
         </div></div>`;}).join('')}
@@ -3014,7 +3071,7 @@ function openBuilder(planId,isNew,fromClone,versionId){
   let v=versionId?getVersion(versionId):null;
   if(!v)v=getVersionsForFlavor(pk).find(x=>EDITABLE_STATUSES.includes(x.status))||getPublishedVersion(pk)||getVersionsForFlavor(pk)[0];
   currentVersionId=v?v.versionId:null;
-  builderMeasuresEditable=v?(isVersionEditable(v)||v.versionId===reviewerEditVersionId):true;
+  builderMeasuresEditable=v?canEditVersion(v):(currentReviewerId==='creator');
   if(v){
     if(!v.content)v.content=blankVersionContent(pk);
     populateBuilderFromVersion(v);
@@ -3083,12 +3140,15 @@ function renderBuilderFlavors(){
   const editable=builderMeasuresEditable;
   const flavors=builderWorkingContent.flavors;
   const isOverview=activeBuilderFlavor==='overview';
+  const isOverview2=activeBuilderFlavor==='overview2';
   if(typeof activeBuilderFlavor==='number'&&activeBuilderFlavor>=flavors.length)activeBuilderFlavor=Math.max(0,flavors.length-1);
   sharedPayoutSlots=new Set();builderPayoutSlotIndex={};
-  const overviewTab=`<button type="button" class="pa-pivot-tab flavor-tab ${isOverview?'active':''}" data-flavortab="builder-overview" onclick="switchFlavorTab('builder','overview')"><i class="ti ti-layout-list"></i> Overview</button>`;
-  const tabs=flavorTabsHtml(flavors,isOverview?-1:activeBuilderFlavor,'builder',{dotFn:builderFlavorDot,addOnclick:editable?'addBuilderFlavor()':null,leadTabs:overviewTab});
+  const overviewTab=`<button type="button" class="pa-pivot-tab flavor-tab ${isOverview?'active':''}" data-flavortab="builder-overview" onclick="switchFlavorTab('builder','overview')"><i class="ti ti-layout-list"></i> Overview</button>`
+    +`<button type="button" class="pa-pivot-tab flavor-tab ${isOverview2?'active':''}" data-flavortab="builder-overview2" onclick="switchFlavorTab('builder','overview2')"><i class="ti ti-columns"></i> Overview2</button>`;
+  const tabs=flavorTabsHtml(flavors,(isOverview||isOverview2)?-1:activeBuilderFlavor,'builder',{dotFn:builderFlavorDot,addOnclick:editable?'addBuilderFlavor()':null,leadTabs:overviewTab});
   const panels=flavors.map((fl,fi)=>`<div class="pa-pivot-panel ${fi===activeBuilderFlavor?'active':''}" id="builder-flavorpanel-${fi}" role="tabpanel">${renderBuilderFlavorBlock(fl,fi,editable)}</div>`).join('')
-    +`<div class="pa-pivot-panel ${isOverview?'active':''}" id="builder-flavorpanel-overview" role="tabpanel">${renderPlanOverview(builderWorkingContent)}</div>`;
+    +`<div class="pa-pivot-panel ${isOverview?'active':''}" id="builder-flavorpanel-overview" role="tabpanel">${renderPlanOverview(builderWorkingContent)}</div>`
+    +`<div class="pa-pivot-panel ${isOverview2?'active':''}" id="builder-flavorpanel-overview2" role="tabpanel">${renderPlanOverviewByFlavor(builderWorkingContent)}</div>`;
   cont.innerHTML=tabs+panels;
   // Fill each flavor's own payout-table & bonus editors (containers created in the flavor block; hidden panels are still in the DOM).
   flavors.forEach((fl,fi)=>{renderBuilderFlavorPayouts(fi);renderBuilderFlavorBonuses(fi);});
@@ -3131,6 +3191,38 @@ function renderPlanOverview(content){
     <div class="plan-section-hdr" style="margin-top:12px">Tether</div>${tetherHtml}
     <div class="plan-section-hdr" style="margin-top:12px">Key policies</div>${keyPolHtml}
   </div>`;
+}
+/* Read-only overview by FLAVOR dimension: one card per flavor with its full config side by side. */
+function renderPlanOverviewByFlavor(content){
+  const flavors=(content&&content.flavors)||[];
+  const esc=escapeCompareHtml;
+  if(!flavors.length)return '<p style="font-size:12px;color:var(--pa-text-secondary)">No flavors.</p>';
+  const cards=flavors.map(fl=>{
+    const sum=(fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);
+    const vctOk=Math.round(sum)===100;
+    const meta=[`HC ${fl.headcount!=null&&fl.headcount!==''?esc(String(fl.headcount)):'—'}`,
+      `Pay mix ${fl.payMixBase!=null&&fl.payMixBase!==''?esc(String(fl.payMixBase)):'—'}/${fl.payMixVar!=null&&fl.payMixVar!==''?esc(String(fl.payMixVar)):'—'}`,
+      `New-hire guarantee ${fl.newHireGuarantee?esc(fl.newHireGuarantee):'—'}`].map(x=>`<span>${x}</span>`).join('');
+    const mrows=(fl.measures||[]).map((m,mi)=>{
+      const linked=(fl.payoutTables||[]).find(pt=>pt.id===m.payoutTableId);
+      return `<tr><td><span class="badge badge-proposal" style="font-weight:600">M${mi+1}</span></td><td>${esc(m.description||'—')}</td><td class="num">${esc(m.vct||'—')}</td><td>${esc(m.perf||'—')}</td><td>${esc(m.pay||'—')}</td><td>${esc(linked?(linked.title||'Untitled'):'—')}</td></tr>`;
+    }).join('');
+    const measuresTbl=`<div style="overflow-x:auto"><table class="payout-tier-table" style="width:100%;min-width:460px"><thead><tr><th style="width:34px">#</th><th>Performance measure</th><th class="num">VCT Wt%</th><th>Perf period</th><th>Payout freq</th><th>Payout table</th></tr></thead><tbody>${mrows||'<tr><td colspan="6" style="color:var(--muted)">No measures</td></tr>'}</tbody></table></div>`;
+    const payouts=(fl.payoutTables||[]).length?(fl.payoutTables||[]).map(pt=>`<div class="measure-payout-unit" style="margin-bottom:8px;padding:8px 10px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><i class="ti ti-table"></i><strong style="font-size:12px">${esc(pt.title||'Untitled')}</strong></div>${renderPayoutMatrixTables(pt,'payout-matrix')}</div>`).join(''):'<span style="font-size:12px;color:var(--muted)">No payout tables</span>';
+    const bonuses=(fl.bonuses||[]).length?(fl.bonuses||[]).map(x=>esc((x.type||'—')+(x.payoutDetails?' · '+x.payoutDetails:'')+(x.maxPayout?' · max '+x.maxPayout:''))).join('<br>'):'<span style="color:var(--muted)">No bonus</span>';
+    const tether=(fl.tether&&fl.tether.trim())?esc(fl.tether):'<span style="color:var(--muted)">—</span>';
+    const keyPol=(fl.keyPolicies&&fl.keyPolicies.trim())?esc(fl.keyPolicies):'<span style="color:var(--muted)">—</span>';
+    return `<div class="flavor-ov-card">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="badge badge-draft" style="background:#EEF2F7;color:#33475B;font-weight:600">${esc(fl.flavorLabel)}</span><strong style="font-size:13px">${esc(fl.role||'—')}</strong><span class="badge ${vctOk?'badge-approved':'badge-rejected'}" style="margin-left:auto">VCT ${sum%1===0?sum:sum.toFixed(1)}%</span></div>
+      <div class="flavor-ov-meta">${meta}</div>
+      <div class="flavor-ov-subhdr">Measures &amp; Weightings</div>${measuresTbl}
+      <div class="flavor-ov-subhdr">Payout tables</div>${payouts}
+      <div class="flavor-ov-subhdr">Bonus</div><div style="font-size:12px">${bonuses}</div>
+      <div class="flavor-ov-subhdr">Tether</div><div style="font-size:12px">${tether}</div>
+      <div class="flavor-ov-subhdr">Key policies</div><div style="font-size:12px">${keyPol}</div>
+    </div>`;
+  }).join('');
+  return `<div class="flavor-ov-grid">${cards}</div>`;
 }
 function flavorVctSum(fl){return (fl.measures||[]).reduce((s,m)=>s+(parsePctValue(m.vct)||0),0);}
 function flavorVctSumBadge(fi){
@@ -3425,7 +3517,7 @@ function validateVersionContent(content){
 function saveBuilderVersion(){
   const v=getVersion(currentVersionId);
   if(!v||!builderWorkingContent){alert('No version open.');return;}
-  if(!isVersionEditable(v)&&v.versionId!==reviewerEditVersionId){alert('This version is locked. Create a new revision to edit.');return;}
+  if(!canEditVersion(v)){alert(`You can't edit this version as ${currentReviewer().role}.`);return;}
   const pk=planKey(v.flavorId,v.fy);
   const gv=id=>document.getElementById(id)?.value;
   builderWorkingContent.planMeta={planName:gv('builder-plan-name'),designerNote:gv('builder-plan-notes')||(builderWorkingContent.planMeta&&builderWorkingContent.planMeta.designerNote)||''};
@@ -5944,6 +6036,7 @@ showBuilderEntry();
 currentPlanKey='A01|FY27';
 approvalVersionId='ver-A01-FY27-2';
 currentVersionId='ver-A01-FY27-2';
+renderPersonaToggle();
 </script>
 </body>
 </html>

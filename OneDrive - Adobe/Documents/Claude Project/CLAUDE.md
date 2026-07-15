@@ -122,13 +122,27 @@ include only the minimum user-facing information needed to understand and use th
   `draft, first_review, second_review, executive_review, release_validation, document_generation,
   payout_system_config, completed`. `statusFromStage()` derives status from stage; **only one
   version per plan may be in the approval queue at a time** (`getPendingApprovalVersions`).
-- **Approvals screen** (`renderApprovalScreen`) = a **"view as reviewer" toggle** + a reviewer-scoped
-  **queue** + the version detail. Reviewers are named people mapped to stages (`REVIEWERS`,
-  `currentReviewerId`): Susan L.→1st Review, Val R.→2nd Review, Elena M.→Executive, Comp Design Team→
-  Release Validation/Document Generation/Payout config. The queue lists versions at the current
-  reviewer's stage(s). At the **review stages** (`REVIEW_STAGES`) any reviewer can **Approve / Edit /
-  Withdraw**; **Edit is in-place** (`reviewerEditVersion` → builder editable via `reviewerEditVersionId`,
-  even though the version is locked). At **Release Validation** the Comp Design Team sets per-flavor
+- **Global persona toggle (top-right "Viewing as"):** a topbar `#topbar-persona` select drives
+  `currentReviewerId` across the app (`setPersona` → recompute editability + re-render open surfaces;
+  `renderPersonaToggle` fills it + the avatar + hides the Create-Plan button for non-creators). Personas
+  (`REVIEWERS`): **Creator** (Melissa C., stage `draft`), **1st Reviewer** (Susan L., `first_review`), **2nd
+  Reviewer** (Val R., `second_review`), **Executive** (Elena M., `executive_review`). (Comp Design Team is
+  dropped from the toggle for now — the release-validation/ops action branches remain but are inert.)
+- **Persona gates editing app-wide** via `canEditVersion(v)`: Creator edits `draft`/`withdrawn` versions;
+  1st/2nd edit **in-place** only the version at their own review stage (`reviewerEditVersion` sets
+  `reviewerEditVersionId`); Executive **never** edits. `builderMeasuresEditable=canEditVersion(v)` (openBuilder),
+  `saveBuilderVersion` guards on it, and the builder **Submit** shows only for the Creator persona
+  (`updateBuilderSubmitState`).
+- **Approvals screen** (`renderApprovalScreen`) = the version detail + a persona-scoped **queue**
+  (`currentReviewerQueue` — versions at the persona's stage) + a read-only **plan overview** card. The old
+  in-approval reviewer bar is removed (the topbar toggle is the single control). Actions are **persona ×
+  stage**: **Creator** → "Open in builder" (draft) / view-only note; **reviewer at own stage** → **Approve →
+  {next}** (gated: all flavors approved) · **Edit** (1st/2nd only, not Exec) · **Reject → back to draft**
+  (`rejectVersionToDraft`); off-stage → "Awaiting {stageReviewerName}". **Reject → draft** sets
+  `status`/`approvalStage='draft'` but **keeps** per-flavor `reviewStatus` so the creator sees which flavors
+  were rejected; **resubmit** (`submitVersionById`) restarts at `first_review` and resets flavors to pending;
+  **advancing into a new review stage resets** flavors to pending so the next reviewer reviews fresh. At
+  **Release Validation** the Comp Design Team sets per-flavor
   new-hire guarantee + per-measure **plan-mechanics type** (`m.mechType` from `PLAN_MECH_TYPES`,
   `setReleaseValidationMechType`) + per-payout-table **prorate VCT** (`pt.prorateVct`, tri-state
   `''`/`'Yes'`/`'No'`, `setReleaseValidationProrate` — moved here from the builder; the builder no longer
@@ -214,7 +228,12 @@ include only the minimum user-facing information needed to understand and use th
   table shown once via `renderPayoutMatrixTables` + a "Used by: Flavor A, B…" chip). Bonus / Tether / Key
   policies are likewise **consolidated** (`consolidate(displayFn)` groups flavors by identical value → one row
   labelled "All flavors" when shared, else "Flavor A, B"). Surfaced in the **builder Overview tab** and the
-  **approval detail** (`#approval-overview`). **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
+  **approval detail** (`#approval-overview`).
+- **Plan Overview2** (`renderPlanOverviewByFlavor(content)`): a second builder tab (`#builder-flavorpanel-overview2`,
+  after Overview) — the same info **by flavor dimension**: a responsive grid (`.flavor-ov-grid`) of one
+  `.flavor-ov-card` per flavor, each card = header meta (role · HC · pay mix · NHG · VCT total) + that flavor's
+  Measures & Weightings table + its **own** payout matrices (not deduped) + Bonus / Tether / Key policies.
+  Builder-only (not in the approval detail). **Approval** (`renderApprovalScreen`): the per-flavor review + release-validation panels
   are tabbed (`prefix='approval'`, `#approval-flavorpanel-${fi}`). **Compare** (`buildCompareTableBodyHtml`):
   each Flavor section header row is a `.cmp-section-toggle` collapsing its sibling `<tr>`s
   (`toggleCompareSection`) — Plan information + first flavor open, rest collapsed by default.

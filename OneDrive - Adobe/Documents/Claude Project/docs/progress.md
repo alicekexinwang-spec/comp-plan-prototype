@@ -3,7 +3,29 @@
 _Single file: `comp-plan-prototype.html`. Architecture/conventions live in `CLAUDE.md`; this file
 tracks status only._
 
-## Latest change — overview polish: first tab, no system-pay col, rename, consolidate, side-by-side (branch `feature/comp-plan-flavorconfig`)
+## Latest change — global persona toggle + stage capabilities + reject-to-draft (+ Overview2 tab) (branch `feature/comp-plan-flavorconfig`)
+Two features in one commit.
+- **Overview2 tab** (`renderPlanOverviewByFlavor`): a second builder tab (after Overview) showing the plan
+  **by flavor dimension** — a grid of one card per flavor (header meta + that flavor's Measures & Weightings,
+  own payout matrices, bonus, tether, key policies). Complements the section-first Overview.
+- **Persona-based views:** a **global top-right "Viewing as" toggle** (`#topbar-persona`/`setPersona`) with
+  personas **Creator / 1st / 2nd / Executive** (`REVIEWERS`; Comp dropped for now). **Editing is gated by
+  persona** (`canEditVersion`): Creator edits drafts + submits (Create-Plan + builder Submit shown only to
+  Creator); 1st/2nd edit in-place only at their stage; Exec never edits. **Approval actions are persona ×
+  stage**: reviewer-at-own-stage → Approve→next (all-flavors-approved gated) · Edit (1st/2nd only) · **Reject
+  → back to draft** (`rejectVersionToDraft` — keeps per-flavor statuses so the creator sees what to fix);
+  off-stage → "Awaiting …". Resubmit restarts at 1st review (flavors reset to pending); advancing into a new
+  review stage also resets flavors. Per-flavor "Needs rework" relabelled **Reject**. The in-approval reviewer
+  bar was removed (topbar toggle is the single control).
+
+Verified on webui2 (no console errors): toggle lists Creator/1st/2nd/Exec (default Creator); Create-Plan hides
+for non-creators; 1st reviewer sees Approve/Edit/Reject + per-flavor panel, Exec sees Approve/Reject (no Edit);
+approve 2 + reject 1 blocks advance; Reject → draft retains `[approved,approved,needs_rework]`; Exec can't edit
+a draft, Creator can; resubmit → first_review + flavors pending; approve-all advances 1st→2nd with flavors
+reset; Overview2 renders 3 flavor cards; all 11 versions `validateVersionContent`=0. **Committed on
+`feature/comp-plan-flavorconfig`.**
+
+## Earlier change — overview polish: first tab, no system-pay col, rename, consolidate, side-by-side (branch `feature/comp-plan-flavorconfig`)
 Refined the Plan Overview (`renderPlanOverview`, builder + approval): (1) **Overview is now the first tab**
 and the builder **lands on it** (`flavorTabsHtml` `leadTabs`; `openBuilder` sets `activeBuilderFlavor='overview'`);
 (2) removed the **System pay measure** column from the overview measures table; (3) renamed **"Pay measures"
