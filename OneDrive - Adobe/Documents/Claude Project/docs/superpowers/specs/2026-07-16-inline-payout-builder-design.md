@@ -1,4 +1,4 @@
-# Inline Payout Table Builder Design
+# Performance Measure Quota Configuration Design
 
 **Date:** 2026-07-16
 
@@ -6,103 +6,138 @@
 
 ## Goal
 
-Remove the standalone Payout Tables configuration library and let a plan designer define each performance measure's payout table directly in the Plan Builder.
+Remove the standalone Payout Table Setup configuration and make each reusable Performance Measure configuration own its quota setup. Keep the proposal payout-table editor focused on attainment tiers, xPCR, MCR, and its existing optional note.
 
 ## Scope
 
-This change affects the single-file prototype, its seed/configuration model, and its supporting documentation. It does not redesign plan versioning, approvals, comparison, or the standardized payout-table data format.
+This change affects the single-file prototype, configuration persistence, seeded data, and supporting documentation. It does not redesign plan versioning, approvals, comparison, or payout calculations.
 
 ## User Experience
 
-Each performance measure remains linked one-to-one with a payout table. In the measure's inline builder card, the designer selects:
+The Performance Measures configuration screen retains the existing performance-measure value and system-pay-measure fields and adds, inline on the same configuration entry:
 
-- quota band set;
-- pay curve;
-- threshold;
-- cap.
+- Quota Band Set;
+- Pay Curve;
+- Threshold;
+- Cap.
 
-Selecting a quota band set creates the table's bands. Within each band, the designer selects an attainment tier set and enters xPCR values per tier plus MCR for the band. An optional note remains on that individual payout table within the proposal flavor.
+The standalone Payout Tables configuration screen is removed.
 
-The Performance Measures configuration screen remains a simple mapping from performance-measure value to system pay measure. It does not own payout structure. The standalone Payout Tables configuration screen and reusable payout profiles are removed.
+In the Plan Builder, selecting a performance measure applies that measure configuration to the proposal measure and generates the quota bands. The linked payout-table editor does not repeat editable quota-band, curve, threshold, or cap controls. For each generated quota band, the designer selects an Attainment Tier Set, enters xPCR for each tier, and enters MCR for the band. The existing optional payout-table note remains editable.
 
-## Data Model
+## Data Ownership
 
-The existing per-flavor ownership model remains authoritative:
-
-```text
-flavor.measures[n].payoutTableId -> flavor.payoutTables[n].id
-```
-
-Each table retains the standardized shape:
+Each reusable Performance Measure configuration entry has this normalized shape:
 
 ```text
 {
-  id, title, bandSetId, payCurveType, threshold, globalVctCap, note,
-  prorateVct,
-  thresholds[{ id, label, description, tierSetId, mcr,
-               tiers[{ id, attainmentFrom, attainmentTo, xPCR, mcr }] }]
+  id,
+  value,
+  systemPayMeasure,
+  bandSetId,
+  payCurveType,
+  threshold,
+  globalVctCap
 }
 ```
 
-`sourceSetupId` and `sourceSetupName` are removed because tables no longer originate from reusable profiles. `prorateVct` remains preserved because it is completed later during Release Validation.
+When selected in the builder, these quota settings are copied onto the proposal's performance-measure instance. This makes the proposal a stable snapshot: later edits to reusable configuration do not silently change an existing proposal.
+
+The proposal measure therefore extends its existing fields with:
+
+```text
+{ bandSetId, payCurveType, threshold, globalVctCap }
+```
+
+The linked payout table retains its identity, optional note, Release Validation value, generated band rows, and tier details:
+
+```text
+{
+  id,
+  title,
+  note,
+  prorateVct,
+  thresholds[{
+    id,
+    label,
+    description,
+    tierSetId,
+    mcr,
+    tiers[{ id, attainmentFrom, attainmentTo, xPCR, mcr }]
+  }]
+}
+```
+
+Quota ownership fields are removed from the payout table: `bandSetId`, `payCurveType`, `threshold`, and `globalVctCap`. Library provenance fields `sourceSetupId` and `sourceSetupName` are also removed because payout profiles no longer exist.
 
 ## Configuration and Persistence
 
-`quotaBandSets`, `attainmentTierSets`, and `performanceMeasures` remain persisted in localStorage. `payoutSetups` is removed from runtime state, normalization, persistence, CRUD, routing, and screen registration.
+`quotaBandSets`, `attainmentTierSets`, and the extended `performanceMeasures` remain persisted in localStorage. `payoutSetups` is removed from runtime state, normalization, persistence, CRUD, routing, and screen registration.
 
-Previously persisted `payoutSetups` data is ignored. Existing persisted band, tier, and performance-measure identifiers remain stable so references continue to resolve.
+Existing persisted Performance Measure entries normalize missing quota fields to blank values, with Pay Curve defaulting to `Linear`. Existing band, tier, and measure identifiers remain stable.
 
-## Builder Behavior and Data Flow
+## Builder Data Flow
 
-Adding a performance measure creates and links one blank payout table. Removing the measure removes its table. The measure and payout controls render as one inline unit.
+Each builder performance measure remains linked one-to-one with a payout table.
 
-Before a structural selection causes a re-render, current DOM edits are synchronized into `builderWorkingContent` so sibling edits are not lost.
+When a measure value is selected or changed:
 
-- Changing the quota band set rebuilds the table's bands from that set and clears each band's tier selection and tiers.
-- Changing a band's attainment tier set rebuilds that band's tiers from the selected set and leaves xPCR values blank for entry.
-- xPCR, MCR, curve, threshold, cap, title, and note round-trip through the existing collection/synchronization path.
-- Read-only Overview, approval, and comparison surfaces continue to render the same matrix representation.
+1. Resolve its reusable Performance Measure configuration.
+2. Copy `systemPayMeasure`, `bandSetId`, `payCurveType`, `threshold`, and `globalVctCap` onto the proposal measure.
+3. Rebuild the linked payout table's quota-band rows from the configured Quota Band Set.
+4. Initialize each generated band with no Attainment Tier Set and no tiers.
+5. Preserve the payout table's identity, title, optional note, and `prorateVct`.
+
+Changing the reusable configuration later does not modify existing proposal measures. Re-selecting or changing the measure in the builder reapplies the current configuration and intentionally rebuilds its band/tier structure.
+
+Within the payout editor, changing a band's Attainment Tier Set rebuilds only that band's tiers. xPCR, MCR, and the optional note round-trip through the existing DOM synchronization path.
+
+Read-only Overview, approval, and comparison rendering resolves quota metadata from the linked performance measure and tier details from the payout table.
 
 ## Seed Data
 
-Demo content no longer copies from a user-facing payout library. Internal seed-only factory functions create fresh standardized payout tables by demo name. Each seeded measure receives its own table and fresh table, band, and tier identifiers.
+Seeded reusable Performance Measure entries include the quota settings needed by demo measures. Seeded proposal measures carry snapshot quota settings, and their linked payout tables contain the corresponding generated bands and tier details. No user-facing payout-profile library or seed library is retained.
 
 ## Validation
 
-Submission continues to require, per flavor:
+Existing plan and VCT rules remain. Submission also continues to require, per flavor:
 
 - every performance measure links to an existing payout table;
-- every payout table is linked by at least one measure;
-- all other existing plan and VCT validation rules still pass.
-
-The one-to-one builder behavior normally guarantees these linkage rules, while validation protects migrated or malformed data.
+- every payout table is linked by at least one performance measure;
+- selected performance measures have a Quota Band Set;
+- each generated quota band has an Attainment Tier Set and tier details as required by the existing payout validation.
 
 ## Documentation
 
-Update `CLAUDE.md`, `docs/progress.md`, and the business PRD source to describe inline payout definition and remove the reusable-library workflow. Regenerate the tracked PRD `.docx` from the updated source.
+Update `CLAUDE.md`, `docs/progress.md`, and the business PRD source to describe Performance Measure quota ownership and remove the Payout Table Setup workflow. Regenerate the tracked PRD `.docx` from the updated source.
 
 ## Verification
 
-Because this is a self-contained throwaway browser prototype with no automated test framework, verification uses focused static checks plus browser regression testing:
+This is a self-contained browser prototype without an automated test framework. Verification uses focused static checks and browser regression testing:
 
-1. Confirm there are no remaining Payout Tables nav/screen/library references.
-2. Confirm Performance Measures configuration still contains only value and system-pay-measure fields.
-3. Exercise add/remove measure and the one-to-one payout lifecycle.
-4. Exercise band-set and tier-set changes, including rebuild behavior and preservation of sibling edits.
-5. Save and reopen a proposal; confirm curve, threshold, cap, xPCR, MCR, and note round-trip.
-6. Confirm all seeded versions pass `validateVersionContent`.
-7. Check Overview, approval, and comparison matrix rendering.
-8. Confirm no browser console errors.
+1. Confirm no Payout Table Setup navigation, screen, state, CRUD, persistence, or provenance references remain.
+2. Confirm each Performance Measure configuration entry exposes value, system pay measure, quota band set, pay curve, threshold, and cap.
+3. Confirm legacy persisted Performance Measure entries normalize safely.
+4. Select a performance measure in the builder and confirm its configured quota settings are copied and its quota bands are generated.
+5. Confirm the payout editor exposes only Attainment Tier Set, xPCR, MCR, and the optional note.
+6. Confirm changing a tier set rebuilds only that band's tiers.
+7. Save and reopen a proposal; confirm measure quota settings and payout tier details round-trip.
+8. Confirm existing proposals are not silently rewritten when reusable configuration changes.
+9. Confirm all seeded versions pass validation.
+10. Check Overview, approval, and comparison rendering plus browser console output.
 
 ## Alternatives Considered
 
-1. **Inline per-measure definition (selected).** Matches the final clarified requirement and removes unnecessary configuration indirection.
-2. **Reusable library plus builder overrides.** Supports reuse but contradicts the explicit removal of the separate payout-table configuration.
-3. **Payout fields on Performance Measures configuration.** Centralizes defaults but contradicts the clarification that these choices belong in the Plan Builder.
+1. **Snapshot quota configuration onto proposal measures (selected).** Preserves existing proposal behavior and avoids runtime coupling to mutable global configuration.
+2. **Resolve quota configuration live from reusable entries.** Uses less duplicated data but would silently change existing proposals when administrators edit configuration.
+3. **Keep quota settings on payout tables.** Requires fewer data-path changes but fails the explicit ownership requirement and leaves duplicated quota-related fields.
 
-## Non-Goals and Known Limitations
+## Constraints and Non-Goals
 
-- No unrelated cleanup of legacy builder functions.
-- No new backend or persistence layer.
-- No change to the stepped/marginal payout calculation.
-- `payCurveType` remains descriptive unless separately requested; the current calculation does not branch on Linear versus Stepped.
+- Make the smallest changes that satisfy the ownership change.
+- Reuse existing selectors, inputs, payout tier editor, and styles.
+- Do not refactor unrelated legacy code.
+- Preserve existing approval, comparison, seeding, and Release Validation behavior.
+- Keep the optional payout-table note editable.
+- Do not change xPCR or MCR requirements.
+- `payCurveType` remains descriptive unless separately requested; the current payout calculation does not branch on Linear versus Stepped.
